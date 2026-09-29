@@ -1,0 +1,24 @@
+name: vydani
+# Tag v* (anotovaný) = release pro HACS, který vydá github-actions[bot].
+# První řádek zprávy tagu = název („Nokturno pro Home Assistant 9.0.0 – opravy chyb“), zbytek = text.
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  vydani:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: git fetch --force origin "refs/tags/$GITHUB_REF_NAME:refs/tags/$GITHUB_REF_NAME"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V=$(python3 -c "import json; print(json.load(open('custom_components/nokturno/manifest.json'))['version'])")
+          test "v$V" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME, manifest $V"; exit 1; }
+          TITLE=$(git for-each-ref "refs/tags/$GITHUB_REF_NAME" --format='%(contents:subject)')
+          git for-each-ref "refs/tags/$GITHUB_REF_NAME" --format='%(contents:body)' > notes.md
+          PRE=""; [[ "$V" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || PRE="--prerelease"
+          gh release create "$GITHUB_REF_NAME" $PRE --title "$TITLE" --notes-file notes.md

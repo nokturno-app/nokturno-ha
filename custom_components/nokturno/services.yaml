@@ -1,0 +1,479 @@
+# Texty (name/description) jsou v strings.json a translations/*.json – tady jen selektory.
+search:
+  fields:
+    query:
+      required: true
+      example: Matrix
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: search_type
+          options:
+          - movie
+          - series
+          - webshare
+          - catalog
+          - catalog_series
+    limit:
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 60
+streams:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    alt:
+      selector:
+        text: null
+    series:
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 500
+play:
+  fields:
+    id:
+      selector:
+        text: null
+    query:
+      example: Matrix
+      selector:
+        text: null
+    entity_id:
+      selector:
+        entity:
+          domain: media_player
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    stream:
+      selector:
+        number:
+          min: 0
+          max: 100
+    url:
+      selector:
+        text: null
+    alt:
+      selector:
+        text: null
+    series:
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 500
+    direct:
+      default: false
+      selector:
+        boolean: null
+resolve:
+  fields:
+    id:
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    stream:
+      selector:
+        number:
+          min: 0
+          max: 100
+    url:
+      selector:
+        text: null
+    alt:
+      selector:
+        text: null
+    series:
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 500
+download:
+  fields:
+    id:
+      selector:
+        text: null
+    name:
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    stream:
+      selector:
+        number:
+          min: 0
+          max: 100
+    url:
+      selector:
+        text: null
+    alt:
+      selector:
+        text: null
+    series:
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 500
+send_link:
+  fields:
+    notify_service:
+      required: true
+      example: notify.sm_s921b
+      selector:
+        text: null
+    id:
+      selector:
+        text: null
+    name:
+      selector:
+        text: null
+    title:
+      default: Nokturno
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    stream:
+      selector:
+        number:
+          min: 0
+          max: 100
+    url:
+      selector:
+        text: null
+    alt:
+      selector:
+        text: null
+    series:
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 500
+cancel_download:
+  fields:
+    download_id:
+      required: true
+      selector:
+        text: null
+start_download:
+  fields:
+    download_id:
+      required: true
+      selector:
+        text: null
+detail:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+episodes:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+delete_file:
+  fields:
+    path:
+      required: true
+      example: /media/nokturno/Matrix.mp4
+      selector:
+        text: null
+continue_watching:
+  fields:
+    entity_id:
+      selector:
+        entity:
+          domain: media_player
+remove_progress:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          domain: media_player
+    file:
+      required: true
+      selector:
+        text: null
+watch_series:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+    title:
+      selector:
+        text: null
+    alt:
+      selector:
+        text: null
+    poster:
+      selector:
+        text: null
+    remove:
+      default: false
+      selector:
+        boolean: null
+check_series: {}
+clear_history: {}
+clear_cache: {}
+mark_seen:
+  fields:
+    id:
+      selector:
+        text: null
+trakt_auth: {}
+trakt_watched:
+  fields:
+    id:
+      required: true
+      example: tt0133093
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 500
+    remove:
+      default: false
+      selector:
+        boolean: null
+trakt_watchlist: {}
+trakt_flag:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+share_file:
+  fields:
+    path:
+      required: true
+      example: /media/nokturno/Matrix.mp4
+      selector:
+        text: null
+    notify_service:
+      example: notify.mobile_app_telefon
+      selector:
+        text: null
+    hours:
+      default: 24
+      selector:
+        number:
+          min: 1
+          max: 720
+want_to_watch:
+  fields:
+    id:
+      selector:
+        text: null
+    query:
+      example: Duna 3
+      selector:
+        text: null
+    series:
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    title:
+      selector:
+        text: null
+    year:
+      selector:
+        number:
+          min: 1900
+          max: 2100
+    alt:
+      selector:
+        text: null
+    poster:
+      selector:
+        text: null
+    remove:
+      default: false
+      selector:
+        boolean: null
+    flag:
+      default: false
+      selector:
+        boolean: null
+favourite_add:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+favourite_toggle:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    title:
+      selector:
+        text: null
+    year:
+      selector:
+        number:
+          min: 1900
+          max: 2100
+    alt:
+      selector:
+        text: null
+    poster:
+      selector:
+        text: null
+fulltext_search:
+  fields:
+    id:
+      selector:
+        text: null
+    query:
+      selector:
+        text: null
+    type:
+      default: movie
+      selector:
+        select:
+          translation_key: title_type
+          options:
+          - movie
+          - series
+    series:
+      selector:
+        text: null
+    season:
+      selector:
+        number:
+          min: 0
+          max: 100
+    episode:
+      selector:
+        number:
+          min: 0
+          max: 1000
+    source:
+      selector:
+        select:
+          translation_key: fulltext_source
+          multiple: true
+          options:
+          - ws
+          - hs
+          - st
+          - fs
