@@ -47,8 +47,6 @@ from .const import (
     CONF_SUB_WARN_DAYS,
     CONF_SYNC_CODE,
     CONF_SYNC_KEY,
-    CONF_TERMS_VERSION,
-    TERMS_VERSION,
     STATS_INTERVAL_HOURS,
     SUB_CHECK_INTERVAL_HOURS,
     SYNC_CIRCLE_OPTIONS,
@@ -865,26 +863,6 @@ POSLEDNI_STREAMU_MAX = 300   # kolik řádků streamů si HA pamatuje pro přehr
 SYNC_KEY_MIN_HEX = 32   # 128 bitů; do 6.1.4 doplňoval `async_setup_entry` starším instalacím jen 12 znaků
 
 
-@callback
-def _varovat_nove_podminky(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Věcná změna právního upozornění (vyšší `TERMS_VERSION`) — na rozdíl od Kodi tu
-    není revokovatelný přepínač, souhlas se natvrdo zapíše jednou při instalaci
-    (`entry.data`) a nic ho pak samo nekontroluje. Existující instalaci na starší
-    verzi textu se aspoň upozorní, ať ji potvrdí v Options flow (`NokturnoOptionsFlow.
-    async_step_terms_update`) — bez toho by věcná změna nikoho nedohnala."""
-    if entry.data.get(CONF_TERMS_VERSION) == TERMS_VERSION:
-        return
-    from homeassistant.components import persistent_notification
-
-    persistent_notification.async_create(
-        hass,
-        "Podmínky použití Nokturna se změnily (verze 3). Potvrď je znovu: "
-        "Nastavení → Zařízení a služby → Nokturno → Konfigurovat.",
-        title="Nokturno – nové podmínky použití",
-        notification_id=f"{DOMAIN}_terms",
-    )
-
-
 def _varovat_kratky_klic(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Klíč pro `/api/nokturno/sync` a `/files` kratší než 128 bitů — jen upozornit.
 
@@ -926,7 +904,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             entry, data={k: v for k, v in entry.data.items() if k not in ZRUSENE_KLICE},
             options={k: v for k, v in entry.options.items() if k not in ZRUSENE_KLICE})
     _varovat_kratky_klic(hass, entry)
-    _varovat_nove_podminky(hass, entry)
     if not hass.data.get(f"{DOMAIN}_sync_view"):
         hass.http.register_view(NokturnoSyncView(hass))
         hass.http.register_view(NokturnoFilesView(hass))
