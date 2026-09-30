@@ -17,7 +17,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 COMPONENT = ROOT / "custom_components" / "nokturno"
-CORE = ROOT.parent.parent / "nokturno-core"
+CORE = pathlib.Path(__file__).resolve().parents[2] / "nokturno-jadro"
 sys.path.insert(0, str(ROOT / "tests"))
 sys.path.insert(0, str(ROOT))
 
