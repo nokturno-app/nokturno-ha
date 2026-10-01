@@ -102,6 +102,7 @@ from homeassistant.util import slugify
 
 from .downloader import Downloader
 from .lib import accounts as accounts_lib
+from .lib import keepalive
 from .lib.enrich import _capped
 from .lib.source_errors import summarize as summarize_failures
 from .lib.stats import COLLECT_URL, Stats
@@ -911,6 +912,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.http.register_view(NokturnoStorageView(hass))
         hass.http.register_view(NokturnoFastshareView(hass))
         hass.data[f"{DOMAIN}_sync_view"] = True
+    keepalive.enable()   # spojení k API zdrojů se drží mezi dotazy (testy tuhle funkci nevolají)
     options = {**entry.data, **entry.options}
     # hlavičky souborů ze společné cache serveru (`Engine._media_hints`) — dotaz prozradí
     # serveru identy otvíraných souborů, proto jen s povolenými statistikami, jako v Kodi
