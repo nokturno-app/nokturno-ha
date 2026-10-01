@@ -40,6 +40,7 @@ from homeassistant.loader import async_get_integration
 
 from .const import (
     ACCOUNTS_INTERVAL_HOURS,
+    CACHE_MAX_BYTES,
     CONF_DOWNLOAD_DIR,
     CONF_EXTERNAL_HOST,
     CONTINUE_CACHE_KEY,
@@ -1292,8 +1293,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def stats_tick(_now=None):
         await hass.async_add_executor_job(_stats_send)
-        # cache API leží v .storage, tedy v každé záloze HA — prošlé záznamy dřív nikdo nemazal
-        smazano = await hass.async_add_executor_job(engine.store.prune_cache)
+        # cache API leží v .storage, tedy v každé záloze HA — prošlé záznamy dřív nikdo nemazal;
+        # strop velikosti je nižší než výchozí (120 MB): zálohy by ho nesly s sebou
+        smazano = await hass.async_add_executor_job(
+            lambda: engine.store.prune_cache(max_bytes=CACHE_MAX_BYTES))
         if smazano:
             _LOGGER.debug("cache: smazáno %d prošlých souborů", smazano)
 
