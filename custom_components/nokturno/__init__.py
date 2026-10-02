@@ -95,6 +95,7 @@ from .const import (
     SIGNAL_SYNCED,
     SIGNAL_WATCHLIST,
     TRAKT_INTERVAL_HOURS,
+    TRAKT_PULL_INTERVAL_MINUTES,
     WATCH_INTERVAL_HOURS,
     EVENT_TRAKT_AVAILABLE,
 )
@@ -1160,6 +1161,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await announce()
         return trakt_cache()
 
+    async def pull_trakt(_now=None):
+        """Zhlédnuté a rozkoukané z Traktu (Stremio, Nuvio…) do evidence. HA je střed
+        synchronizace, takže to dostanou i Kodi bez vlastního přihlášení k Traktu."""
+        from .lib import trakt_pull
+
+        api = await hass.async_add_executor_job(trakt)
+        if api is None:
+            return
+        try:
+            prijato = await hass.async_add_executor_job(trakt_pull.pull, engine.store, api)
+        except Exception as err:  # noqa: BLE001 – výpadek Traktu nesmí nic shodit
+            _LOGGER.debug("stahování z Traktu: %s", err)
+            return
+        if prijato:
+            _LOGGER.debug("Trakt: přijato %s zhlédnutých/rozkoukaných", prijato)
+            async_dispatcher_send(hass, SIGNAL_WATCHLIST)
+            async_dispatcher_send(hass, SIGNAL_TRAKT)
+            async_dispatcher_send(hass, SIGNAL_SYNCED)
+
     async def handle_trakt_list(call: ServiceCall):
         fresh = await check_trakt(force=True)
         items = sorted(fresh.values(), key=lambda i: (not i.get("streams"), i.get("title") or ""))
@@ -1413,6 +1433,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     entry.async_on_unload(async_at_started(hass, refresh_accounts))
     entry.async_on_unload(async_track_time_interval(hass, check_series, timedelta(hours=WATCH_INTERVAL_HOURS)))
     entry.async_on_unload(async_track_time_interval(hass, check_trakt, timedelta(hours=TRAKT_INTERVAL_HOURS)))
+    entry.async_on_unload(async_track_time_interval(hass, pull_trakt,
+                                                    timedelta(minutes=TRAKT_PULL_INTERVAL_MINUTES)))
+    entry.async_on_unload(async_at_started(hass, pull_trakt))
 
     async def _in_executor(func, *args):
         try:

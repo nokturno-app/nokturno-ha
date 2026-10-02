@@ -106,3 +106,5 @@ WATCH_INTERVAL_HOURS = 6
 # pod `accounts.TTL` (12 h), ať v senzoru nestojí stav označený jako zastaralý
 ACCOUNTS_INTERVAL_HOURS = 6
 TRAKT_INTERVAL_HOURS = 24
+# zhlédnuté a rozkoukané z Traktu (`trakt_pull`); kolo bez změny = jeden dotaz
+TRAKT_PULL_INTERVAL_MINUTES = 15
