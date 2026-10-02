@@ -56,7 +56,7 @@ SYNC_CIRCLE_OPTIONS = (
 
 SUB_CHECK_INTERVAL_HOURS = 12
 STATS_INTERVAL_HOURS = 6
-CACHE_MAX_BYTES = 40 * 1024 * 1024   # strop cache API v .storage (`Store.prune_cache`)
+CACHE_MAX_BYTES = 40 * 1024 * 1024   # strop cache API v .cache/nokturno (`Store.prune_cache`)
 
 # Kodi doplněk, přes který se přehrává (evidence zhlédnuto/rozkoukáno zůstane v Kodi)
 KODI_PLUGIN = "plugin://plugin.video.nokturno/"

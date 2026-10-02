@@ -369,6 +369,7 @@ actions:
 - **Hlášky WebShare** se překládají do srozumitelné podoby: „File temporarily unavailable" se ukáže jako doporučení zkusit jiný stream. U titulků se taková chyba přeskočí a video se pustí nebo stáhne bez nich.
 - **Náhledy Sosáče** jsou od září 2026 mrtvé (404), plakáty se dotahují z TMDB – podle IMDb id, a když chybí, podle názvu a roku.
 - **Přerušené stahování**: fronta se ukládá do `.storage/nokturno/downloads.json`, rozstahovaný soubor zůstává jako `.part`. Po startu se úloha zařadí zpátky, vyžádá se nový odkaz (ty z WebShare vyprší) a pokračuje se hlavičkou `Range` od posledního bajtu. Když server rozsah neumí, stahuje se znovu od začátku. Zrušení uživatelem `.part` smaže.
+- **Kde leží data**: účty, rozkoukané, Můj seznam, Hlídané a synchronizace v `.storage/nokturno/` (jdou do záloh HA). Cache odpovědí zdrojů a rejstřík Sosáče jdou kdykoli stáhnout znovu, proto jsou od 9.7.2 v `.cache/nokturno/` mimo `.storage` a zálohy nezvětšují; při prvním startu se tam samy přesunou.
 - **Nový díl seriálu** se hlásí až podle dostupnosti streamu; při zařazení se najde nejnovější série se streamy, dál se hlídá jen posun dopředu.
 - **Jedno hledání pro oba typy**: karta se ptá na filmy i seriály naráz a drží si obojí; přepínač se ukáže, jen když obojí něco našlo, a přepnutí pak jen prohodí už načtený seznam.
 - **Rok jako filtr**: z dotazu se odřízne čtyřciferný rok a použije se na výsledky i na názvy souborů z fulltextu WebShare (tolerance ±1, soubor bez roku projde). Rok v budoucnosti se bere jako součást názvu.

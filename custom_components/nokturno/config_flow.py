@@ -245,7 +245,8 @@ class CztorPairing:
     def _cztor(self):
         from .lib.cztor_api import CztorApi
         from .lib.store import Store
-        return CztorApi(Store(self.hass.config.path(f".storage/{DOMAIN}")), device_name="Nokturno (Home Assistant)")
+        return CztorApi(Store(self.hass.config.path(f".storage/{DOMAIN}"),
+                              cache_dir=self.hass.config.path(f".cache/{DOMAIN}")), device_name="Nokturno (Home Assistant)")
 
     async def _cztor_needs_pairing(self, user_input) -> bool:
         if not user_input.get(CONF_CZ_ENABLED):

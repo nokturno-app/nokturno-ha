@@ -14,6 +14,7 @@ import logging
 import os
 import re
 import secrets
+import shutil
 import time
 import urllib.parse
 from functools import partial
@@ -106,6 +107,7 @@ from .lib import keepalive
 from .lib.enrich import _capped
 from .lib.source_errors import summarize as summarize_failures
 from .lib.stats import COLLECT_URL, Stats
+from .lib.store import Store
 from .lib.webshare_api import WebshareApiError
 from .lib.sync import apply_changes, collect_changes, filter_circles
 from .lib import syncbox
@@ -895,6 +897,23 @@ def _varovat_kratky_klic(hass: HomeAssistant, entry: ConfigEntry) -> None:
 ZRUSENE_KLICE = ("prowlarr_url", "prowlarr_key", "qbit_url", "qbit_username", "qbit_password")
 
 
+def _presun_cache(data_dir: str, cache_dir: str) -> None:
+    """9.7.2: cache API a rejstřík Sosáče z `.storage/nokturno` do `.cache/nokturno` —
+    jdou stáhnout znovu a v `.storage` byly v každé záloze HA (~9 MB). Jednou při startu;
+    stará cache se maže (po aktualizaci by ji `clear_cache` smazal stejně), rejstřík se přesune."""
+    stara = os.path.join(data_dir, "cache")
+    if os.path.isdir(stara):
+        shutil.rmtree(stara, ignore_errors=True)
+    rejstrik = os.path.join(data_dir, "sosac_index.json")
+    if os.path.exists(rejstrik):
+        os.makedirs(cache_dir, exist_ok=True)
+        cil = os.path.join(cache_dir, "sosac_index.json")
+        if os.path.exists(cil):
+            os.remove(rejstrik)
+        else:
+            shutil.move(rejstrik, cil)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_register_card(hass)
     # starší instalace klíč nemají — doplnit jednou (spustí to jeden reload přes update listener)
@@ -920,9 +939,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if options.get(CONF_EXTERNAL_HOST) and await async_tailscale_running(hass) is False:
         _LOGGER.warning("addon Tailscale neběží — odkazy mimo síť se nebudou přepisovat")
         options = {**options, CONF_EXTERNAL_HOST: ""}
-    engine = await hass.async_add_executor_job(
-        Engine, options, hass.config.path(f".storage/{DOMAIN}")
-    )
+    data_dir = hass.config.path(f".storage/{DOMAIN}")
+    cache_dir = hass.config.path(f".cache/{DOMAIN}")
+    await hass.async_add_executor_job(_presun_cache, data_dir, cache_dir)
+    store = await hass.async_add_executor_job(partial(Store, data_dir, cache_dir=cache_dir))
+    engine = await hass.async_add_executor_job(partial(Engine, options, data_dir, store=store))
     # čítače leží vedle ostatních dat integrace; Stats si soubor drží sám
     stats = await hass.async_add_executor_job(Stats, hass.config.path(f".storage/{DOMAIN}"))
     stats_version = str((await async_get_integration(hass, DOMAIN)).version or "")
@@ -1295,8 +1316,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def stats_tick(_now=None):
         await hass.async_add_executor_job(_stats_send)
-        # cache API leží v .storage, tedy v každé záloze HA — prošlé záznamy dřív nikdo nemazal;
-        # strop velikosti je nižší než výchozí (120 MB): zálohy by ho nesly s sebou
+        # prošlé záznamy cache API (od 9.7.2 v .cache/nokturno, mimo zálohy) dřív nikdo nemazal;
+        # strop velikosti nižší než výchozí 120 MB, HA běží často na malém disku
         smazano = await hass.async_add_executor_job(
             lambda: engine.store.prune_cache(max_bytes=CACHE_MAX_BYTES))
         if smazano:

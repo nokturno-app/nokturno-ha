@@ -34,7 +34,7 @@ from .lib.sosac_api import is_sosac_id as _is_legacy_sosac_id
 from .lib.sosac_direct import SosacDirect, is_direct_id
 from .lib.store import Store
 from .lib.streams import (arrange, assume_origin_language, estimate_rank, expand_groups, fold, group_streams,
-                            langs_from_name, parse_stream, stream_hdr)
+                            is_surround, langs_from_name, parse_stream, stream_3d, stream_hdr)
 from .lib.tracks import SUBTITLE_FALLBACK
 from .lib.hellspy_api import HellspyApi, HellspyError, HellspyRateLimited
 from .lib.sledujteto_api import SledujtetoApi, SledujtetoError
@@ -137,6 +137,8 @@ PREREAD_PER_SOURCE = 6
 # zablokovaly skutečný dialog streamů), takže by bez týhle cache zahřívání po 6 h
 # pokaždé znovu prohledalo všech ~60 kandidátů od nuly.
 LANG_CLASS_TTL = 24 * 3600
+QUALITY_MIN_GB = {4: 4.0, 3.5: 2.5}   # nejmenší věrohodná velikost filmu v GB podle `quality_rank`
+QUALITY_CLASS_TTL = 3 * 24 * 3600
 # kolik dalších názvů (originál, anglický, český/slovenský z Wikidat) jde do fulltextových dotazů;
 # každý je u každého zdroje další HTTP dotaz (až 10 variant × 5 zdrojů = 45 dotazů na titul)
 MAX_TITLE_VARIANTS = 3
@@ -2665,6 +2667,51 @@ class Engine:
             return {"k": "dub" if langs & want else "subs" if subs & want else "", "n": len(streams)}
 
         return self.store.cached_if(key, ttl, _spocitat, ok=lambda d: bool(d.get("n")))
+
+    @staticmethod
+    def quality_match(stream, min_quality=4, surround=False, audio="CZ", subs=""):
+        """Odpovídá stream definici „vysoká kvalita“? 3D se vyřazuje vždy; 5.1 vyžaduje ověřené `channels`;
+        prázdný `audio`/`subs` a `min_quality` 0 = na parametru nezáleží."""
+        rank = stream.get("quality_rank") or 0
+        if rank < min_quality or stream_3d(stream):
+            return False
+        # příliš malý soubor skutečné 4K/2K nebude (přepočtená 1080p, falešný popisek); neznámá velikost projde
+        size = stream.get("size_gb") or 0
+        if size and size < QUALITY_MIN_GB.get(rank, 0):
+            return False
+        if audio and audio not in (stream.get("langs") or ()):
+            return False
+        if subs and subs not in (stream.get("subs") or ()):
+            return False
+        return not surround or bool(is_surround(stream, audio))
+
+    def classify_quality(self, ctype, item_id, min_quality=4, surround=False, audio="CZ", subs="",
+                         ttl=QUALITY_CLASS_TTL):
+        """Má titul aspoň jeden stream odpovídající definici? `True`/`False`, `None` = zdroje
+        nedoběhly (výpadek) nebo nic nevrátily – nic se neukládá a volající to zkusí později."""
+        key = (f"qualclass2:{ctype}:{item_id}:{min_quality}:{int(bool(surround))}:{audio}:{subs}:"
+               f"{self._streams_cache_key(ctype, item_id)}")
+
+        def _spocitat():
+            # rychlá cesta: kolo zdrojů skončí u prvního streamu, který by definici splnil bez ohledu
+            # na 5.1; ověří se jen hlavička toho jednoho (nejvýš tří) souborů, ne všech desítek
+            def volne(s):
+                return self.quality_match(s, min_quality, False, audio, subs)
+            rychle = self.raw_streams(ctype, item_id, strict=True, probe_audio=False, failures=[],
+                                      stop_when=lambda st: any(volne(s) for s in st or []))
+            kandidati = sorted((s for s in rychle or [] if volne(s)),
+                               key=lambda s: -(s.get("quality_rank") or 0))[:3]
+            for kand in kandidati:
+                self._fill_audio([kand])   # opraví jazyk i kanály podle skutečné hlavičky
+                if self.quality_match(kand, min_quality, surround, audio, subs):
+                    return True
+            failures = []
+            streams = self.raw_streams(ctype, item_id, strict=True, probe_audio=True, failures=failures)
+            if any(self.quality_match(s, min_quality, surround, audio, subs) for s in streams):
+                return True
+            return None if failures or not streams else False
+
+        return self.store.cached_if(key, ttl, _spocitat, ok=lambda d: d is not None)
 
     def _max_bitrate(self):
         """Strop datového toku z nastavení (Mb/s), 0 = bez omezení."""

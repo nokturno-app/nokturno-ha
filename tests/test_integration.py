@@ -1003,3 +1003,23 @@ class TestBezTorrentu(unittest.TestCase):
                     continue   # ZRUSENE_KLICE mažou staré hodnoty z nastavení
                 self.assertNotIn(slovo, text.replace("zrusene_klice", ""), f"{soubor}: {slovo}")
         self.assertFalse((COMPONENT / "lib" / "prowlarr.py").exists())
+
+
+class TestPresunCache(unittest.TestCase):
+    """9.7.2: cache a rejstřík Sosáče z .storage/nokturno do .cache/nokturno, data zůstanou."""
+
+    def test_presun(self):
+        import os
+        import tempfile
+        from custom_components.nokturno import _presun_cache
+        with tempfile.TemporaryDirectory() as root:
+            data, cache = os.path.join(root, "data"), os.path.join(root, "cache_dir")
+            os.makedirs(os.path.join(data, "cache"))
+            for name in ("cache/abc.json", "sosac_index.json", "watched.json", "favlog.json"):
+                with open(os.path.join(data, name), "w") as f:
+                    f.write("{}")
+            _presun_cache(data, cache)
+            self.assertEqual(sorted(os.listdir(data)), ["favlog.json", "watched.json"])
+            self.assertTrue(os.path.exists(os.path.join(cache, "sosac_index.json")))
+            _presun_cache(data, cache)   # podruhé nic nedělá
+            self.assertEqual(sorted(os.listdir(data)), ["favlog.json", "watched.json"])

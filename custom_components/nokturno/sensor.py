@@ -4,11 +4,12 @@ from __future__ import annotations
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EVENT_HOMEASSISTANT_STARTED, EVENT_SERVICE_REGISTERED
+from homeassistant.const import EVENT_SERVICE_REGISTERED
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.start import async_at_started
 from homeassistant.util import slugify
 
 from .const import (CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONTINUE_CACHE_KEY, DOMAIN, MULTI_PLAY_ASK,
@@ -64,7 +65,7 @@ class NokturnoDownloadsSensor(SensorEntity):
         # mobile_app se registruje až po nás — stav přepíšeme, jakmile jeho notify služby naskočí.
         # Posluchače musí být @callback, jinak je HA spustí ve vlákně a async_write_ha_state se pohorší.
         @callback
-        def _started(_event) -> None:
+        def _started(_hass) -> None:
             self._updated()
 
         @callback
@@ -72,7 +73,9 @@ class NokturnoDownloadsSensor(SensorEntity):
             if event.data.get("domain") == "notify":
                 self._updated()
 
-        self.async_on_remove(self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _started))
+        # async_at_started, ne async_listen_once: po startu by odhlášení už vyřízeného
+        # posluchače při reloadu shodilo HA chybou „Unable to remove unknown job listener"
+        self.async_on_remove(async_at_started(self.hass, _started))
 
         self.async_on_remove(self.hass.bus.async_listen(EVENT_SERVICE_REGISTERED, _service_added))
 
