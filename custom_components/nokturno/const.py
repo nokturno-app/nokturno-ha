@@ -88,6 +88,9 @@ SERVICE_WANT = "want_to_watch"
 SERVICE_FAVOURITE_ADD = "favourite_add"
 SERVICE_FAVOURITE_TOGGLE = "favourite_toggle"
 SERVICE_FULLTEXT = "fulltext_search"
+SERVICE_CATALOGS = "catalogs"
+SERVICE_CATALOG_VERIFY = "catalog_verify"
+SERVICE_CATALOG_PAUSE = "catalog_pause"
 
 # poslední živý stav „Pokračovat ve sledování" — karta ho ukáže hned po načtení,
 # než dorazí čerstvá odpověď z živého dotazu na Kodi (viz kodi_continue v __init__.py)
@@ -97,12 +100,16 @@ SIGNAL_DOWNLOADS = f"{DOMAIN}_downloads_updated"
 SIGNAL_WATCHLIST = f"{DOMAIN}_watchlist_updated"
 SIGNAL_TRAKT = f"{DOMAIN}_trakt_updated"
 SIGNAL_ACCOUNTS = f"{DOMAIN}_accounts_updated"
+# vlastní katalogy: dávka ověřování doběhla nebo přišly výsledky synchronizací (`lib/mycat.py`)
+SIGNAL_CATALOGS = f"{DOMAIN}_catalogs_updated"
 # synchronizace přinesla změny odjinud — oznámit, co z nich je nové (`watch.pending_notices`)
 SIGNAL_SYNCED = f"{DOMAIN}_synced"
 EVENT_DOWNLOAD_DONE = f"{DOMAIN}_download_done"
 EVENT_NEW_EPISODE = f"{DOMAIN}_new_episode"
 EVENT_TRAKT_AVAILABLE = f"{DOMAIN}_trakt_available"
 WATCH_INTERVAL_HOURS = 6
+# ověřování vlastních katalogů: jeden titul jednoho katalogu za minutu (~1400 denně)
+VERIFY_INTERVAL_SECONDS = 60
 # pod `accounts.TTL` (12 h), ať v senzoru nestojí stav označený jako zastaralý
 ACCOUNTS_INTERVAL_HOURS = 6
 TRAKT_INTERVAL_HOURS = 24

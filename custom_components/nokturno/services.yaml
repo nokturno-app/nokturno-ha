@@ -309,6 +309,24 @@ watch_series:
       selector:
         boolean: null
 check_series: {}
+catalogs: {}
+catalog_verify:
+  fields:
+    id:
+      selector:
+        text: null
+    count:
+      default: 10
+      selector:
+        number:
+          min: 1
+          max: 50
+catalog_pause:
+  fields:
+    paused:
+      required: true
+      selector:
+        boolean: null
 clear_history: {}
 clear_cache: {}
 mark_seen:

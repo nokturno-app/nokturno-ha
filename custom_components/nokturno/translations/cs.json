@@ -618,6 +618,34 @@
       "name": "Zkontrolovat nové díly",
       "description": "Hned projde seriály v Hlídaných (jinak se kontrolují každých 6 hodin)."
     },
+    "catalogs": {
+      "name": "Stav vlastních katalogů",
+      "description": "Vrátí ověřované vlastní katalogy: kolik titulů je zkontrolovaných, kolik vyhovuje a kdy proběhla poslední kontrola."
+    },
+    "catalog_verify": {
+      "name": "Ověřit katalog hned",
+      "description": "Hned spustí dávku ověřování streamů u vlastního katalogu (bez ID další katalog v pořadí). Pozastavení se neřídí.",
+      "fields": {
+        "id": {
+          "name": "ID katalogu",
+          "description": "ID vlastního katalogu (vrací služba Stav vlastních katalogů). Prázdné = další v pořadí."
+        },
+        "count": {
+          "name": "Počet titulů",
+          "description": "Kolik titulů se má v téhle dávce ověřit."
+        }
+      }
+    },
+    "catalog_pause": {
+      "name": "Pozastavit ověřování katalogů",
+      "description": "Pozastaví nebo obnoví ověřování vlastních katalogů na pozadí na tomhle Home Assistantovi.",
+      "fields": {
+        "paused": {
+          "name": "Pozastaveno",
+          "description": "Zapnuto = ověřování na pozadí je pozastavené."
+        }
+      }
+    },
     "clear_history": {
       "name": "Smazat historii hledání",
       "description": "Vymaže poslední dotazy zobrazené v kartě."
@@ -802,6 +830,9 @@
       },
       "sources": {
         "name": "Stav zdrojů"
+      },
+      "catalogs": {
+        "name": "Katalogy"
       }
     }
   },

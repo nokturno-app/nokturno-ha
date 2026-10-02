@@ -62,6 +62,9 @@ from .const import (
     EVENT_DOWNLOAD_DONE,
     EVENT_NEW_EPISODE,
     KODI_PLUGIN,
+    SERVICE_CATALOG_PAUSE,
+    SERVICE_CATALOG_VERIFY,
+    SERVICE_CATALOGS,
     SERVICE_CHECK_SERIES,
     SERVICE_CLEAR_CACHE,
     SERVICE_CLEAR_HISTORY,
@@ -90,12 +93,14 @@ from .const import (
     SERVICE_STREAMS,
     SERVICE_WATCH,
     SIGNAL_ACCOUNTS,
+    SIGNAL_CATALOGS,
     SIGNAL_DOWNLOADS,
     SIGNAL_TRAKT,
     SIGNAL_SYNCED,
     SIGNAL_WATCHLIST,
     TRAKT_INTERVAL_HOURS,
     TRAKT_PULL_INTERVAL_MINUTES,
+    VERIFY_INTERVAL_SECONDS,
     WATCH_INTERVAL_HOURS,
     EVENT_TRAKT_AVAILABLE,
 )
@@ -112,6 +117,7 @@ from .lib.store import Store
 from .lib.webshare_api import WebshareApiError
 from .lib.sync import apply_changes, collect_changes, filter_circles
 from .lib import syncbox
+from .lib import mycat as mycat_lib
 from .lib import watch as watch_lib
 from .engine import Engine, NokturnoError, split_episode_id
 
@@ -189,6 +195,13 @@ FULLTEXT_SCHEMA = STREAMS_SCHEMA.extend({
     vol.Optional("source"): vol.All(cv.ensure_list, [vol.In(["ws", "hs", "st"])]),
 })
 
+CATALOG_VERIFY_SCHEMA = vol.Schema({
+    vol.Optional("id"): cv.string,
+    vol.Optional("count", default=10): vol.All(vol.Coerce(int), vol.Range(min=1, max=50)),
+})
+
+CATALOG_PAUSE_SCHEMA = vol.Schema({vol.Required("paused"): cv.boolean})
+
 WANT_SCHEMA = vol.Schema({
     vol.Optional("id"): cv.string,
     vol.Optional("query"): cv.string,
@@ -247,7 +260,11 @@ def _entry_data(hass: HomeAssistant) -> dict:
 
 
 def sync_circles(entry) -> tuple[str, ...]:
-    """Okruhy zapnuté v nastavení integrace (výchozí: všechny tři).
+    """Okruhy zapnuté v nastavení integrace (výchozí: všechny) a vždy `catalogs`.
+
+    Vlastní katalogy (`lib/mycat.py`) nemají v integraci žádné nastavení: HA je jen
+    přijímá z Kodi a ověřuje je a výsledky rozesílá zpátky, takže okruh je zapnutý vždy
+    (ověřování jde pozastavit službou `nokturno.catalog_pause`).
 
     Platí pro obě cesty naráz — pro Kodi v místní síti i pro skupinu na relayi —
     a v obou směrech: vypnutý okruh se nepošle **ani nepřijme**. Kdyby se jen
@@ -257,7 +274,7 @@ def sync_circles(entry) -> tuple[str, ...]:
     """
     volby = {**entry.data, **entry.options}
     zapnute = tuple(okruh for okruh, klic in SYNC_CIRCLE_OPTIONS if volby.get(klic, True))
-    return zapnute or ()
+    return zapnute + ("catalogs",)
 
 
 # kontrola sledovaných seriálů je v jádru (`lib/watch.py`) — tady zůstávají jména,
@@ -712,6 +729,7 @@ class NokturnoSyncView(HomeAssistantView):
             async_dispatcher_send(self.hass, SIGNAL_WATCHLIST)
             async_dispatcher_send(self.hass, SIGNAL_TRAKT)
             async_dispatcher_send(self.hass, SIGNAL_SYNCED)
+            async_dispatcher_send(self.hass, SIGNAL_CATALOGS)
         _LOGGER.debug("sync %s: přijato %s, vráceno %s", body.get("device"), result["applied"],
                       len(result["changes"].get("watched") or {}) + len(result["changes"].get("favlog") or {}))
         return self.json(result)
@@ -1257,6 +1275,51 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await announce()
         return watchlist()
 
+    katalogy_zamek = asyncio.Lock()
+    katalogy_pristi = [0]
+
+    async def verify_catalogs(_now=None, cid=None, size=1, manual=False):
+        """Vlastní katalogy z Kodi (okruh synchronizace `catalogs`): jedna dávka jednoho katalogu,
+        z časovače round-robin. Logika je v jádru (`lib/mycat.py`), sdílí ji s doplňkem pro Kodi;
+        Kodi, které vidí čerstvé výsledky odsud, samo neověřuje. Pozastavení (`catalog_pause`)
+        se týká jen časovače, ruční volání (`manual`) ověřuje vždy. Vrací počet ověřených titulů."""
+        if katalogy_zamek.locked():
+            return 0
+        async with katalogy_zamek:
+            def cile():
+                if not manual and (engine.store.load(mycat_lib.PAUSED, {}) or {}).get("on"):
+                    return []
+                return [c["id"] for c in mycat_lib.verified(engine.store, concerts=False)]
+
+            targets = await hass.async_add_executor_job(cile)
+            if not targets:
+                return 0
+            if cid is None:
+                cid = targets[katalogy_pristi[0] % len(targets)]
+                katalogy_pristi[0] += 1
+            elif cid not in targets:
+                return 0
+            try:
+                done = await hass.async_add_executor_job(
+                    partial(mycat_lib.refresh, engine, engine.store, engine.dash, cid, size))
+            except Exception as err:  # noqa: BLE001 – výpadek zdroje nesmí shodit časovač
+                _LOGGER.debug("ověřování katalogu %s: %s", cid, err)
+                return 0
+            async_dispatcher_send(hass, SIGNAL_CATALOGS)
+            return done
+
+    async def handle_catalogs(call: ServiceCall):
+        return await hass.async_add_executor_job(mycat_lib.overview, engine.store)
+
+    async def handle_catalog_verify(call: ServiceCall):
+        done = await verify_catalogs(cid=call.data.get("id") or None, size=call.data["count"], manual=True)
+        return {"verified": done}
+
+    async def handle_catalog_pause(call: ServiceCall):
+        await hass.async_add_executor_job(
+            engine.store.save, mycat_lib.PAUSED, {"on": bool(call.data["paused"])})
+        async_dispatcher_send(hass, SIGNAL_CATALOGS)
+
     async def handle_watch(call: ServiceCall):
         sid = call.data["id"]
         if call.data.get("remove") or (sid in watchlist() and not call.data.get("title")):
@@ -1431,6 +1494,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if prijato:
             async_dispatcher_send(hass, SIGNAL_WATCHLIST)
             async_dispatcher_send(hass, SIGNAL_TRAKT)
+            async_dispatcher_send(hass, SIGNAL_CATALOGS)
             await announce()
         _LOGGER.debug("relay synchronizace: odesláno %s, přijato %s", poslano, prijato)
 
@@ -1444,6 +1508,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                                                     timedelta(hours=ACCOUNTS_INTERVAL_HOURS)))
     entry.async_on_unload(async_at_started(hass, refresh_accounts))
     entry.async_on_unload(async_track_time_interval(hass, check_series, timedelta(hours=WATCH_INTERVAL_HOURS)))
+    entry.async_on_unload(async_track_time_interval(hass, verify_catalogs,
+                                                    timedelta(seconds=VERIFY_INTERVAL_SECONDS)))
     entry.async_on_unload(async_track_time_interval(hass, check_trakt, timedelta(hours=TRAKT_INTERVAL_HOURS)))
     entry.async_on_unload(async_track_time_interval(hass, pull_trakt,
                                                     timedelta(minutes=TRAKT_PULL_INTERVAL_MINUTES)))
@@ -1811,6 +1877,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         (SERVICE_REMOVE_PROGRESS, handle_remove_progress, REMOVE_PROGRESS_SCHEMA, SupportsResponse.NONE),
         (SERVICE_WATCH, handle_watch, WATCH_SCHEMA, SupportsResponse.OPTIONAL),
         (SERVICE_CHECK_SERIES, handle_check_series, vol.Schema({}), SupportsResponse.OPTIONAL),
+        (SERVICE_CATALOGS, handle_catalogs, vol.Schema({}), SupportsResponse.ONLY),
+        (SERVICE_CATALOG_VERIFY, handle_catalog_verify, CATALOG_VERIFY_SCHEMA, SupportsResponse.OPTIONAL),
+        (SERVICE_CATALOG_PAUSE, handle_catalog_pause, CATALOG_PAUSE_SCHEMA, SupportsResponse.NONE),
         (SERVICE_CLEAR_HISTORY, handle_clear_history, vol.Schema({}), SupportsResponse.NONE),
         (SERVICE_CLEAR_CACHE, handle_clear_cache, vol.Schema({}), SupportsResponse.NONE),
         (SERVICE_SEEN, handle_seen, SEEN_SCHEMA, SupportsResponse.OPTIONAL),

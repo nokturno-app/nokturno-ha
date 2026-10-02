@@ -618,6 +618,34 @@
       "name": "Check for new episodes",
       "description": "Checks series on the Watchlist right away (otherwise every 6 hours)."
     },
+    "catalogs": {
+      "name": "Own catalogs status",
+      "description": "Returns the verified own catalogs: how many titles were checked, how many match and when the last check ran."
+    },
+    "catalog_verify": {
+      "name": "Verify catalog now",
+      "description": "Runs a batch of stream checks for an own catalog right away (without an ID the next catalog in turn). Ignores the pause.",
+      "fields": {
+        "id": {
+          "name": "Catalog ID",
+          "description": "ID of the own catalog (see the Catalogs service). Empty = the next one in turn."
+        },
+        "count": {
+          "name": "Number of titles",
+          "description": "How many titles to verify in this batch."
+        }
+      }
+    },
+    "catalog_pause": {
+      "name": "Pause catalog verification",
+      "description": "Pauses or resumes the background verification of own catalogs on this Home Assistant.",
+      "fields": {
+        "paused": {
+          "name": "Paused",
+          "description": "On = the background verification is paused."
+        }
+      }
+    },
     "clear_history": {
       "name": "Clear search history",
       "description": "Clears the recent queries shown in the card."
@@ -802,6 +830,9 @@
       },
       "sources": {
         "name": "Source status"
+      },
+      "catalogs": {
+        "name": "Catalogs"
       }
     }
   },

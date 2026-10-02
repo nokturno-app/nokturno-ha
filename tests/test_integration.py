@@ -329,7 +329,7 @@ class TestSouboryProHomeAssistant(unittest.TestCase):
             self.assertEqual(set(body.get("fields", {})), pole, f"pole služby {name} vs. YAML")
         for lang in ("cs", "sk"):
             preklad = json.loads((COMPONENT / "translations" / f"{lang}.json").read_text(encoding="utf-8"))
-            self.assertEqual(set(preklad["entity"]["sensor"]), {"downloads", "new_episodes", "trakt", "sources"})
+            self.assertEqual(set(preklad["entity"]["sensor"]), {"downloads", "new_episodes", "trakt", "sources", "catalogs"})
 
     def test_senzory_maji_prekladove_klice(self):
         sensor = (COMPONENT / "sensor.py").read_text(encoding="utf-8")
@@ -780,11 +780,11 @@ class TestSynchronizaceVNastaveni(unittest.TestCase):
         self.assertIn(const.CONF_SYNC_CODE, sekce["synchronizace"])
 
     def test_vychozi_stav_je_vse_zapnute(self):
-        self.assertEqual(sync_circles(self._Entry()), ("watched", "favourites", "history", "watchlist"))
+        self.assertEqual(sync_circles(self._Entry()), ("watched", "favourites", "history", "watchlist", "catalogs"))
 
     def test_vypnuty_okruh_vypadne(self):
         entry = self._Entry(options={const.CONF_SYNC_HISTORY: False})
-        self.assertEqual(sync_circles(entry), ("watched", "favourites", "watchlist"))
+        self.assertEqual(sync_circles(entry), ("watched", "favourites", "watchlist", "catalogs"))
 
     def test_vypnute_vse_neposila_nic(self):
         """Prázdná sada znamená „nic", ne „vše" — `filter_circles(None)` by bylo „vše"."""
@@ -792,7 +792,7 @@ class TestSynchronizaceVNastaveni(unittest.TestCase):
                                      const.CONF_SYNC_FAVOURITES: False,
                                      const.CONF_SYNC_HISTORY: False,
                                      const.CONF_SYNC_WATCHLIST: False})
-        self.assertEqual(sync_circles(entry), ())
+        self.assertEqual(sync_circles(entry), ("catalogs",))   # vlastní katalogy se vypnout nedají, jen pozastavit
         from custom_components.nokturno.lib.sync import filter_circles
         self.assertEqual(filter_circles({"watched": {"x": {}}}, sync_circles(entry)), {})
 
@@ -1003,6 +1003,50 @@ class TestBezTorrentu(unittest.TestCase):
                     continue   # ZRUSENE_KLICE mažou staré hodnoty z nastavení
                 self.assertNotIn(slovo, text.replace("zrusene_klice", ""), f"{soubor}: {slovo}")
         self.assertFalse((COMPONENT / "lib" / "prowlarr.py").exists())
+
+
+class TestKatalogyVHA(unittest.TestCase):
+    """Ověřování vlastních katalogů: HA je ověřovatel (okruh `catalogs`), senzor a služby (9.11)."""
+
+    def test_okruh_catalogs_je_vzdy_zapnuty(self):
+        entry = TestSynchronizaceVNastaveni._Entry(options={k: False for _o, k in const.SYNC_CIRCLE_OPTIONS})
+        self.assertEqual(sync_circles(entry), ("catalogs",))
+
+    def test_sluzby_a_signal_jsou_v_kodu(self):
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        for sluzba in (const.SERVICE_CATALOGS, const.SERVICE_CATALOG_VERIFY, const.SERVICE_CATALOG_PAUSE):
+            self.assertIn(sluzba, {getattr(const, n) for n in dir(const) if n.startswith("SERVICE_")})
+        self.assertIn("async def verify_catalogs(", src)
+        self.assertIn("timedelta(seconds=VERIFY_INTERVAL_SECONDS)", src)
+        self.assertEqual(const.VERIFY_INTERVAL_SECONDS, 60)
+
+    def test_senzor_atributy_mimo_recorder_a_cte_jen_prehled(self):
+        senzor = nokturno_sensor.NokturnoCatalogsSensor.__new__(nokturno_sensor.NokturnoCatalogsSensor)
+        senzor._data = {"paused": True, "catalogs": [{"id": "k1"}, {"id": "k2"}]}
+        self.assertEqual(senzor.native_value, 2)
+        self.assertEqual(senzor.extra_state_attributes["paused"], True)
+        self.assertEqual(len(senzor.extra_state_attributes["catalogs"]), 2)
+        self.assertEqual(nokturno_sensor.NokturnoCatalogsSensor._unrecorded_attributes, {"paused", "catalogs"})
+
+    def test_verify_catalogs_volani_jadra_v_executoru(self):
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        telo = src[src.index("async def verify_catalogs("):src.index("async def handle_catalogs(")]
+        self.assertIn("hass.async_add_executor_job(\n                    partial(mycat_lib.refresh", telo)
+        self.assertNotIn("mycat_lib.refresh(", telo.replace("partial(mycat_lib.refresh", ""))
+
+    def test_koncertni_katalog_ha_neoveruje_ani_neukazuje(self):
+        """Katalog koncertů přijde synchronizací, ale HA ho neověřuje (round-robin) ani nehlásí (služba, senzor)."""
+        import tempfile
+        from custom_components.nokturno.lib import mycat
+        from custom_components.nokturno.lib.store import Store
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn("mycat_lib.verified(engine.store, concerts=False)", src)
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(tmp)
+            mycat.save(store, {"id": "k1", "kind": "movie", "name": "F", "verify": True})
+            mycat.save(store, {"id": "c1", "kind": "concert", "name": "K", "verify": True, "tags": ["rock"]})
+            self.assertEqual([c["id"] for c in mycat.verified(store, concerts=False)], ["k1"])
+            self.assertEqual([c["id"] for c in mycat.overview(store)["catalogs"]], ["k1"])
 
 
 class TestPresunCache(unittest.TestCase):

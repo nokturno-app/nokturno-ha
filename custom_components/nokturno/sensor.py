@@ -13,8 +13,9 @@ from homeassistant.helpers.start import async_at_started
 from homeassistant.util import slugify
 
 from .const import (CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONTINUE_CACHE_KEY, DOMAIN, MULTI_PLAY_ASK,
-                    SIGNAL_ACCOUNTS, SIGNAL_DOWNLOADS, SIGNAL_TRAKT, SIGNAL_WATCHLIST)
+                    SIGNAL_ACCOUNTS, SIGNAL_CATALOGS, SIGNAL_DOWNLOADS, SIGNAL_TRAKT, SIGNAL_WATCHLIST)
 from .lib import accounts as accounts_lib
+from .lib import mycat as mycat_lib
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, add_entities: AddEntitiesCallback) -> None:
@@ -24,6 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, add_entitie
         NokturnoEpisodesSensor(entry, data["engine"]),
         NokturnoTraktSensor(entry, data["engine"]),
         NokturnoSourcesSensor(entry, data["engine"]),
+        NokturnoCatalogsSensor(entry, data["engine"]),
     ])
 
 
@@ -312,3 +314,44 @@ class NokturnoSourcesSensor(SensorEntity):
                         for row in rows if row["code"] != "off"],
             "problems": [row["source"] for row in accounts_lib.problems(rows)],
         }
+
+
+class NokturnoCatalogsSensor(SensorEntity):
+    """Ověřované vlastní katalogy (`lib/mycat.py`): stav = kolik jich HA ověřuje, detail v atributech.
+
+    Data se čtou z disku, proto vždy v executoru (při přidání entity a po každém signálu
+    `SIGNAL_CATALOGS` – dávka ověřování nebo synchronizace); atribut čtení pak jen vrací
+    poslední načtený přehled."""
+
+    _attr_has_entity_name = True
+    _attr_translation_key = "catalogs"
+    _attr_icon = "mdi:playlist-check"
+    _attr_should_poll = False
+    _attr_native_unit_of_measurement = "katalogů"
+    _unrecorded_attributes = frozenset({"paused", "catalogs"})
+
+    def __init__(self, entry: ConfigEntry, engine):
+        self._engine = engine
+        self._data = {"paused": False, "catalogs": []}
+        self._attr_unique_id = f"{entry.entry_id}_catalogs"
+        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, entry.entry_id)})
+
+    async def async_added_to_hass(self) -> None:
+        self._data = await self.hass.async_add_executor_job(mycat_lib.overview, self._engine.store)
+        self.async_on_remove(async_dispatcher_connect(self.hass, SIGNAL_CATALOGS, self._updated))
+
+    @callback
+    def _updated(self) -> None:
+        self.hass.async_create_task(self._refresh())
+
+    async def _refresh(self) -> None:
+        self._data = await self.hass.async_add_executor_job(mycat_lib.overview, self._engine.store)
+        self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> int:
+        return len(self._data["catalogs"])
+
+    @property
+    def extra_state_attributes(self) -> dict:
+        return dict(self._data)

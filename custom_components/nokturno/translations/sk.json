@@ -618,6 +618,34 @@
       "name": "Skontrolovať nové diely",
       "description": "Hneď prejde seriály v Sledovaných (inak sa kontrolujú každých 6 hodín)."
     },
+    "catalogs": {
+      "name": "Stav vlastných katalógov",
+      "description": "Vráti overované vlastné katalógy: koľko titulov je skontrolovaných, koľko vyhovuje a kedy prebehla posledná kontrola."
+    },
+    "catalog_verify": {
+      "name": "Overiť katalóg hneď",
+      "description": "Hneď spustí dávku overovania streamov pri vlastnom katalógu (bez ID ďalší katalóg v poradí). Pozastavenie sa neriadi.",
+      "fields": {
+        "id": {
+          "name": "ID katalógu",
+          "description": "ID vlastného katalógu (vracia služba Stav vlastných katalógov). Prázdne = ďalší v poradí."
+        },
+        "count": {
+          "name": "Počet titulov",
+          "description": "Koľko titulov sa má v tejto dávke overiť."
+        }
+      }
+    },
+    "catalog_pause": {
+      "name": "Pozastaviť overovanie katalógov",
+      "description": "Pozastaví alebo obnoví overovanie vlastných katalógov na pozadí na tomto Home Assistantovi.",
+      "fields": {
+        "paused": {
+          "name": "Pozastavené",
+          "description": "Zapnuté = overovanie na pozadí je pozastavené."
+        }
+      }
+    },
     "clear_history": {
       "name": "Zmazať históriu hľadania",
       "description": "Vymaže posledné dotazy zobrazené v karte."
@@ -802,6 +830,9 @@
       },
       "sources": {
         "name": "Stav zdrojov"
+      },
+      "catalogs": {
+        "name": "Katalógy"
       }
     }
   },
