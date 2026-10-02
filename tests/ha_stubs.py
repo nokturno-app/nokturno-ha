@@ -198,7 +198,8 @@ def install_homeassistant():
     _module("homeassistant.components.sensor", SensorEntity=SensorEntity)
     _module("homeassistant.config_entries", ConfigEntry=ConfigEntry, ConfigFlow=ConfigFlow, OptionsFlow=OptionsFlow)
     _module("homeassistant.const", ATTR_ENTITY_ID="entity_id", Platform=Platform,
-            EVENT_HOMEASSISTANT_STARTED="homeassistant_started", EVENT_SERVICE_REGISTERED="service_registered")
+            EVENT_HOMEASSISTANT_CLOSE="homeassistant_close", EVENT_HOMEASSISTANT_STARTED="homeassistant_started",
+            EVENT_SERVICE_REGISTERED="service_registered")
     _module("homeassistant.core", HomeAssistant=object, ServiceCall=object, SupportsResponse=SupportsResponse,
             callback=_decorator)
     _module("homeassistant.exceptions", HomeAssistantError=HomeAssistantError, Unauthorized=Unauthorized)

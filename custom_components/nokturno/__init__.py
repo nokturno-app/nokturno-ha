@@ -27,7 +27,7 @@ from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.components.http.auth import async_sign_path
 from homeassistant.components.http.ban import process_wrong_login
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import ATTR_ENTITY_ID, Platform
+from homeassistant.const import ATTR_ENTITY_ID, EVENT_HOMEASSISTANT_CLOSE, Platform
 from homeassistant.core import HomeAssistant, ServiceCall, SupportsResponse, callback
 from homeassistant.exceptions import HomeAssistantError, Unauthorized
 from homeassistant.helpers import config_validation as cv
@@ -105,7 +105,7 @@ from homeassistant.util import slugify
 from .downloader import Downloader
 from .lib import accounts as accounts_lib
 from .lib import keepalive
-from .lib.enrich import _capped
+from .lib.enrich import _capped, shutdown_pool
 from .lib.source_errors import summarize as summarize_failures
 from .lib.stats import COLLECT_URL, Stats
 from .lib.store import Store
@@ -915,6 +915,11 @@ def _presun_cache(data_dir: str, cache_dir: str) -> None:
             shutil.move(rejstrik, cil)
 
 
+@callback
+def _zavrit_enrich(_event) -> None:
+    shutdown_pool(cancel=True)
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await async_register_card(hass)
     # starší instalace klíč nemají — doplnit jednou (spustí to jeden reload přes update listener)
@@ -933,6 +938,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.http.register_view(NokturnoFastshareView(hass))
         hass.data[f"{DOMAIN}_sync_view"] = True
     keepalive.enable()   # spojení k API zdrojů se drží mezi dotazy (testy tuhle funkci nevolají)
+    # Sdílený executor obohacení (`lib/enrich.py`) nemá daemon vlákna a nečinná čekají na
+    # frontu bez timeoutu. Python je při konci budí přes `threading._register_atexit`, jenže
+    # HA `threading._shutdown` nahrazuje svým `deadlock_safe_shutdown` a čekal by na ně celých
+    # 10 s (HA Home 2026-10-02: vypnutí 29 s místo 19 s). CLOSE je poslední fáze vypínání,
+    # po ní už nic dalšího obohacovat nezačne.
+    # `@callback`: holá funkce by šla do executoru, `shutdown(wait=False)` ale neblokuje.
+    entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_CLOSE, _zavrit_enrich))
     options = {**entry.data, **entry.options}
     # hlavičky souborů ze společné cache serveru (`Engine._media_hints`) — dotaz prozradí
     # serveru identy otvíraných souborů, proto jen s povolenými statistikami, jako v Kodi
@@ -1857,4 +1869,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if not hass.data[DOMAIN]:
             for name in data.get("services") or []:
                 hass.services.async_remove(DOMAIN, name)
+            shutdown_pool(cancel=True)   # jinak nečinná vlákna visí až do konce procesu
     return unloaded
