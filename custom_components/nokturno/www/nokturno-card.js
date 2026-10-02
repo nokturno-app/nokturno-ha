@@ -17,7 +17,7 @@
  *   downloads: sensor.nokturno_stahovani
  */
 
-const CARD_VERSION = "9.7.3";
+const CARD_VERSION = "9.8.1";
 console.info(`%c NOKTURNO-CARD %c ${CARD_VERSION} `, "background:#5b4b8a;color:#fff;border-radius:3px 0 0 3px", "background:#f0b429;color:#222;border-radius:0 3px 3px 0");
 
 const SOURCE_COLORS = { "Luna": "#8e7cc3", "WebShare": "#4a90d9", "Sosáč": "#e08b3c",
@@ -146,8 +146,7 @@ const SK = {
   "Domů": "Domov",
   "Knihovna": "Knižnica",
   "Zatím nic rozkoukaného ani hlídaného.": "Zatiaľ nič rozpozerané ani sledované.",
-  "Zatím nic v Mém seznamu ani mezi hlídanými seriály.": "Zatiaľ nič v Mojom zozname ani medzi sledovanými seriálmi.",
-  "Hlídané seriály": "Sledované seriály",
+  "Zatím nic v Mém seznamu.": "Zatiaľ nič v Mojom zozname.",
   "pokračovat": "pokračovať",
   "Nadpis karty": "Nadpis karty",
 };
@@ -1016,7 +1015,7 @@ class NokturnoCard extends HTMLElement {
   }
 
   /** Úvodní obrazovka: poslední dotazy nad taby, obsah podle vybraného tabu
-      (Domů = rozkoukané + hlídané, Knihovna = Můj seznam + sledované seriály,
+      (Domů = rozkoukané + Hlídané včetně seriálů, Knihovna = Můj seznam,
       Stažené = probíhající i hotová stahování – kreslí `_renderDownloads`). */
   _home() {
     const st = this._state;
@@ -1042,18 +1041,18 @@ class NokturnoCard extends HTMLElement {
       <button class="tab${st.homeTab === tb.id ? " active" : ""}" data-hometab="${tb.id}">
         <ha-icon icon="${tb.icon}"></ha-icon> ${tb.label}${tb.badge ? `<span class="tabbadge">${tb.badge}</span>` : ""}
       </button>`).join("")}</div>`;
-    if (st.homeTab === "domov") html += this._homeTabDomov(cont, trakt);
-    else if (st.homeTab === "knihovna") html += this._homeTabKnihovna(fav, series);
+    if (st.homeTab === "domov") html += this._homeTabDomov(cont, trakt, series);
+    else if (st.homeTab === "knihovna") html += this._homeTabKnihovna(fav);
     // obsah tabu Stažené kreslí samostatně `_renderDownloads` do #downloads
     return html;
   }
 
-  _homeTabDomov(cont, trakt) {
+  _homeTabDomov(cont, trakt, series) {
     const st = this._state;
     let html = "";
     const manyKodi = new Set(cont.map((c) => c.entity_id)).size > 1;
     if (cont.length) {
-      // stejný textový řádkový styl jako „Hlídané"/„Sledované seriály" – bez plakátu.
+      // stejný textový řádkový styl jako „Hlídané" – bez plakátu.
       // Plakáty/fanart v plné velikosti se tu dřív dekódovaly do paměti prohlížeče
       // (desítky MB na obrázek) a při delším prohlížení to vedlo ke „stránka neodpovídá".
       html += `<div class="section"><ha-icon icon="mdi:play-circle-outline"></ha-icon> ${this._t("Pokračovat ve sledování")}</div>
@@ -1073,9 +1072,12 @@ class NokturnoCard extends HTMLElement {
           </div>`;
         }).join("")}</div>`;
     }
-    if (trakt.length) {
+    // díl s vlaječkou u hlídaného seriálu se kreslí na řádku seriálu (jako v Kodi)
+    const onSeriesRow = new Set(series.filter((w) => w.available && w.available.id).map((w) => w.available.id));
+    const titles = trakt.map((t, i) => [t, i]).filter(([t]) => !onSeriesRow.has(t.id)).slice(0, 12);
+    if (series.length || titles.length) {
       html += `<div class="section"><ha-icon icon="mdi:bell-outline"></ha-icon> ${this._t("Hlídané")}</div>
-        <div>${trakt.slice(0, 12).map((t, i) => {
+        <div>${this._seriesRows(series)}${titles.map(([t, i]) => {
           const opening = st.busy && st.loading === `trakt:${i}`;
           const flagging = st.busy && st.loading === `traktflag:${i}`;
           const moving = st.busy && st.loading === `favmove:${i}`;
@@ -1102,11 +1104,11 @@ class NokturnoCard extends HTMLElement {
           </div>`;
         }).join("")}</div>`;
     }
-    if (!cont.length && !trakt.length) html += `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
+    if (!cont.length && !series.length && !titles.length) html += `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
     return html;
   }
 
-  _homeTabKnihovna(fav, series) {
+  _homeTabKnihovna(fav) {
     const st = this._state;
     let html = "";
     if (fav.length) {
@@ -1120,9 +1122,13 @@ class NokturnoCard extends HTMLElement {
           </div>`;
         }).join("")}</div>`;
     }
-    if (series.length) {
-      html += `<div class="section"><ha-icon icon="mdi:television-play"></ha-icon> ${this._t("Hlídané seriály")}</div>
-        <div>${series.map((w, i) => `
+    if (!fav.length) html += `<div class="muted empty">${this._t("Zatím nic v Mém seznamu.")}</div>`;
+    return html;
+  }
+
+  /** Řádky hlídaných seriálů v sekci Hlídané (Domů). */
+  _seriesRows(series) {
+    return series.map((w, i) => `
           <div class="stream stacked">
             <span class="tag" style="background:${w.new ? "var(--success-color, #2e8b57)" : "var(--disabled-text-color, #777)"}">
               <ha-icon icon="${w.new ? "mdi:new-box" : "mdi:eye-outline"}" class="ext"></ha-icon>
@@ -1146,10 +1152,7 @@ class NokturnoCard extends HTMLElement {
               <ha-icon-button data-wopen="${i}" title="${this._t("Otevřít")}"><ha-icon icon="mdi:folder-play-outline"></ha-icon></ha-icon-button>
               <ha-icon-button data-wremove="${i}" title="${this._t("Přestat hlídat")}"><ha-icon icon="mdi:eye-off-outline"></ha-icon></ha-icon-button>
             </span>
-          </div>`).join("")}</div>`;
-    }
-    if (!fav.length && !series.length) html += `<div class="muted empty">${this._t("Zatím nic v Mém seznamu ani mezi hlídanými seriály.")}</div>`;
-    return html;
+          </div>`).join("");
   }
 
   _isWatched(id) { return this._watchlist().some((w) => w.id === id); }
