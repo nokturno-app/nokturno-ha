@@ -17,5 +17,5 @@
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/nokturno-app/nokturno-ha/issues",
   "requirements": [],
-  "version": "9.7.2"
+  "version": "9.7.3"
 }

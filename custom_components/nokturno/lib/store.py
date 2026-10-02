@@ -92,6 +92,9 @@ class Store:
         self._sigs = {}
         self._index = None
         self._clean_tmp()
+        # úložiště rejstříku Sosáče založené hned tady, ne v `index()`: ten se volá i ze smyčky
+        # událostí HA (atributy senzoru) a konstruktor Store čte disk (`_clean_tmp`)
+        self._index_files = Store(self.cache_dir) if self.cache_dir != directory else None
         # Hledání pro film i seriál běží souběžně ve dvou vláknech (default.py
         # search_run) a obě sahají na tenhle jeden Store — bez zámku dvě vlákna
         # měnila stejný sdílený dict zároveň s tím, jak ho druhé zapisovalo
@@ -261,8 +264,7 @@ class Store:
         """Rejstřík Sosáče nad vlastním souborem, viz `Index`."""
         with self._lock:
             if self._index is None:
-                files = Store(self.cache_dir) if self.cache_dir != self.dir else None
-                self._index = Index(self, files=files)
+                self._index = Index(self, files=self._index_files)
             return self._index
 
     # --- historie hledání -------------------------------------------------------
