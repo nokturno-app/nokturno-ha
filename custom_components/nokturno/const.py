@@ -25,6 +25,30 @@ CONF_DOWNLOAD_DIR = "download_dir"
 DEFAULT_DOWNLOAD_DIR = "/media/nokturno"
 CONF_TRAKT_ID = "trakt_client_id"
 CONF_TRAKT_SECRET = "trakt_client_secret"
+# Přepínače „Používat …“ u zdrojů s účtem: vypnutý zdroj si údaje nechá, jádro je ale
+# nedostane (`zdroje_pro_engine`). Výchozí zapnuto, takže dřívější instalace nic nepoznají.
+# Klíče `luna_enabled` a `davN_enabled` jsou tytéž jako v doplňku pro Kodi.
+SOURCE_TOGGLES = {
+    "ws_enabled": ("ws_username", "ws_password"),
+    "sc_enabled": ("streamuj_username", "streamuj_password"),
+    "st_enabled": ("st_email", "st_password"),
+    "fs_enabled": ("fs_username", "fs_password"),
+    "luna_enabled": ("luna_url", "luna_token"),
+    "dav1_enabled": ("dav1_url",),
+    "dav2_enabled": ("dav2_url",),
+    "dav3_enabled": ("dav3_url",),
+}
+
+
+def zdroje_pro_engine(volby: dict) -> dict:
+    """Volby pro `Engine` bez údajů vypnutých zdrojů – prázdný údaj jádro bere jako vypnutý zdroj."""
+    out = dict(volby)
+    for prepinac, klice in SOURCE_TOGGLES.items():
+        if not out.get(prepinac, True):
+            out.update(dict.fromkeys(klice, ""))
+    return out
+
+
 CONF_SUB_WARN_DAYS = "sub_warn_days"   # kolik dní předem upozornit na konec předplatného WebShare
 CONF_STATS_ENABLED = "stats_enabled"
 CONF_SYNC_KEY = "sync_key"   # klíč, kterým se Kodi doplňky hlásí na /api/nokturno/sync

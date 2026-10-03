@@ -49,62 +49,146 @@
               "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
             }
           },
-          "zdroje": {
-            "name": "Sources and accounts",
-            "description": "Sign-in for the individual sources. An empty field means the source is off. Passwords are stored in HA and only ever sent to the source they belong to.",
+          "webshare": {
+            "name": "WebShare",
+            "description": "Sign-in to WebShare. If you turn the source off, the credentials stay stored.",
             "data": {
-              "ws_username": "WebShare – e-mail",
-              "ws_password": "WebShare – password (or stored hash)",
-              "streamuj_username": "Streamuj.tv – username (for Sosáč)",
-              "streamuj_password": "Streamuj.tv – password",
-              "st_email": "Sledujteto – e-mail",
-              "st_password": "Sledujteto – password (playback needs Premium)",
-              "fs_username": "FastShare / Sdilej.cz – username",
-              "fs_password": "FastShare / Sdilej.cz – password (playback uses your credit or unlimited plan)",
-              "fs_provider": "FastShare – account from",
-              "luna_url": "Luna – server address",
-              "luna_token": "Luna – token (or the whole install URL)",
-              "hs_enabled": "Use HellSpy",
-              "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)",
-              "cz_enabled": "Use CZtor",
-              "pt_enabled": "Use Přehraj.to",
-              "pt_email": "Přehraj.to – e-mail (optional)",
-              "pt_password": "Přehraj.to – password (optional)"
+              "ws_enabled": "Use WebShare",
+              "ws_username": "E-mail",
+              "ws_password": "Password (or stored hash)",
+              "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)"
             },
             "data_description": {
               "ws_password": "Stored as a hash, not as the password. The end of the subscription is detected automatically and reported by the source-status sensor.",
-              "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them.",
-              "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not.",
-              "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan.",
+              "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning."
+            }
+          },
+          "sosac": {
+            "name": "Sosáč",
+            "description": "Sosáč searches and plays through a streamuj.tv account. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "sc_enabled": "Use Sosáč",
+              "streamuj_username": "Streamuj.tv – username (for Sosáč)",
+              "streamuj_password": "Streamuj.tv – password"
+            },
+            "data_description": {
+              "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them."
+            }
+          },
+          "hellspy": {
+            "name": "HellSpy",
+            "description": "A public source, no account needed.",
+            "data": {
+              "hs_enabled": "Use HellSpy"
+            },
+            "data_description": {
+              "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it."
+            }
+          },
+          "sledujteto": {
+            "name": "Sledujteto",
+            "description": "A Sledujteto.cz account. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "st_enabled": "Use Sledujteto",
+              "st_email": "E-mail",
+              "st_password": "Password (playback needs Premium)"
+            },
+            "data_description": {
+              "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not."
+            }
+          },
+          "fastshare": {
+            "name": "FastShare / Sdilej.cz",
+            "description": "A FastShare.cz or Sdilej.cz account. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "fs_enabled": "Use FastShare / Sdilej.cz",
+              "fs_provider": "Account from",
+              "fs_username": "Username",
+              "fs_password": "Password (playback uses your credit or unlimited plan)"
+            },
+            "data_description": {
               "fs_provider": "Sdilej.cz has the same files as FastShare, only the account is separate. Choose the site where you have your account and credit.",
-              "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it.",
-              "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it.",
-              "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning.",
-              "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password.",
+              "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan."
+            }
+          },
+          "prehrajto": {
+            "name": "Přehraj.to",
+            "description": "Works without an account, a Premium account adds paging and the original file. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "pt_enabled": "Use Přehraj.to",
+              "pt_email": "E-mail (optional)",
+              "pt_password": "Password (optional)"
+            },
+            "data_description": {
               "pt_enabled": "Přehraj.to works without an account: the first page of results and a transcoded 1080p file. A Premium account adds paging and the original file.",
               "pt_email": "Optional. With a Přehraj.to Premium account you get paging and the original file. Přehraj.to counts every sign-in as a device, so Nokturno signs in only once every few hours."
             }
           },
-          "uloziste": {
-            "name": "Own storage (WebDAV)",
-            "description": "Up to three own folders over WebDAV (NAS, Nextcloud). They are searched together with the sources and matching files show up as extra streams.",
+          "cztor": {
+            "name": "CZtor",
+            "description": "The paid cztor.com catalogue, the device is paired with a PIN.",
             "data": {
-              "dav1_url": "Storage 1 – folder address (WebDAV)",
-              "dav1_username": "Storage 1 – username",
-              "dav1_password": "Storage 1 – password",
-              "dav1_name": "Storage 1 – name shown with streams",
-              "dav2_url": "Storage 2 – folder address (WebDAV)",
-              "dav2_username": "Storage 2 – username",
-              "dav2_password": "Storage 2 – password",
-              "dav2_name": "Storage 2 – name shown with streams",
-              "dav3_url": "Storage 3 – folder address (WebDAV)",
-              "dav3_username": "Storage 3 – username",
-              "dav3_password": "Storage 3 – password",
-              "dav3_name": "Storage 3 – name shown with streams"
+              "cz_enabled": "Use CZtor"
+            },
+            "data_description": {
+              "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password."
+            }
+          },
+          "luna": {
+            "name": "Luna",
+            "description": "Luna on your device – Home Assistant add-on, TV box, computer or NAS. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "luna_enabled": "Use Luna",
+              "luna_url": "Server address",
+              "luna_token": "Token (or the whole install URL)"
+            },
+            "data_description": {
+              "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
+            }
+          },
+          "uloziste1": {
+            "name": "Storage 1 (WebDAV)",
+            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+            "data": {
+              "dav1_enabled": "Use this storage",
+              "dav1_url": "Folder address (WebDAV)",
+              "dav1_username": "Username",
+              "dav1_password": "Password",
+              "dav1_name": "Name shown with streams"
             },
             "data_description": {
               "dav1_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
               "dav1_name": "The storage name shown next to its streams."
+            }
+          },
+          "uloziste2": {
+            "name": "Storage 2 (WebDAV)",
+            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+            "data": {
+              "dav2_enabled": "Use this storage",
+              "dav2_url": "Folder address (WebDAV)",
+              "dav2_username": "Username",
+              "dav2_password": "Password",
+              "dav2_name": "Name shown with streams"
+            },
+            "data_description": {
+              "dav2_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+              "dav2_name": "The storage name shown next to its streams."
+            }
+          },
+          "uloziste3": {
+            "name": "Storage 3 (WebDAV)",
+            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+            "data": {
+              "dav3_enabled": "Use this storage",
+              "dav3_url": "Folder address (WebDAV)",
+              "dav3_username": "Username",
+              "dav3_password": "Password",
+              "dav3_name": "Name shown with streams"
+            },
+            "data_description": {
+              "dav3_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+              "dav3_name": "The storage name shown next to its streams."
             }
           },
           "stahovani": {
@@ -200,62 +284,146 @@
               "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
             }
           },
-          "zdroje": {
-            "name": "Sources and accounts",
-            "description": "Sign-in for the individual sources. An empty field means the source is off. Passwords are stored in HA and only ever sent to the source they belong to.",
+          "webshare": {
+            "name": "WebShare",
+            "description": "Sign-in to WebShare. If you turn the source off, the credentials stay stored.",
             "data": {
-              "ws_username": "WebShare – e-mail",
-              "ws_password": "WebShare – password (or stored hash)",
-              "streamuj_username": "Streamuj.tv – username (for Sosáč)",
-              "streamuj_password": "Streamuj.tv – password",
-              "st_email": "Sledujteto – e-mail",
-              "st_password": "Sledujteto – password (playback needs Premium)",
-              "fs_username": "FastShare / Sdilej.cz – username",
-              "fs_password": "FastShare / Sdilej.cz – password (playback uses your credit or unlimited plan)",
-              "fs_provider": "FastShare – account from",
-              "luna_url": "Luna – server address",
-              "luna_token": "Luna – token (or the whole install URL)",
-              "hs_enabled": "Use HellSpy",
-              "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)",
-              "cz_enabled": "Use CZtor",
-              "pt_enabled": "Use Přehraj.to",
-              "pt_email": "Přehraj.to – e-mail (optional)",
-              "pt_password": "Přehraj.to – password (optional)"
+              "ws_enabled": "Use WebShare",
+              "ws_username": "E-mail",
+              "ws_password": "Password (or stored hash)",
+              "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)"
             },
             "data_description": {
               "ws_password": "Stored as a hash, not as the password. The end of the subscription is detected automatically and reported by the source-status sensor.",
-              "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them.",
-              "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not.",
-              "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan.",
+              "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning."
+            }
+          },
+          "sosac": {
+            "name": "Sosáč",
+            "description": "Sosáč searches and plays through a streamuj.tv account. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "sc_enabled": "Use Sosáč",
+              "streamuj_username": "Streamuj.tv – username (for Sosáč)",
+              "streamuj_password": "Streamuj.tv – password"
+            },
+            "data_description": {
+              "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them."
+            }
+          },
+          "hellspy": {
+            "name": "HellSpy",
+            "description": "A public source, no account needed.",
+            "data": {
+              "hs_enabled": "Use HellSpy"
+            },
+            "data_description": {
+              "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it."
+            }
+          },
+          "sledujteto": {
+            "name": "Sledujteto",
+            "description": "A Sledujteto.cz account. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "st_enabled": "Use Sledujteto",
+              "st_email": "E-mail",
+              "st_password": "Password (playback needs Premium)"
+            },
+            "data_description": {
+              "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not."
+            }
+          },
+          "fastshare": {
+            "name": "FastShare / Sdilej.cz",
+            "description": "A FastShare.cz or Sdilej.cz account. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "fs_enabled": "Use FastShare / Sdilej.cz",
+              "fs_provider": "Account from",
+              "fs_username": "Username",
+              "fs_password": "Password (playback uses your credit or unlimited plan)"
+            },
+            "data_description": {
               "fs_provider": "Sdilej.cz has the same files as FastShare, only the account is separate. Choose the site where you have your account and credit.",
-              "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it.",
-              "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it.",
-              "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning.",
-              "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password.",
+              "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan."
+            }
+          },
+          "prehrajto": {
+            "name": "Přehraj.to",
+            "description": "Works without an account, a Premium account adds paging and the original file. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "pt_enabled": "Use Přehraj.to",
+              "pt_email": "E-mail (optional)",
+              "pt_password": "Password (optional)"
+            },
+            "data_description": {
               "pt_enabled": "Přehraj.to works without an account: the first page of results and a transcoded 1080p file. A Premium account adds paging and the original file.",
               "pt_email": "Optional. With a Přehraj.to Premium account you get paging and the original file. Přehraj.to counts every sign-in as a device, so Nokturno signs in only once every few hours."
             }
           },
-          "uloziste": {
-            "name": "Own storage (WebDAV)",
-            "description": "Up to three own folders over WebDAV (NAS, Nextcloud). They are searched together with the sources and matching files show up as extra streams.",
+          "cztor": {
+            "name": "CZtor",
+            "description": "The paid cztor.com catalogue, the device is paired with a PIN.",
             "data": {
-              "dav1_url": "Storage 1 – folder address (WebDAV)",
-              "dav1_username": "Storage 1 – username",
-              "dav1_password": "Storage 1 – password",
-              "dav1_name": "Storage 1 – name shown with streams",
-              "dav2_url": "Storage 2 – folder address (WebDAV)",
-              "dav2_username": "Storage 2 – username",
-              "dav2_password": "Storage 2 – password",
-              "dav2_name": "Storage 2 – name shown with streams",
-              "dav3_url": "Storage 3 – folder address (WebDAV)",
-              "dav3_username": "Storage 3 – username",
-              "dav3_password": "Storage 3 – password",
-              "dav3_name": "Storage 3 – name shown with streams"
+              "cz_enabled": "Use CZtor"
+            },
+            "data_description": {
+              "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password."
+            }
+          },
+          "luna": {
+            "name": "Luna",
+            "description": "Luna on your device – Home Assistant add-on, TV box, computer or NAS. If you turn the source off, the credentials stay stored.",
+            "data": {
+              "luna_enabled": "Use Luna",
+              "luna_url": "Server address",
+              "luna_token": "Token (or the whole install URL)"
+            },
+            "data_description": {
+              "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
+            }
+          },
+          "uloziste1": {
+            "name": "Storage 1 (WebDAV)",
+            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+            "data": {
+              "dav1_enabled": "Use this storage",
+              "dav1_url": "Folder address (WebDAV)",
+              "dav1_username": "Username",
+              "dav1_password": "Password",
+              "dav1_name": "Name shown with streams"
             },
             "data_description": {
               "dav1_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
               "dav1_name": "The storage name shown next to its streams."
+            }
+          },
+          "uloziste2": {
+            "name": "Storage 2 (WebDAV)",
+            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+            "data": {
+              "dav2_enabled": "Use this storage",
+              "dav2_url": "Folder address (WebDAV)",
+              "dav2_username": "Username",
+              "dav2_password": "Password",
+              "dav2_name": "Name shown with streams"
+            },
+            "data_description": {
+              "dav2_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+              "dav2_name": "The storage name shown next to its streams."
+            }
+          },
+          "uloziste3": {
+            "name": "Storage 3 (WebDAV)",
+            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+            "data": {
+              "dav3_enabled": "Use this storage",
+              "dav3_url": "Folder address (WebDAV)",
+              "dav3_username": "Username",
+              "dav3_password": "Password",
+              "dav3_name": "Name shown with streams"
+            },
+            "data_description": {
+              "dav3_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+              "dav3_name": "The storage name shown next to its streams."
             }
           },
           "stahovani": {

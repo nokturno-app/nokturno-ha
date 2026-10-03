@@ -450,8 +450,20 @@ class TestSouboryProHomeAssistant(unittest.TestCase):
     def test_zplosteni_vstupu_ze_sekci(self):
         """Uživatelův vstup přijde po sekcích, ukládá se ale naplocho jako dřív."""
         plocho = config_flow._zploskuj({"prehravani": {"pref_lang": "CZ"},
-                                        "zdroje": {"ws_username": "a@b.cz"}})
+                                        "webshare": {"ws_username": "a@b.cz"}})
         self.assertEqual(plocho, {"pref_lang": "CZ", "ws_username": "a@b.cz"})
+
+    def test_vypnuty_zdroj_si_udaje_necha(self):
+        """„Používat …“ vypnuté: údaje zůstanou v nastavení, jádro je ale nedostane."""
+        volby = {"ws_username": "a@b.cz", "ws_password": "x", "ws_enabled": False,
+                 "st_email": "c@d.cz", "dav2_url": "http://nas/", "dav2_enabled": False}
+        pro_engine = const.zdroje_pro_engine(volby)
+        self.assertEqual((pro_engine["ws_username"], pro_engine["ws_password"]), ("", ""))
+        self.assertEqual(pro_engine["dav2_url"], "")
+        self.assertEqual(pro_engine["st_email"], "c@d.cz")   # bez přepínače = zapnuto
+        self.assertEqual(volby["ws_username"], "a@b.cz")
+        for prepinac in const.SOURCE_TOGGLES:
+            self.assertIn(prepinac, {m.schema for m in config_flow.preferences_schema({}).schema})
 
     def test_karta_existuje_a_hlasi_verzi(self):
         card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")

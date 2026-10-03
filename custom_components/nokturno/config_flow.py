@@ -13,6 +13,7 @@ from homeassistant.helpers import selector
 
 from .engine import STORAGE_OPTIONS
 from .const import (
+    SOURCE_TOGGLES,
     CONF_CZ_ENABLED,
     CONF_TERMS_ACCEPTED,
     CONF_TERMS_VERSION,
@@ -107,12 +108,17 @@ def _kod_skupiny(accounts: dict) -> str | None:
 SEKCE = [
     ("prehravani", [CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONF_PREF_LANG, CONF_PREF_SURROUND,
                     CONF_HIDE_SD, CONF_MAX_BITRATE, CONF_SORT], False),
-    ("zdroje", [CONF_WS_USER, CONF_WS_PASS, CONF_STREAMUJ_USER, CONF_STREAMUJ_PASS,
-                CONF_ST_EMAIL, CONF_ST_PASS, CONF_FS_USER, CONF_FS_PASS, CONF_FS_PROVIDER,
-                CONF_HS_ENABLED, CONF_PT_ENABLED, CONF_PT_EMAIL, CONF_PT_PASS,
-                CONF_CZ_ENABLED, CONF_LUNA_URL, CONF_LUNA_TOKEN,
-                CONF_SUB_WARN_DAYS], True),
-    ("uloziste", STORAGE_KEYS, True),
+    # Každý zdroj má vlastní sekci: přepínač „Používat …“ nahoře, pod ním jeho údaje.
+    # Dřív byly všechny v jedné sekci a hledalo se, které pole patří ke kterému zdroji.
+    ("webshare", ["ws_enabled", CONF_WS_USER, CONF_WS_PASS, CONF_SUB_WARN_DAYS], True),
+    ("sosac", ["sc_enabled", CONF_STREAMUJ_USER, CONF_STREAMUJ_PASS], True),
+    ("hellspy", [CONF_HS_ENABLED], True),
+    ("sledujteto", ["st_enabled", CONF_ST_EMAIL, CONF_ST_PASS], True),
+    ("fastshare", ["fs_enabled", CONF_FS_PROVIDER, CONF_FS_USER, CONF_FS_PASS], True),
+    ("prehrajto", [CONF_PT_ENABLED, CONF_PT_EMAIL, CONF_PT_PASS], True),
+    ("cztor", [CONF_CZ_ENABLED], True),
+    ("luna", ["luna_enabled", CONF_LUNA_URL, CONF_LUNA_TOKEN], True),
+    *((f"uloziste{n}", [f"dav{n}_enabled", *slot], True) for n, slot in enumerate(STORAGE_OPTIONS, 1)),
     ("stahovani", [CONF_DOWNLOAD_DIR, CONF_EXTERNAL_HOST, CONF_NOTIFY_TARGET], True),
     ("synchronizace", [CONF_SYNC_KEY, CONF_SYNC_CODE, CONF_SYNC_WATCHED,
                        CONF_SYNC_FAVOURITES, CONF_SYNC_HISTORY, CONF_SYNC_WATCHLIST], True),
@@ -214,6 +220,8 @@ def preferences_schema(data: dict) -> vol.Schema:
             selector.SelectSelector(selector.SelectSelectorConfig(
                 options=list(FS_PROVIDERS), translation_key="fs_provider")),
         vol.Optional(CONF_HS_ENABLED, default=data.get(CONF_HS_ENABLED, True)): bool,
+        # „Používat …“ u zdrojů s účtem — vypnutý zdroj si údaje nechá (`SOURCE_TOGGLES`)
+        **{vol.Optional(k, default=data.get(k, True)): bool for k in SOURCE_TOGGLES},
         # Přehraj.to funguje i bez účtu (první strana + překódovaný soubor), účet
         # je nepovinný a přidá stránkování i původní soubor — proto zapnuté ve výchozím
         # stavu jako HellSpy; e-mail a heslo jsou v ACCOUNT_KEYS (entry.data)

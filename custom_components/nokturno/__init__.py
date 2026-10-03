@@ -40,6 +40,7 @@ from homeassistant.helpers.start import async_at_started
 from homeassistant.loader import async_get_integration
 
 from .const import (
+    zdroje_pro_engine,
     ACCOUNTS_INTERVAL_HOURS,
     CACHE_MAX_BYTES,
     CONF_DOWNLOAD_DIR,
@@ -971,7 +972,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # po ní už nic dalšího obohacovat nezačne.
     # `@callback`: holá funkce by šla do executoru, `shutdown(wait=False)` ale neblokuje.
     entry.async_on_unload(hass.bus.async_listen_once(EVENT_HOMEASSISTANT_CLOSE, _zavrit_enrich))
-    options = {**entry.data, **entry.options}
+    options = zdroje_pro_engine({**entry.data, **entry.options})
     # hlavičky souborů ze společné cache serveru (`Engine._media_hints`) — dotaz prozradí
     # serveru identy otvíraných souborů, proto jen s povolenými statistikami, jako v Kodi
     options["media_hints"] = bool(options.get(CONF_STATS_ENABLED, True))

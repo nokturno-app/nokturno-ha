@@ -49,62 +49,146 @@
               "multi_play": "Platí, jen když je nastavený víc než jeden přehrávač. „Zeptat se“ po klepnutí na Přehrát ukáže okno s výběrem, „první v seznamu“ spustí přehrávání rovnou na prvním přehrávači a výběr otevře dlouhý stisk tlačítka."
             }
           },
-          "zdroje": {
-            "name": "Zdroje a účty",
-            "description": "Přihlášení k jednotlivým zdrojům. Prázdné pole = zdroj se nepoužívá. Hesla se ukládají do HA a ven jdou jen tomu zdroji, kterému patří.",
+          "webshare": {
+            "name": "WebShare",
+            "description": "Přihlášení k WebShare. Když zdroj vypneš, údaje zůstanou uložené.",
             "data": {
-              "ws_username": "WebShare – e-mail",
-              "ws_password": "WebShare – heslo (nebo uložený hash)",
-              "streamuj_username": "Streamuj.tv – uživatel (pro Sosáč)",
-              "streamuj_password": "Streamuj.tv – heslo",
-              "st_email": "Sledujteto – e-mail",
-              "st_password": "Sledujteto – heslo (přehrávání jen s Premium)",
-              "fs_username": "FastShare / Sdilej.cz – uživatel",
-              "fs_password": "FastShare / Sdilej.cz – heslo (přehrání z kreditu nebo neomezeného tarifu)",
-              "fs_provider": "FastShare – účet z",
-              "luna_url": "Luna – adresa serveru",
-              "luna_token": "Luna – token (nebo celá instalační URL)",
-              "hs_enabled": "Používat HellSpy",
-              "sub_warn_days": "Upozornit N dní před koncem předplatného WebShare (0 = vypnuto)",
-              "cz_enabled": "Používat CZtor",
-              "pt_enabled": "Používat Přehraj.to",
-              "pt_email": "Přehraj.to – e-mail (nepovinné)",
-              "pt_password": "Přehraj.to – heslo (nepovinné)"
+              "ws_enabled": "Používat WebShare",
+              "ws_username": "E-mail",
+              "ws_password": "Heslo (nebo uložený hash)",
+              "sub_warn_days": "Upozornit N dní před koncem předplatného WebShare (0 = vypnuto)"
             },
             "data_description": {
               "ws_password": "Ukládá se jako hash, ne jako heslo. Konec předplatného integrace rozpozná sama a hlásí ho v senzoru stavu zdrojů.",
-              "streamuj_username": "Účet streamuj.tv. Bez něj Sosáč tituly najde, ale nepřehraje.",
-              "st_email": "Účet Sledujteto.cz. Hledání funguje i bez Premium, přehrávání pouze s ním.",
-              "fs_username": "Účet FastShare.cz nebo Sdilej.cz podle volby „účet z“. Přehrávání se účtuje z kreditu nebo z neomezeného tarifu.",
+              "sub_warn_days": "Počet dní před koncem předplatného WebShare, kdy přijde upozornění. 0 = neupozorňovat."
+            }
+          },
+          "sosac": {
+            "name": "Sosáč",
+            "description": "Sosáč hledá a přehrává přes účet streamuj.tv. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "sc_enabled": "Používat Sosáč",
+              "streamuj_username": "Streamuj.tv – uživatel (pro Sosáč)",
+              "streamuj_password": "Streamuj.tv – heslo"
+            },
+            "data_description": {
+              "streamuj_username": "Účet streamuj.tv. Bez něj Sosáč tituly najde, ale nepřehraje."
+            }
+          },
+          "hellspy": {
+            "name": "HellSpy",
+            "description": "Veřejný zdroj, účet nepotřebuje.",
+            "data": {
+              "hs_enabled": "Používat HellSpy"
+            },
+            "data_description": {
+              "hs_enabled": "HellSpy je veřejný a účet nevyžaduje. Odmítnutí dotazů (HTTP 429) obvykle znamená, že HellSpy blokuje tvoji síť (VPN, mobilní data); integrace ho pak na deset minut vynechá a hledá bez něj."
+            }
+          },
+          "sledujteto": {
+            "name": "Sledujteto",
+            "description": "Účet Sledujteto.cz. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "st_enabled": "Používat Sledujteto",
+              "st_email": "E-mail",
+              "st_password": "Heslo (přehrávání jen s Premium)"
+            },
+            "data_description": {
+              "st_email": "Účet Sledujteto.cz. Hledání funguje i bez Premium, přehrávání pouze s ním."
+            }
+          },
+          "fastshare": {
+            "name": "FastShare / Sdilej.cz",
+            "description": "Účet FastShare.cz nebo Sdilej.cz. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "fs_enabled": "Používat FastShare / Sdilej.cz",
+              "fs_provider": "Účet z",
+              "fs_username": "Uživatel",
+              "fs_password": "Heslo (přehrání z kreditu nebo neomezeného tarifu)"
+            },
+            "data_description": {
               "fs_provider": "Sdilej.cz má stejné soubory jako FastShare, jen účet je samostatný. Vyber web, kde máš účet a kredit.",
-              "luna_url": "Adresa zařízení, kde Luna běží, s portem 7126 – u doplňku v Home Assistantu jeho jméno, u Luny na TV boxu, počítači nebo NAS jejich IP adresa. Vložit lze i celou instalační adresu ze stránky /setup, token se z ní načte.",
-              "hs_enabled": "HellSpy je veřejný a účet nevyžaduje. Odmítnutí dotazů (HTTP 429) obvykle znamená, že HellSpy blokuje tvoji síť (VPN, mobilní data); integrace ho pak na deset minut vynechá a hledá bez něj.",
-              "sub_warn_days": "Počet dní před koncem předplatného WebShare, kdy přijde upozornění. 0 = neupozorňovat.",
-              "cz_enabled": "Placený katalog cztor.com. Zapnutí otevře krok s PINem; heslo k účtu integrace nezískává.",
+              "fs_username": "Účet FastShare.cz nebo Sdilej.cz podle volby „účet z“. Přehrávání se účtuje z kreditu nebo z neomezeného tarifu."
+            }
+          },
+          "prehrajto": {
+            "name": "Přehraj.to",
+            "description": "Funguje i bez účtu, Premium účet přidá stránkování a původní soubor. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "pt_enabled": "Používat Přehraj.to",
+              "pt_email": "E-mail (nepovinné)",
+              "pt_password": "Heslo (nepovinné)"
+            },
+            "data_description": {
               "pt_enabled": "Přehraj.to funguje i bez účtu: první strana výsledků a překódovaný soubor v 1080p. S Premium účtem přibude stránkování a původní soubor.",
               "pt_email": "Nepovinné. S Premium účtem Přehraj.to přibude stránkování a původní soubor. Přehraj.to počítá každé přihlášení jako zařízení, proto se Nokturno přihlašuje jen jednou za pár hodin."
             }
           },
-          "uloziste": {
-            "name": "Vlastní úložiště (WebDAV)",
-            "description": "Až tři vlastní složky přes WebDAV (NAS, Nextcloud). Prohledávají se spolu se zdroji a nalezené soubory se nabídnou jako další streamy.",
+          "cztor": {
+            "name": "CZtor",
+            "description": "Placený katalog cztor.com, zařízení se páruje PINem.",
             "data": {
-              "dav1_url": "Úložiště 1 – adresa složky (WebDAV)",
-              "dav1_username": "Úložiště 1 – uživatel",
-              "dav1_password": "Úložiště 1 – heslo",
-              "dav1_name": "Úložiště 1 – název u streamů",
-              "dav2_url": "Úložiště 2 – adresa složky (WebDAV)",
-              "dav2_username": "Úložiště 2 – uživatel",
-              "dav2_password": "Úložiště 2 – heslo",
-              "dav2_name": "Úložiště 2 – název u streamů",
-              "dav3_url": "Úložiště 3 – adresa složky (WebDAV)",
-              "dav3_username": "Úložiště 3 – uživatel",
-              "dav3_password": "Úložiště 3 – heslo",
-              "dav3_name": "Úložiště 3 – název u streamů"
+              "cz_enabled": "Používat CZtor"
+            },
+            "data_description": {
+              "cz_enabled": "Placený katalog cztor.com. Zapnutí otevře krok s PINem; heslo k účtu integrace nezískává."
+            }
+          },
+          "luna": {
+            "name": "Luna",
+            "description": "Luna na tvém zařízení – doplněk Home Assistanta, TV box, počítač nebo NAS. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "luna_enabled": "Používat Lunu",
+              "luna_url": "Adresa serveru",
+              "luna_token": "Token (nebo celá instalační URL)"
+            },
+            "data_description": {
+              "luna_url": "Adresa zařízení, kde Luna běží, s portem 7126 – u doplňku v Home Assistantu jeho jméno, u Luny na TV boxu, počítači nebo NAS jejich IP adresa. Vložit lze i celou instalační adresu ze stránky /setup, token se z ní načte."
+            }
+          },
+          "uloziste1": {
+            "name": "Úložiště 1 (WebDAV)",
+            "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+            "data": {
+              "dav1_enabled": "Použít toto úložiště",
+              "dav1_url": "Adresa složky (WebDAV)",
+              "dav1_username": "Uživatel",
+              "dav1_password": "Heslo",
+              "dav1_name": "Název u streamů"
             },
             "data_description": {
               "dav1_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
               "dav1_name": "Název úložiště zobrazený u jeho streamů."
+            }
+          },
+          "uloziste2": {
+            "name": "Úložiště 2 (WebDAV)",
+            "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+            "data": {
+              "dav2_enabled": "Použít toto úložiště",
+              "dav2_url": "Adresa složky (WebDAV)",
+              "dav2_username": "Uživatel",
+              "dav2_password": "Heslo",
+              "dav2_name": "Název u streamů"
+            },
+            "data_description": {
+              "dav2_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
+              "dav2_name": "Název úložiště zobrazený u jeho streamů."
+            }
+          },
+          "uloziste3": {
+            "name": "Úložiště 3 (WebDAV)",
+            "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+            "data": {
+              "dav3_enabled": "Použít toto úložiště",
+              "dav3_url": "Adresa složky (WebDAV)",
+              "dav3_username": "Uživatel",
+              "dav3_password": "Heslo",
+              "dav3_name": "Název u streamů"
+            },
+            "data_description": {
+              "dav3_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
+              "dav3_name": "Název úložiště zobrazený u jeho streamů."
             }
           },
           "stahovani": {
@@ -200,62 +284,146 @@
               "multi_play": "Platí, jen když je nastavený víc než jeden přehrávač. „Zeptat se“ po klepnutí na Přehrát ukáže okno s výběrem, „první v seznamu“ spustí přehrávání rovnou na prvním přehrávači a výběr otevře dlouhý stisk tlačítka."
             }
           },
-          "zdroje": {
-            "name": "Zdroje a účty",
-            "description": "Přihlášení k jednotlivým zdrojům. Prázdné pole = zdroj se nepoužívá. Hesla se ukládají do HA a ven jdou jen tomu zdroji, kterému patří.",
+          "webshare": {
+            "name": "WebShare",
+            "description": "Přihlášení k WebShare. Když zdroj vypneš, údaje zůstanou uložené.",
             "data": {
-              "ws_username": "WebShare – e-mail",
-              "ws_password": "WebShare – heslo (nebo uložený hash)",
-              "streamuj_username": "Streamuj.tv – uživatel (pro Sosáč)",
-              "streamuj_password": "Streamuj.tv – heslo",
-              "st_email": "Sledujteto – e-mail",
-              "st_password": "Sledujteto – heslo (přehrávání jen s Premium)",
-              "fs_username": "FastShare / Sdilej.cz – uživatel",
-              "fs_password": "FastShare / Sdilej.cz – heslo (přehrání z kreditu nebo neomezeného tarifu)",
-              "fs_provider": "FastShare – účet z",
-              "luna_url": "Luna – adresa serveru",
-              "luna_token": "Luna – token (nebo celá instalační URL)",
-              "hs_enabled": "Používat HellSpy",
-              "sub_warn_days": "Upozornit N dní před koncem předplatného WebShare (0 = vypnuto)",
-              "cz_enabled": "Používat CZtor",
-              "pt_enabled": "Používat Přehraj.to",
-              "pt_email": "Přehraj.to – e-mail (nepovinné)",
-              "pt_password": "Přehraj.to – heslo (nepovinné)"
+              "ws_enabled": "Používat WebShare",
+              "ws_username": "E-mail",
+              "ws_password": "Heslo (nebo uložený hash)",
+              "sub_warn_days": "Upozornit N dní před koncem předplatného WebShare (0 = vypnuto)"
             },
             "data_description": {
               "ws_password": "Ukládá se jako hash, ne jako heslo. Konec předplatného integrace rozpozná sama a hlásí ho v senzoru stavu zdrojů.",
-              "streamuj_username": "Účet streamuj.tv. Bez něj Sosáč tituly najde, ale nepřehraje.",
-              "st_email": "Účet Sledujteto.cz. Hledání funguje i bez Premium, přehrávání pouze s ním.",
-              "fs_username": "Účet FastShare.cz nebo Sdilej.cz podle volby „účet z“. Přehrávání se účtuje z kreditu nebo z neomezeného tarifu.",
+              "sub_warn_days": "Počet dní před koncem předplatného WebShare, kdy přijde upozornění. 0 = neupozorňovat."
+            }
+          },
+          "sosac": {
+            "name": "Sosáč",
+            "description": "Sosáč hledá a přehrává přes účet streamuj.tv. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "sc_enabled": "Používat Sosáč",
+              "streamuj_username": "Streamuj.tv – uživatel (pro Sosáč)",
+              "streamuj_password": "Streamuj.tv – heslo"
+            },
+            "data_description": {
+              "streamuj_username": "Účet streamuj.tv. Bez něj Sosáč tituly najde, ale nepřehraje."
+            }
+          },
+          "hellspy": {
+            "name": "HellSpy",
+            "description": "Veřejný zdroj, účet nepotřebuje.",
+            "data": {
+              "hs_enabled": "Používat HellSpy"
+            },
+            "data_description": {
+              "hs_enabled": "HellSpy je veřejný a účet nevyžaduje. Odmítnutí dotazů (HTTP 429) obvykle znamená, že HellSpy blokuje tvoji síť (VPN, mobilní data); integrace ho pak na deset minut vynechá a hledá bez něj."
+            }
+          },
+          "sledujteto": {
+            "name": "Sledujteto",
+            "description": "Účet Sledujteto.cz. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "st_enabled": "Používat Sledujteto",
+              "st_email": "E-mail",
+              "st_password": "Heslo (přehrávání jen s Premium)"
+            },
+            "data_description": {
+              "st_email": "Účet Sledujteto.cz. Hledání funguje i bez Premium, přehrávání pouze s ním."
+            }
+          },
+          "fastshare": {
+            "name": "FastShare / Sdilej.cz",
+            "description": "Účet FastShare.cz nebo Sdilej.cz. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "fs_enabled": "Používat FastShare / Sdilej.cz",
+              "fs_provider": "Účet z",
+              "fs_username": "Uživatel",
+              "fs_password": "Heslo (přehrání z kreditu nebo neomezeného tarifu)"
+            },
+            "data_description": {
               "fs_provider": "Sdilej.cz má stejné soubory jako FastShare, jen účet je samostatný. Vyber web, kde máš účet a kredit.",
-              "luna_url": "Adresa zařízení, kde Luna běží, s portem 7126 – u doplňku v Home Assistantu jeho jméno, u Luny na TV boxu, počítači nebo NAS jejich IP adresa. Vložit lze i celou instalační adresu ze stránky /setup, token se z ní načte.",
-              "hs_enabled": "HellSpy je veřejný a účet nevyžaduje. Odmítnutí dotazů (HTTP 429) obvykle znamená, že HellSpy blokuje tvoji síť (VPN, mobilní data); integrace ho pak na deset minut vynechá a hledá bez něj.",
-              "sub_warn_days": "Počet dní před koncem předplatného WebShare, kdy přijde upozornění. 0 = neupozorňovat.",
-              "cz_enabled": "Placený katalog cztor.com. Zapnutí otevře krok s PINem; heslo k účtu integrace nezískává.",
+              "fs_username": "Účet FastShare.cz nebo Sdilej.cz podle volby „účet z“. Přehrávání se účtuje z kreditu nebo z neomezeného tarifu."
+            }
+          },
+          "prehrajto": {
+            "name": "Přehraj.to",
+            "description": "Funguje i bez účtu, Premium účet přidá stránkování a původní soubor. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "pt_enabled": "Používat Přehraj.to",
+              "pt_email": "E-mail (nepovinné)",
+              "pt_password": "Heslo (nepovinné)"
+            },
+            "data_description": {
               "pt_enabled": "Přehraj.to funguje i bez účtu: první strana výsledků a překódovaný soubor v 1080p. S Premium účtem přibude stránkování a původní soubor.",
               "pt_email": "Nepovinné. S Premium účtem Přehraj.to přibude stránkování a původní soubor. Přehraj.to počítá každé přihlášení jako zařízení, proto se Nokturno přihlašuje jen jednou za pár hodin."
             }
           },
-          "uloziste": {
-            "name": "Vlastní úložiště (WebDAV)",
-            "description": "Až tři vlastní složky přes WebDAV (NAS, Nextcloud). Prohledávají se spolu se zdroji a nalezené soubory se nabídnou jako další streamy.",
+          "cztor": {
+            "name": "CZtor",
+            "description": "Placený katalog cztor.com, zařízení se páruje PINem.",
             "data": {
-              "dav1_url": "Úložiště 1 – adresa složky (WebDAV)",
-              "dav1_username": "Úložiště 1 – uživatel",
-              "dav1_password": "Úložiště 1 – heslo",
-              "dav1_name": "Úložiště 1 – název u streamů",
-              "dav2_url": "Úložiště 2 – adresa složky (WebDAV)",
-              "dav2_username": "Úložiště 2 – uživatel",
-              "dav2_password": "Úložiště 2 – heslo",
-              "dav2_name": "Úložiště 2 – název u streamů",
-              "dav3_url": "Úložiště 3 – adresa složky (WebDAV)",
-              "dav3_username": "Úložiště 3 – uživatel",
-              "dav3_password": "Úložiště 3 – heslo",
-              "dav3_name": "Úložiště 3 – název u streamů"
+              "cz_enabled": "Používat CZtor"
+            },
+            "data_description": {
+              "cz_enabled": "Placený katalog cztor.com. Zapnutí otevře krok s PINem; heslo k účtu integrace nezískává."
+            }
+          },
+          "luna": {
+            "name": "Luna",
+            "description": "Luna na tvém zařízení – doplněk Home Assistanta, TV box, počítač nebo NAS. Když zdroj vypneš, údaje zůstanou uložené.",
+            "data": {
+              "luna_enabled": "Používat Lunu",
+              "luna_url": "Adresa serveru",
+              "luna_token": "Token (nebo celá instalační URL)"
+            },
+            "data_description": {
+              "luna_url": "Adresa zařízení, kde Luna běží, s portem 7126 – u doplňku v Home Assistantu jeho jméno, u Luny na TV boxu, počítači nebo NAS jejich IP adresa. Vložit lze i celou instalační adresu ze stránky /setup, token se z ní načte."
+            }
+          },
+          "uloziste1": {
+            "name": "Úložiště 1 (WebDAV)",
+            "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+            "data": {
+              "dav1_enabled": "Použít toto úložiště",
+              "dav1_url": "Adresa složky (WebDAV)",
+              "dav1_username": "Uživatel",
+              "dav1_password": "Heslo",
+              "dav1_name": "Název u streamů"
             },
             "data_description": {
               "dav1_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
               "dav1_name": "Název úložiště zobrazený u jeho streamů."
+            }
+          },
+          "uloziste2": {
+            "name": "Úložiště 2 (WebDAV)",
+            "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+            "data": {
+              "dav2_enabled": "Použít toto úložiště",
+              "dav2_url": "Adresa složky (WebDAV)",
+              "dav2_username": "Uživatel",
+              "dav2_password": "Heslo",
+              "dav2_name": "Název u streamů"
+            },
+            "data_description": {
+              "dav2_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
+              "dav2_name": "Název úložiště zobrazený u jeho streamů."
+            }
+          },
+          "uloziste3": {
+            "name": "Úložiště 3 (WebDAV)",
+            "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+            "data": {
+              "dav3_enabled": "Použít toto úložiště",
+              "dav3_url": "Adresa složky (WebDAV)",
+              "dav3_username": "Uživatel",
+              "dav3_password": "Heslo",
+              "dav3_name": "Název u streamů"
+            },
+            "data_description": {
+              "dav3_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
+              "dav3_name": "Název úložiště zobrazený u jeho streamů."
             }
           },
           "stahovani": {
