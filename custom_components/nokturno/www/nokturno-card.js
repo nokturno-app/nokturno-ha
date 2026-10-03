@@ -17,7 +17,7 @@
  *   downloads: sensor.nokturno_stahovani
  */
 
-const CARD_VERSION = "10.1.1";
+const CARD_VERSION = "10.1.4";
 console.info(`%c NOKTURNO-CARD %c ${CARD_VERSION} `, "background:#5b4b8a;color:#fff;border-radius:3px 0 0 3px", "background:#f0b429;color:#222;border-radius:0 3px 3px 0");
 
 const SOURCE_COLORS = { "Luna": "#8e7cc3", "WebShare": "#4a90d9", "Sosáč": "#e08b3c",
@@ -73,6 +73,7 @@ const SK = {
   "Přesunout do Mého seznamu": "Presunúť do Môjho zoznamu",
   "Přidáno do Mého seznamu": "Pridané do Môjho zoznamu",
   "Odebráno z Mého seznamu": "Odobrané z Môjho zoznamu",
+  "Odebrat z Mého seznamu": "Odobrať z Môjho zoznamu",
   "Přidat do Mého seznamu": "Pridať do Môjho zoznamu",
   "Odebrat z Mého seznamu": "Odobrať z Môjho zoznamu",
   "· {0} streamů": "· {0} streamov",
@@ -1119,6 +1120,11 @@ class NokturnoCard extends HTMLElement {
           <div class="stream stacked" data-fav="${i}" style="cursor:pointer">
             <span class="tag" style="background:var(--primary-color, #555)"><ha-icon icon="${opening ? "mdi:loading" : "mdi:bookmark-outline"}" class="ext${opening ? " spin" : ""}"></ha-icon> ${this._t("Můj seznam")}</span>
             <span class="label">${this._esc(f.title)}</span>
+            <span class="icons">
+              <ha-icon-button data-favremove="${i}" title="${this._t("Odebrat z Mého seznamu")}">
+                <ha-icon icon="mdi:close-circle-outline"></ha-icon>
+              </ha-icon-button>
+            </span>
           </div>`;
         }).join("")}</div>`;
     }
@@ -1738,7 +1744,7 @@ class NokturnoCard extends HTMLElement {
     const keys = ["open", "back", "ep", "play", "phone", "dl", "link", "toggle", "hist", "histclear", "cont",
                   "contremove", "watch", "wopen", "wremove", "wseen", "wflag", "trakt", "traktflag", "traktflagdetail",
                   "want", "catalog", "research", "findfulltext", "removeprogress",
-                  "favmove", "fav", "favtoggle", "hometab"];
+                  "favmove", "fav", "favremove", "favtoggle", "hometab"];
     const hit = event.composedPath().find((el) => el.dataset && keys.some((k) => k in el.dataset));
     if (!hit) return;
     const data = hit.dataset;
@@ -1793,6 +1799,19 @@ class NokturnoCard extends HTMLElement {
       return this._guard(async () => {
         await this._call("favourite_add", { id: t.id }, false);
         this._toast(this._t("Přidáno do Mého seznamu"));
+      });
+    }
+    if (data.favremove !== undefined) {
+      const f = this._favourites()[+data.favremove];
+      if (!f) return undefined;
+      this._favOverride = this._favOverride || {};
+      this._favOverride[f.id] = false;
+      this._paint();
+      return this._guard(async () => {
+        if ((this._sensorAttr("favourites") || []).some((x) => x.id === f.id)) {
+          await this._call("favourite_toggle", { id: f.id, type: f.type === "series" ? "series" : "movie" }, false);
+        }
+        this._toast(this._t("Odebráno z Mého seznamu"));
       });
     }
     if (data.fav !== undefined) {
