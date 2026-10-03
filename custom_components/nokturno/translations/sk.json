@@ -686,8 +686,8 @@
       }
     },
     "trakt_watchlist": {
-      "name": "Trakt – zoznam na pozretie",
-      "description": "Načíta zoznam na pozretie z Trakt.tv a zistí, ktoré tituly už majú stream (inak beží raz denne)."
+      "name": "Sledované – skontrolovať teraz",
+      "description": "Zistí, ktoré sledované tituly už majú stream (inak beží raz denne). Watchlist z Trakt.tv je v Mojom zozname."
     },
     "trakt_flag": {
       "name": "Trakt – označiť na kontrolu",

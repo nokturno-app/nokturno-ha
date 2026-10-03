@@ -686,8 +686,8 @@
       }
     },
     "trakt_watchlist": {
-      "name": "Trakt – watchlist",
-      "description": "Loads the Trakt.tv watchlist and finds which titles already have a stream (otherwise runs once a day)."
+      "name": "Watchlist – check now",
+      "description": "Finds which Watchlist titles already have a stream (otherwise runs once a day). The Trakt.tv watchlist is in My list."
     },
     "trakt_flag": {
       "name": "Trakt – mark for further checking",

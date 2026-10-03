@@ -1157,6 +1157,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             await hass.async_add_executor_job(engine.store.toggle_favourite, wid, remember)
         await hass.async_add_executor_job(watch_lib.unwant, engine.store, wid)
         async_dispatcher_send(hass, SIGNAL_TRAKT)
+        hass.async_create_task(pull_trakt())
         return {"id": wid}
 
     async def handle_favourite_toggle(call: ServiceCall):
@@ -1167,25 +1168,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                                {k: call.data.get(k) for k in ("poster", "alt", "type")})
         added = await hass.async_add_executor_job(engine.store.toggle_favourite, wid, info)
         async_dispatcher_send(hass, SIGNAL_TRAKT)
+        hass.async_create_task(pull_trakt())   # Můj seznam = Trakt Watchlist, poslat hned
         return {"id": wid, "favourite": added}
 
     async def check_trakt(_now=None, only=None, force=False):
-        """Hlídané (vlastní seznam + Trakt) — co už jde pustit. Logika je v jádru
+        """Hlídané — co už jde pustit. Logika je v jádru
         (`watch.check_wanted`), sdílí ji s doplňkem pro Kodi.
 
         Z časovače jednou denně a jen tituly, které nikdo (ani jiné zařízení ve skupině
         synchronizace) nekontroloval za posledních 24 h. `only=<id>`: jen ta jedna
         položka (po `want_to_watch`, ať přidání neznamená 40 hledání)."""
-        extra = []
-        api = await hass.async_add_executor_job(trakt) if only is None else None
-        if api is not None and api.logged_in():
-            for kind in ("movies", "shows"):
-                try:
-                    extra += await hass.async_add_executor_job(api.watchlist, kind)
-                except Exception as err:  # noqa: BLE001 – výpadek Traktu nesmí shodit kontrolu
-                    _LOGGER.debug("trakt watchlist %s: %s", kind, err)
+        # Trakt Watchlist se sem nemíchá — je v Mém seznamu (`trakt_pull.mirror_watchlist`)
         await hass.async_add_executor_job(
-            partial(watch_lib.check_wanted, engine, engine.store, extra,
+            partial(watch_lib.check_wanted, engine, engine.store, (),
                     force=force or only is not None, only=only))
         async_dispatcher_send(hass, SIGNAL_TRAKT)
         await announce()
@@ -1200,11 +1195,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if api is None:
             return
         try:
-            prijato = await hass.async_add_executor_job(
-                partial(trakt_pull.pull, engine.store, api,
-                        # změněný Watchlist = kontrola hned, ne až v denním kole
-                        on_watchlist=lambda: hass.loop.call_soon_threadsafe(
-                            lambda: hass.async_create_task(check_trakt()))))
+            prijato = await hass.async_add_executor_job(trakt_pull.pull, engine.store, api)
         except Exception as err:  # noqa: BLE001 – výpadek Traktu nesmí nic shodit
             _LOGGER.debug("stahování z Traktu: %s", err)
             return
