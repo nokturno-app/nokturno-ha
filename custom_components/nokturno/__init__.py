@@ -432,6 +432,14 @@ def kodi_endpoints(hass: HomeAssistant, entity_id: str | None = None) -> list[di
     return out
 
 
+_ZNACKY_KODI = re.compile(r"\[/?(?:COLOR|B|I|LIGHT|UPPERCASE|LOWERCASE|CAPITALIZE)[^\]]*\]|\[CR\]", re.I)
+
+
+def _bez_znacek(text: str) -> str:
+    """Popisek z výpisu Kodi bez formátovacích značek ([COLOR …], [B] …) – karta je jinak vypíše doslova."""
+    return " ".join(_ZNACKY_KODI.sub("", text).split())
+
+
 async def _kodi_continue_one(hass: HomeAssistant, kodi: dict) -> list[dict]:
     session = async_get_clientsession(hass)
     payload = {"jsonrpc": "2.0", "id": 1, "method": "Files.GetDirectory", "params": {
@@ -450,7 +458,7 @@ async def _kodi_continue_one(hass: HomeAssistant, kodi: dict) -> list[dict]:
     for f in (data.get("result") or {}).get("files") or []:
         art = f.get("art") or {}
         items.append({
-            "label": f.get("label") or f.get("title") or "",
+            "label": _bez_znacek(f.get("label") or f.get("title") or ""),
             "title": re.sub(r"\s*\(\d{4}\)\s*$", "", f.get("title") or f.get("label") or ""),
             "file": f.get("file"),
             "thumbnail": kodi_image(art.get("thumb") or art.get("poster") or f.get("thumbnail") or "", "w500"),

@@ -1067,3 +1067,12 @@ class TestPresunCache(unittest.TestCase):
             self.assertTrue(os.path.exists(os.path.join(cache, "sosac_index.json")))
             _presun_cache(data, cache)   # podruhé nic nedělá
             self.assertEqual(sorted(os.listdir(data)), ["favlog.json", "watched.json"])
+
+
+class TestPopisekBezZnacekKodi(unittest.TestCase):
+    def test_znacky_zmizi(self):
+        from custom_components.nokturno import _bez_znacek
+        self.assertEqual(_bez_znacek("let na scéně koncert (2025)  [COLOR FF9A9A9A][/COLOR]"),
+                         "let na scéně koncert (2025)")
+        self.assertEqual(_bez_znacek("Film.mkv  [COLOR FF9A9A9A]2.6 GB[/COLOR] [B]x[/B]"), "Film.mkv 2.6 GB x")
+        self.assertEqual(_bez_znacek("Matrix [1999]"), "Matrix [1999]")
