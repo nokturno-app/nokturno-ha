@@ -1200,7 +1200,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if api is None:
             return
         try:
-            prijato = await hass.async_add_executor_job(trakt_pull.pull, engine.store, api)
+            prijato = await hass.async_add_executor_job(
+                partial(trakt_pull.pull, engine.store, api,
+                        # změněný Watchlist = kontrola hned, ne až v denním kole
+                        on_watchlist=lambda: hass.loop.call_soon_threadsafe(
+                            lambda: hass.async_create_task(check_trakt()))))
         except Exception as err:  # noqa: BLE001 – výpadek Traktu nesmí nic shodit
             _LOGGER.debug("stahování z Traktu: %s", err)
             return
