@@ -1040,12 +1040,12 @@ class TestKatalogyVHA(unittest.TestCase):
         from custom_components.nokturno.lib import mycat
         from custom_components.nokturno.lib.store import Store
         src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
-        self.assertIn("mycat_lib.verified(engine.store, concerts=False)", src)
+        self.assertIn("mycat_lib.verified(engine.store)", src)
         with tempfile.TemporaryDirectory() as tmp:
             store = Store(tmp)
             mycat.save(store, {"id": "k1", "kind": "movie", "name": "F", "verify": True})
             mycat.save(store, {"id": "c1", "kind": "concert", "name": "K", "verify": True, "tags": ["rock"]})
-            self.assertEqual([c["id"] for c in mycat.verified(store, concerts=False)], ["k1"])
+            self.assertEqual([c["id"] for c in mycat.verified(store)], ["k1"])
             self.assertEqual([c["id"] for c in mycat.overview(store)["catalogs"]], ["k1"])
 
 

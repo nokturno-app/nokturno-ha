@@ -1284,7 +1284,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             def cile():
                 if not manual and (engine.store.load(mycat_lib.PAUSED, {}) or {}).get("on"):
                     return []
-                return [c["id"] for c in mycat_lib.verified(engine.store, concerts=False)]
+                return [c["id"] for c in mycat_lib.verified(engine.store)]
 
             targets = await hass.async_add_executor_job(cile)
             if not targets:
