@@ -385,7 +385,7 @@
           "sync_favourites": "Tituly pridané do Môjho zoznamu v karte aj v doplnku.",
           "sync_history": "Dotazy zadané pri hľadaní.",
           "sync_watchlist": "Seriály a tituly v Sledovaných aj s príznakom „kontrolovať ďalej“. Kontrolu potom stačí urobiť na jednom zariadení.",
-          "sync_concerts": "Nájdené koncerty sa zdieľajú s ostatnými zariadeniami v skupine. Každé zariadenie ukáže len súbory zo zdrojov, ktoré má zapnuté."
+          "sync_concerts": "Koncerty nájdené v úložiskách tretích strán sa zdieľajú s ostatnými zariadeniami v skupine, každé ukáže len súbory zo zdrojov, ktoré má zapnuté. Súbory z vlastného úložiska zostávajú len na tomto zariadení."
         }
       },
       "ostatni": {
@@ -400,7 +400,7 @@
         },
         "data_description": {
           "tmdb_api_key": "Vlastný kľúč z themoviedb.org. Zrýchľuje načítanie názvov a popisov a nevyžaduje k nim Lunu.",
-          "lastfm_key": "Kľúč pre zoznam interpretov koncertov. Zdarma na last.fm/api. Home Assistant potom koncerty hľadá na pozadí a zdieľa ich so skupinou.",
+          "lastfm_key": "Kľúč pre zoznam interpretov podľa hudobných žánrov. Zadarmo na last.fm/api. Home Assistant potom na pozadí hľadá koncerty v tvojom vlastnom úložisku a voliteľne v úložiskách tretích strán, ktoré máš povolené a nastavené, a zdieľa ich so skupinou.",
           "trakt_client_id": "Nechaj prázdne, použije sa aplikácia Nokturna – potom stačí služba nokturno.trakt_auth a zadať kód na webe Traktu. Ide to aj s free účtom. Vlastnú aplikáciu vyplň, len ak ju máš.",
           "stats_enabled": "Anonymné údaje o používaní – náhodné id, verzia a prehrané tituly. Bez účtov, adries a obsahu. Vypnuté odosiela len id a verziu."
         }

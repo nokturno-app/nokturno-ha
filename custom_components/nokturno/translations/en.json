@@ -385,7 +385,7 @@
           "sync_favourites": "Titles added to My list in the card and in the add-on.",
           "sync_history": "The queries entered when searching.",
           "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device.",
-          "sync_concerts": "Found concerts are shared with the other devices in the group. Each device shows only files from the sources it has enabled."
+          "sync_concerts": "Concerts found in third-party storages are shared with the other devices in the group; each device shows only files from the sources it has enabled. Files from your own storage stay on this device."
         }
       },
       "ostatni": {
@@ -400,7 +400,7 @@
         },
         "data_description": {
           "tmdb_api_key": "Your own key from themoviedb.org. Speeds up loading of titles and plots and removes the dependency on Luna.",
-          "lastfm_key": "Key for the list of artists for concerts. Free at last.fm/api. Home Assistant then searches for concerts in the background and shares them with the group.",
+          "lastfm_key": "Key for the list of artists by music genre. Free at last.fm/api. Home Assistant then searches in the background for concerts in your own storage and optionally in the third-party storages you have enabled and set up, and shares them with the group.",
           "trakt_client_id": "Leave empty to use the Nokturno app – then just run the nokturno.trakt_auth service and enter the code on the Trakt website. Works with a free account too. Fill in only if you have your own app.",
           "stats_enabled": "Anonymous usage data – a random id, the version and the titles played. No accounts, addresses or content. When off, only the id and version are sent."
         }
