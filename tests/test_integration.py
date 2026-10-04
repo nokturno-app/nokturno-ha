@@ -413,7 +413,12 @@ class TestSouboryProHomeAssistant(unittest.TestCase):
         self.assertEqual(shown[-1]["errors"], {"base": "terms_required"})
 
         result = asyncio.run(flow.async_step_user({"terms_accepted": True}))
-        self.assertEqual(result, ("form", "account"))
+        self.assertEqual(result, ("form", "prehravani"))
+        self.assertEqual(asyncio.run(flow.async_step_prehravani({"pref_lang": "—"})), ("form", "vyber_zdroju"))
+        # vybrané zdroje s účtem dostanou svůj krok (bez přepínače), HellSpy ne
+        result = asyncio.run(flow.async_step_vyber_zdroju({"zdroje": ["hellspy", "webshare"]}))
+        self.assertEqual(result, ("form", "webshare"))
+        self.assertNotIn("ws_enabled", {m.schema for m in shown[-1]["data_schema"].schema})
 
         created = []
         flow.async_create_entry = lambda **kw: created.append(kw) or "entry"
@@ -422,36 +427,79 @@ class TestSouboryProHomeAssistant(unittest.TestCase):
             return False
 
         flow._cztor_needs_pairing = bez_parovani
-        self.assertEqual(asyncio.run(flow.async_step_account({})), "entry")
-        self.assertTrue(created[-1]["data"]["terms_accepted"])
-        self.assertEqual(created[-1]["data"]["terms_version"], config_flow.TERMS_VERSION)
+        self.assertEqual(asyncio.run(flow.async_step_webshare({"ws_username": "a@b.cz"})), "entry")
+        data, options = created[-1]["data"], created[-1]["options"]
+        self.assertTrue(data["terms_accepted"])
+        self.assertEqual(data["terms_version"], config_flow.TERMS_VERSION)
+        self.assertEqual(data["ws_username"], "a@b.cz")
+        self.assertEqual(len(data["sync_key"]), 32)
+        self.assertEqual(options["pref_lang"], "")
+        self.assertTrue(options["ws_enabled"] and options["hs_enabled"])
+        self.assertFalse(options["luna_enabled"] or options["cz_enabled"])
+        self.assertNotIn("ws_username", options)
+
+    def test_nastaveni_menu_a_ulozeni(self):
+        """Nastavení je menu; krok se vrátí do menu, uloží se až volbou Uložit."""
+        import asyncio
+        from tests.ha_stubs import ConfigEntry
+
+        entry = ConfigEntry(data={"ws_username": "a@b.cz", "sync_key": "k"},
+                            options={"pref_lang": "CZ", "legacy": 1})
+        updated = []
+
+        class Hass:
+            config_entries = type("CE", (), {"async_update_entry": staticmethod(
+                lambda e, data=None, **kw: updated.append(data))})()
+
+        flow = config_flow.NokturnoOptionsFlow()
+        flow.hass, flow.config_entry = Hass(), entry
+        menus, created = [], []
+        flow.async_show_menu = lambda **kw: menus.append(kw) or ("menu", kw["step_id"])
+        flow.async_show_form = lambda **kw: ("form", kw["step_id"])
+        flow.async_create_entry = lambda **kw: created.append(kw) or "entry"
+
+        async def bez_parovani(user_input):
+            return False
+
+        flow._cztor_needs_pairing = bez_parovani
+        self.assertEqual(asyncio.run(flow.async_step_init()), ("menu", "init"))
+        self.assertIn("WebShare", menus[-1]["description_placeholders"]["zdroje"])
+        self.assertEqual(asyncio.run(flow.async_step_webshare()), ("form", "webshare"))
+        self.assertEqual(asyncio.run(flow.async_step_webshare({"ws_enabled": False, "ws_username": "c@d.cz"})),
+                         ("menu", "zdroje"))
+        self.assertNotIn("WebShare", menus[-1]["description_placeholders"]["zdroje"])
+        self.assertEqual(asyncio.run(flow.async_step_synchronizace({"sync_code": "nesmysl"})),
+                         ("form", "synchronizace"))
+        self.assertEqual(asyncio.run(flow.async_step_hellspy({"hs_enabled": False})), ("menu", "zdroje"))
+        self.assertEqual(updated, [], "před Uložit se nic nezapisuje")
+        self.assertEqual(asyncio.run(flow.async_step_ulozit()), "entry")
+        self.assertEqual(updated[-1]["ws_username"], "c@d.cz")
+        self.assertEqual(updated[-1]["sync_key"], "k")
+        opts = created[-1]["data"]
+        self.assertEqual((opts["ws_enabled"], opts["hs_enabled"], opts["legacy"]), (False, False, 1))
+        self.assertNotIn("ws_username", opts)
 
     def test_kazdy_klic_nastaveni_ma_popisek(self):
-        # Formulář je rozdělený do sbalitelných sekcí, takže popisky polí leží
-        # v `sections.<sekce>.data`, ne rovnou v `step.data`.
         strings = json.loads((COMPONENT / "strings.json").read_text(encoding="utf-8"))
-        klice = set(config_flow.ACCOUNT_KEYS) | {m.schema for m in config_flow.preferences_schema({}).schema}
-        for blok, krok in (("config", "account"), ("options", "init")):
-            sekce = strings[blok]["step"][krok]["sections"]
-            popisky = {k for s in sekce.values() for k in s["data"]}
-            self.assertEqual(klice - popisky, set(),
-                             f"klíč nastavení bez popisku ve formuláři ({blok})")
-            for jmeno, obsah in sekce.items():
-                self.assertTrue(obsah.get("name"), f"sekce {jmeno} bez názvu")
+        kroky = strings["options"]["step"]
+        for jmeno in config_flow.KROKY:
+            popisky = set(kroky[jmeno]["data"])
+            self.assertEqual(set(config_flow.pole_kroku(jmeno)) - popisky, set(), jmeno)
+            self.assertTrue(kroky[jmeno].get("title"), jmeno)
+        for menu, volby in (("init", config_flow.MENU), ("zdroje", config_flow.ZDROJE + ["init"]),
+                            ("uloziste", config_flow.ULOZISTE + ["init"])):
+            self.assertEqual(set(kroky[menu]["menu_options"]), set(volby), menu)
+        pruvodce = strings["config"]["step"]
+        for jmeno in ["prehravani", *config_flow.ZDROJE]:
+            if len(config_flow.KROKY[jmeno]) > 1 or jmeno == "prehravani":
+                self.assertIn(jmeno, pruvodce)
+        self.assertEqual(set(strings["selector"]["zdroje"]["options"]), set(config_flow.ZDROJE))
 
-    def test_kazde_pole_je_v_nejake_sekci(self):
-        """Nové pole nesmí z formuláře vypadnout jen proto, že se zapomnělo v SEKCE."""
-        schema = config_flow.formular({})
-        v_sekcich = {k.schema for sekce in schema.schema.values() for k in sekce.schema.schema}
+    def test_kazde_pole_je_v_nejakem_kroku(self):
+        """Nové pole nesmí z nastavení vypadnout jen proto, že se zapomnělo v KROKY."""
         klice = set(config_flow.ACCOUNT_KEYS) | {m.schema for m in config_flow.preferences_schema({}).schema}
-        self.assertEqual(klice - v_sekcich, set(), "pole mimo všechny sekce")
-        self.assertEqual({k.schema for k in schema.schema} - {j for j, _, _ in config_flow.SEKCE}, set())
-
-    def test_zplosteni_vstupu_ze_sekci(self):
-        """Uživatelův vstup přijde po sekcích, ukládá se ale naplocho jako dřív."""
-        plocho = config_flow._zploskuj({"prehravani": {"pref_lang": "CZ"},
-                                        "webshare": {"ws_username": "a@b.cz"}})
-        self.assertEqual(plocho, {"pref_lang": "CZ", "ws_username": "a@b.cz"})
+        v_krocich = {k for j in config_flow.KROKY for k in config_flow.pole_kroku(j)}
+        self.assertEqual(klice - v_krocich, set(), "pole mimo všechny kroky")
 
     def test_vypnuty_zdroj_si_udaje_necha(self):
         """„Používat …“ vypnuté: údaje zůstanou v nastavení, jádro je ale nedostane."""
@@ -534,7 +582,7 @@ class TestBezpecnostNastaveni(unittest.TestCase):
     def test_sync_key_ma_128_bitu(self):
         src = (COMPONENT / "config_flow.py").read_text(encoding="utf-8")
         self.assertNotIn("token_hex(6)", src)
-        self.assertEqual(src.count("token_hex(16)"), 2)
+        self.assertEqual(src.count("token_hex(16)"), 1)
 
     def test_diagnostika_bez_hesel_a_uctu(self):
         import asyncio
@@ -787,9 +835,8 @@ class TestSynchronizaceVNastaveni(unittest.TestCase):
             self.assertIn(key, predvolby)
 
     def test_okruhy_jsou_v_sekci_synchronizace(self):
-        sekce = dict((jmeno, klice) for jmeno, klice, _ in config_flow.SEKCE)
-        self.assertIn(const.CONF_SYNC_WATCHED, sekce["synchronizace"])
-        self.assertIn(const.CONF_SYNC_CODE, sekce["synchronizace"])
+        self.assertIn(const.CONF_SYNC_WATCHED, config_flow.KROKY["synchronizace"])
+        self.assertIn(const.CONF_SYNC_CODE, config_flow.KROKY["synchronizace"])
 
     def test_vychozi_stav_je_vse_zapnute(self):
         self.assertEqual(sync_circles(self._Entry()), ("watched", "favourites", "history", "watchlist", "catalogs"))
@@ -830,7 +877,7 @@ class TestSynchronizaceVNastaveni(unittest.TestCase):
     def test_kazde_pole_synchronizace_ma_napovedu(self):
         """Sekce je nejméně samozřejmá z celého formuláře — nápověda tam patří ke všemu."""
         preklady = json.loads((ROOT / "custom_components/nokturno/translations/cs.json").read_text("utf-8"))
-        sekce = preklady["options"]["step"]["init"]["sections"]["synchronizace"]
+        sekce = preklady["options"]["step"]["synchronizace"]
         self.assertEqual(set(sekce["data"]), set(sekce["data_description"]))
 
 
@@ -844,8 +891,8 @@ class TestPrekladyProHassfest(unittest.TestCase):
         adresa = re.compile(r"https?://")
         for soubor in self.SOUBORY:
             d = json.loads((ROOT / "custom_components/nokturno" / soubor).read_text("utf-8"))
-            for blok, krok in (("config", "account"), ("options", "init")):
-                for jmeno, sekce in (d[blok]["step"][krok].get("sections") or {}).items():
+            for blok in ("config", "options"):
+                for jmeno, sekce in d[blok]["step"].items():
                     for klic, text in (sekce.get("data_description") or {}).items():
                         self.assertIsNone(adresa.search(text),
                                           f"{soubor}: adresa v nápovědě {jmeno}.{klic}")
@@ -857,9 +904,9 @@ class TestPrekladyProHassfest(unittest.TestCase):
             d = json.loads((ROOT / "custom_components/nokturno" / soubor).read_text("utf-8"))
             tvar = {
                 f"{blok}.{sekce}.{druh}.{klic}"
-                for blok, krok in (("config", "account"), ("options", "init"))
-                for sekce, obsah in (d[blok]["step"][krok].get("sections") or {}).items()
-                for druh in ("data", "data_description")
+                for blok in ("config", "options")
+                for sekce, obsah in d[blok]["step"].items()
+                for druh in ("data", "data_description", "menu_options")
                 for klic in (obsah.get(druh) or {})
             }
             if vzor is None:
@@ -943,8 +990,7 @@ class TestVyberPrehravace(unittest.TestCase):
     KARTA = (ROOT / "custom_components/nokturno/www/nokturno-card.js").read_text("utf-8")
 
     def test_volba_je_v_sekci_prehravani(self):
-        klice = next(k for jmeno, k, _ in config_flow.SEKCE if jmeno == "prehravani")
-        self.assertIn(const.CONF_MULTI_PLAY, klice)
+        self.assertIn(const.CONF_MULTI_PLAY, config_flow.KROKY["prehravani"])
 
     def test_senzor_vystavuje_prehravace_i_rezim(self):
         zdroj = (ROOT / "custom_components/nokturno/sensor.py").read_text("utf-8")

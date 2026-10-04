@@ -5,7 +5,6 @@ from __future__ import annotations
 import secrets
 
 import voluptuous as vol
-from homeassistant.data_entry_flow import section
 
 from homeassistant.config_entries import ConfigEntry, ConfigFlow, OptionsFlow
 from homeassistant.core import callback
@@ -97,67 +96,82 @@ def _kod_skupiny(accounts: dict) -> str | None:
     return None
 
 
-# Formulář má přes čtyřicet polí. Naráz pod sebou to byl nepřehledný sloupec, ve
-# kterém se hledalo očima, proto je rozdělený do sbalitelných sekcí
-# (`data_entry_flow.section`, HA 2024.6+). Pořadí je podle toho, jak často se do
-# nich sahá: přehrávání je otevřené, zbytek sbalený.
+# Nastavení je rozdělené do kroků. Formulář se čtyřiceti poli (i ve sbalitelných
+# sekcích) byl nepřehledný, proto má Nastavení integrace menu: Přehrávání, Zdroje
+# (podmenu po zdrojích), Vlastní úložiště (podmenu po slotech), Stahování,
+# Synchronizace, Ostatní a Uložit. Každý krok je krátký formulář. Změny se drží
+# v paměti flow (`_data`) a zapíšou se až volbou Uložit.
 #
-# Sekce mění tvar dat — uživatelův vstup přijde jako {"sekce": {"klíč": …}}, takže
-# se před uložením zase zploští (`_zploskuj`). Uloženo zůstává naplocho, jak to
-# bylo: `entry.data` i `entry.options` si nesmí kvůli vzhledu formuláře měnit tvar.
-SEKCE = [
-    ("prehravani", [CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONF_PREF_LANG, CONF_PREF_SURROUND,
-                    CONF_HIDE_SD, CONF_MAX_BITRATE, CONF_SORT], False),
-    # Každý zdroj má vlastní sekci: přepínač „Používat …“ nahoře, pod ním jeho údaje.
-    # Dřív byly všechny v jedné sekci a hledalo se, které pole patří ke kterému zdroji.
-    ("webshare", ["ws_enabled", CONF_WS_USER, CONF_WS_PASS, CONF_SUB_WARN_DAYS], True),
-    ("sosac", ["sc_enabled", CONF_STREAMUJ_USER, CONF_STREAMUJ_PASS], True),
-    ("hellspy", [CONF_HS_ENABLED], True),
-    ("sledujteto", ["st_enabled", CONF_ST_EMAIL, CONF_ST_PASS], True),
-    ("fastshare", ["fs_enabled", CONF_FS_PROVIDER, CONF_FS_USER, CONF_FS_PASS], True),
-    ("prehrajto", [CONF_PT_ENABLED, CONF_PT_EMAIL, CONF_PT_PASS], True),
-    ("cztor", [CONF_CZ_ENABLED], True),
-    ("luna", ["luna_enabled", CONF_LUNA_URL, CONF_LUNA_TOKEN], True),
-    *((f"uloziste{n}", [f"dav{n}_enabled", *slot], True) for n, slot in enumerate(STORAGE_OPTIONS, 1)),
-    ("stahovani", [CONF_DOWNLOAD_DIR, CONF_EXTERNAL_HOST, CONF_NOTIFY_TARGET], True),
-    ("synchronizace", [CONF_SYNC_KEY, CONF_SYNC_CODE, CONF_SYNC_WATCHED,
-                       CONF_SYNC_FAVOURITES, CONF_SYNC_HISTORY, CONF_SYNC_WATCHLIST], True),
-    ("ostatni", [CONF_TMDB_KEY, CONF_TRAKT_ID, CONF_TRAKT_SECRET, CONF_STATS_ENABLED], True),
-]
+# Přidání integrace je průvodce: souhlas → přehrávání → výběr zdrojů → formuláře
+# jen vybraných zdrojů. Úložiště, stahování a synchronizace jsou až v Nastavení.
+# Uloženo zůstává naplocho jako dřív (`entry.data` účty, `entry.options` předvolby).
+KROKY = {
+    "prehravani": [CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONF_PREF_LANG, CONF_PREF_SURROUND,
+                   CONF_HIDE_SD, CONF_MAX_BITRATE, CONF_SORT],
+    "webshare": ["ws_enabled", CONF_WS_USER, CONF_WS_PASS, CONF_SUB_WARN_DAYS],
+    "sosac": ["sc_enabled", CONF_STREAMUJ_USER, CONF_STREAMUJ_PASS],
+    "hellspy": [CONF_HS_ENABLED],
+    "sledujteto": ["st_enabled", CONF_ST_EMAIL, CONF_ST_PASS],
+    "fastshare": ["fs_enabled", CONF_FS_PROVIDER, CONF_FS_USER, CONF_FS_PASS],
+    "prehrajto": [CONF_PT_ENABLED, CONF_PT_EMAIL, CONF_PT_PASS],
+    "cztor_zdroj": [CONF_CZ_ENABLED],
+    "luna": ["luna_enabled", CONF_LUNA_URL, CONF_LUNA_TOKEN],
+    **{f"uloziste{n}": [f"dav{n}_enabled", *slot] for n, slot in enumerate(STORAGE_OPTIONS, 1)},
+    "stahovani": [CONF_DOWNLOAD_DIR, CONF_EXTERNAL_HOST, CONF_NOTIFY_TARGET],
+    "synchronizace": [CONF_SYNC_KEY, CONF_SYNC_CODE, CONF_SYNC_WATCHED,
+                      CONF_SYNC_FAVOURITES, CONF_SYNC_HISTORY, CONF_SYNC_WATCHLIST],
+    "ostatni": [CONF_TMDB_KEY, CONF_TRAKT_ID, CONF_TRAKT_SECRET, CONF_STATS_ENABLED],
+}
+ZDROJE = ["webshare", "sosac", "hellspy", "sledujteto", "fastshare", "prehrajto", "cztor_zdroj", "luna"]
+ULOZISTE = [f"uloziste{n}" for n in range(1, len(STORAGE_OPTIONS) + 1)]
+# první pole kroku zdroje/úložiště je jeho přepínač „Používat …“
+PREPINAC = {jmeno: KROKY[jmeno][0] for jmeno in ZDROJE + ULOZISTE}
+JMENA_ZDROJU = {"webshare": "WebShare", "sosac": "Sosáč", "hellspy": "HellSpy", "sledujteto": "Sledujteto",
+                "fastshare": "FastShare / Sdilej.cz", "prehrajto": "Přehraj.to", "cztor_zdroj": "CZtor", "luna": "Luna"}
+MENU = ["prehravani", "zdroje", "uloziste", "stahovani", "synchronizace", "ostatni", "ulozit"]
+# v průvodci předvybrané – fungují bez účtu
+VYCHOZI_ZDROJE = ["hellspy", "prehrajto"]
 
 
 def _pole(current: dict) -> dict:
-    """Všechna pole obou formulářů jako {klíč: (marker, validátor)} k rozdělení do sekcí."""
+    """Všechna pole jako {klíč: (marker, validátor)} k rozdělení do kroků."""
     out = dict(accounts_schema(current))
     out.update(preferences_schema(current).schema)
     return {marker.schema: (marker, validator) for marker, validator in out.items()}
 
 
-def formular(current: dict) -> vol.Schema:
-    """Schéma se sbalitelnými sekcemi. Pole, které by v žádné nebylo, spadne do „ostatní“ —
-    ať nový klíč nezmizí z formuláře jen proto, že se zapomnělo doplnit sem."""
+def pole_kroku(jmeno: str) -> list[str]:
+    """Klíče kroku. Pole, které by nebylo v žádném kroku, spadne do „ostatní“ –
+    ať nový klíč nezmizí z nastavení jen proto, že se zapomnělo doplnit sem."""
+    klice = list(KROKY[jmeno])
+    if jmeno == "ostatni":
+        jinde = {k for j, ks in KROKY.items() for k in ks}
+        klice += [k for k in _pole({}) if k not in jinde]
+    return klice
+
+
+def schema_kroku(jmeno: str, current: dict, bez_prepinace: bool = False) -> vol.Schema:
     pole = _pole(current)
-    rozdelene, schema = set(), {}
-    for jmeno, klice, sbalena in SEKCE:
-        vybrane = {pole[k][0]: pole[k][1] for k in klice if k in pole}
-        rozdelene.update(k for k in klice if k in pole)
-        if jmeno == "ostatni":
-            zbytek = [k for k in pole if k not in rozdelene]
-            vybrane.update({pole[k][0]: pole[k][1] for k in zbytek})
-        if vybrane:
-            schema[vol.Required(jmeno)] = section(vol.Schema(vybrane), {"collapsed": sbalena})
-    return vol.Schema(schema)
+    klice = pole_kroku(jmeno)
+    if bez_prepinace and jmeno in PREPINAC:
+        klice = klice[1:]
+    return vol.Schema({pole[k][0]: pole[k][1] for k in klice if k in pole})
 
 
-def _zploskuj(user_input: dict) -> dict:
-    """Ze sekcí zase plochý dict — tak se to ukládá i čte po zbytek integrace."""
-    plocho = {}
-    for klic, hodnota in (user_input or {}).items():
-        if isinstance(hodnota, dict) and any(j == klic for j, _, _ in SEKCE):
-            plocho.update(hodnota)
+def _zapnute(data: dict, kroky: list[str]) -> str:
+    """Seznam zapnutých zdrojů / úložišť do popisu menu."""
+    jmena = []
+    for jmeno in kroky:
+        if not data.get(PREPINAC[jmeno], jmeno != "cztor_zdroj"):
+            continue
+        if jmeno in ULOZISTE:
+            n = jmeno[-1]
+            if not data.get(f"dav{n}_url"):
+                continue
+            jmena.append(data.get(f"dav{n}_name") or n)
         else:
-            plocho[klic] = hodnota
-    return plocho
+            jmena.append(JMENA_ZDROJU[jmeno])
+    return ", ".join(jmena) or "—"
 
 
 # Jméno jazyka v něm samém — v selectu se ukazuje místo holé zkratky.
@@ -173,7 +187,10 @@ def _seznam(hodnota) -> list[str]:
 
 
 def _heslo():
-    return selector.TextSelector(selector.TextSelectorConfig(type=selector.TextSelectorType.PASSWORD))
+    # `new-password`: prohlížeč jinak do polí vyplní uložené heslo k adrese HA
+    # (na HA Home se tak do Sledujteto i FastShare uložilo heslo k SSH).
+    return selector.TextSelector(selector.TextSelectorConfig(
+        type=selector.TextSelectorType.PASSWORD, autocomplete="new-password"))
 
 
 def accounts_schema(current: dict) -> dict:
@@ -206,8 +223,10 @@ def preferences_schema(data: dict) -> vol.Schema:
                          for l in LANGS])),
         vol.Optional(CONF_PREF_SURROUND, default=data.get(CONF_PREF_SURROUND, False)): bool,
         vol.Optional(CONF_HIDE_SD, default=data.get(CONF_HIDE_SD, False)): bool,
+        # NumberSelector místo vol.Range: HA by u nepovinného čísla kreslilo zaškrtávátko + posuvník
         vol.Optional(CONF_MAX_BITRATE, default=data.get(CONF_MAX_BITRATE, 0)):
-            vol.All(vol.Coerce(float), vol.Range(min=0, max=2000)),
+            selector.NumberSelector(selector.NumberSelectorConfig(
+                min=0, max=2000, step=0.5, mode=selector.NumberSelectorMode.BOX, unit_of_measurement="Mb/s")),
         vol.Optional(CONF_SORT, default=data.get(CONF_SORT, DEFAULT_SORT)):
             selector.SelectSelector(selector.SelectSelectorConfig(
                 options=SORT_ORDERS, translation_key="sort_streams")),
@@ -230,7 +249,8 @@ def preferences_schema(data: dict) -> vol.Schema:
         vol.Optional(CONF_CZ_ENABLED, default=data.get(CONF_CZ_ENABLED, False)): bool,
         # 0 = upozornění na konec předplatného WebShare vypnuté
         vol.Optional(CONF_SUB_WARN_DAYS, default=data.get(CONF_SUB_WARN_DAYS, 5)):
-            vol.All(vol.Coerce(int), vol.Range(min=0, max=14)),
+            selector.NumberSelector(selector.NumberSelectorConfig(
+                min=0, max=14, step=1, mode=selector.NumberSelectorMode.BOX)),
         vol.Optional(CONF_STATS_ENABLED, default=data.get(CONF_STATS_ENABLED, True)): bool,
         # co se synchronizuje — platí pro Kodi v místní síti i pro skupinu na relayi
         vol.Optional(CONF_SYNC_WATCHED, default=data.get(CONF_SYNC_WATCHED, True)): bool,
@@ -288,12 +308,49 @@ class CztorPairing:
                                     description_placeholders={"url": self._cz_pin["url"], "pin": self._cz_pin["pin"]})
 
 
-class NokturnoConfigFlow(CztorPairing, ConfigFlow, domain=DOMAIN):
-    """Jediná instance — jeden formulář se vším, stejný jako pozdější Nastavení
-    integrace (`NokturnoOptionsFlow`), ať se uživatel při přidávání nemusí
-    proklikávat víc kroků a hned vidí, co všechno jde (i nepovinně) nastavit."""
+class Kroky(CztorPairing):
+    """Společné kroky průvodce i Nastavení – jeden krok = jeden krátký formulář."""
+
+    _data: dict | None = None
+    _pruvodce = False   # průvodce vynechá přepínač zdroje, ten nastavil výběr zdrojů
+
+    async def _krok(self, jmeno, user_input):
+        errors = {}
+        data = self._data
+        if user_input is not None:
+            vstup = dict(user_input)
+            if vstup.get(CONF_PREF_LANG) == "—":
+                vstup[CONF_PREF_LANG] = ""
+            if jmeno == "synchronizace":
+                chyba = _kod_skupiny(vstup)
+                if chyba:
+                    errors[CONF_SYNC_CODE] = chyba
+            if not errors:
+                self._data.update(vstup)
+                return await self._po_kroku(jmeno)
+            data = {**self._data, **vstup}
+        return self.async_show_form(step_id=jmeno, errors=errors,
+                                    data_schema=schema_kroku(jmeno, data, self._pruvodce))
+
+    def _rozdel(self) -> tuple[dict, dict]:
+        """`_data` na účty (`entry.data`) a předvolby (`entry.options`)."""
+        predvolby = {m.schema for m in preferences_schema({}).schema}
+        accounts = {k: self._data[k] for k in ACCOUNT_KEYS if k in self._data}
+        prefs = {k: self._data[k] for k in predvolby if k in self._data}
+        return accounts, prefs
+
+
+for _jmeno in KROKY:
+    setattr(Kroky, f"async_step_{_jmeno}",
+            (lambda j: lambda self, user_input=None: self._krok(j, user_input))(_jmeno))
+
+
+class NokturnoConfigFlow(Kroky, ConfigFlow, domain=DOMAIN):
+    """Průvodce: souhlas → přehrávání → výběr zdrojů → údaje vybraných zdrojů.
+    Zbytek (úložiště, stahování, synchronizace…) je v Nastavení integrace."""
 
     VERSION = 1
+    _pruvodce = True
 
     async def async_step_user(self, user_input=None):
         """Právní upozornění — první krok, bez potvrzení se instalace nedokončí."""
@@ -302,7 +359,11 @@ class NokturnoConfigFlow(CztorPairing, ConfigFlow, domain=DOMAIN):
         errors = {}
         if user_input is not None:
             if user_input.get(CONF_TERMS_ACCEPTED):
-                return await self.async_step_account()
+                # klíč pro synchronizaci s Kodi doplňkem — vzniká jednou, 128 bitů
+                # (chrání neautentizované endpointy /sync a /files)
+                self._data = {CONF_SYNC_KEY: secrets.token_hex(16)}
+                self._fronta = []
+                return await self.async_step_prehravani()
             errors["base"] = "terms_required"
         return self.async_show_form(
             step_id="user",
@@ -310,32 +371,36 @@ class NokturnoConfigFlow(CztorPairing, ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def async_step_account(self, user_input=None):
+    async def async_step_vyber_zdroju(self, user_input=None):
         if user_input is not None:
-            user_input = _zploskuj(user_input)
-            if user_input.get(CONF_PREF_LANG) == "—":
-                user_input[CONF_PREF_LANG] = ""
-            accounts = {key: user_input.pop(key) for key in ACCOUNT_KEYS if key in user_input}
-            # klíč pro synchronizaci s Kodi doplňkem — vzniká jednou, uživatel si ho opíše do Kodi
-            if not accounts.get(CONF_SYNC_KEY):
-                accounts[CONF_SYNC_KEY] = secrets.token_hex(16)
-            chyba = _kod_skupiny(accounts)
-            if chyba:
-                return self.async_show_form(step_id="account", errors={CONF_SYNC_CODE: chyba},
-                                            data_schema=formular({**accounts, **user_input}))
-            # potvrzení právního upozornění z prvního kroku patří do entry.data, ať se
-            # při reconfiguraci/aktualizaci nemusí ptát znovu na stejnou verzi textu
-            accounts[CONF_TERMS_ACCEPTED] = True
-            accounts[CONF_TERMS_VERSION] = TERMS_VERSION
-            self._cz_pending, self._cz_accounts = user_input, accounts
-            if await self._cztor_needs_pairing(user_input):
-                return await self.async_step_cztor()
-            return await self._cztor_finish()
-        # sync_key ukázat rovnou vyplněný — ať ho jde zkopírovat do Kodi hned napoprvé,
-        # ne až po dodatečném otevření Nastavení integrace. 128 bitů: klíč chrání
-        # neautentizované endpointy /sync a /files (dřív 48 bitů).
-        return self.async_show_form(step_id="account",
-                                    data_schema=formular({CONF_SYNC_KEY: secrets.token_hex(16)}))
+            vybrane = user_input.get("zdroje") or []
+            for jmeno in ZDROJE:
+                self._data[PREPINAC[jmeno]] = jmeno in vybrane
+            # zdroje bez dalších údajů (HellSpy, CZtor) formulář nemají
+            self._fronta = [j for j in ZDROJE if j in vybrane and len(KROKY[j]) > 1]
+            return await self._dalsi()
+        schema = vol.Schema({vol.Optional("zdroje", default=VYCHOZI_ZDROJE): selector.SelectSelector(
+            selector.SelectSelectorConfig(options=ZDROJE, multiple=True, translation_key="zdroje",
+                                          mode=selector.SelectSelectorMode.LIST))})
+        return self.async_show_form(step_id="vyber_zdroju", data_schema=schema)
+
+    async def _po_kroku(self, jmeno):
+        if jmeno == "prehravani":
+            return await self.async_step_vyber_zdroju()
+        return await self._dalsi()
+
+    async def _dalsi(self):
+        if self._fronta:
+            return await getattr(self, f"async_step_{self._fronta.pop(0)}")()
+        accounts, prefs = self._rozdel()
+        # potvrzení právního upozornění patří do entry.data, ať se při reconfiguraci
+        # nemusí ptát znovu na stejnou verzi textu
+        accounts[CONF_TERMS_ACCEPTED] = True
+        accounts[CONF_TERMS_VERSION] = TERMS_VERSION
+        self._cz_pending, self._cz_accounts = prefs, accounts
+        if await self._cztor_needs_pairing(prefs):
+            return await self.async_step_cztor()
+        return await self._cztor_finish()
 
     async def async_step_reauth(self, entry_data):
         """WebShare odmítl přihlášení — HA ukáže „vyžaduje opravu" a tenhle krok."""
@@ -370,28 +435,48 @@ class NokturnoConfigFlow(CztorPairing, ConfigFlow, domain=DOMAIN):
         return NokturnoOptionsFlow()
 
 
-class NokturnoOptionsFlow(CztorPairing, OptionsFlow):
-    """Změna účtů i předvoleb po instalaci (účty patří do `data`, zbytek do `options`)."""
+class NokturnoOptionsFlow(Kroky, OptionsFlow):
+    """Nastavení jako menu. Změny se drží v `_data` a zapíšou se až volbou Uložit
+    (účty do `entry.data`, předvolby do `entry.options`)."""
+
+    def _aktualni(self) -> dict:
+        if self._data is None:
+            self._data = {**self.config_entry.data, **self.config_entry.options}
+        return self._data
 
     async def async_step_init(self, user_input=None):
-        if user_input is not None:
-            user_input = _zploskuj(user_input)
-            if user_input.get(CONF_PREF_LANG) == "—":
-                user_input[CONF_PREF_LANG] = ""
-            accounts = {key: user_input.pop(key) for key in ACCOUNT_KEYS if key in user_input}
-            chyba = _kod_skupiny(accounts)
-            if chyba:
-                return self.async_show_form(step_id="init", errors={CONF_SYNC_CODE: chyba},
-                                            data_schema=formular({**accounts, **user_input}))
-            self.hass.config_entries.async_update_entry(
-                self.config_entry, data={**self.config_entry.data, **accounts}
-            )
-            self._cz_pending = user_input
-            if await self._cztor_needs_pairing(user_input):
-                return await self.async_step_cztor()
-            return await self._cztor_finish()
-        current = {**self.config_entry.data, **self.config_entry.options}
-        return self.async_show_form(step_id="init", data_schema=formular(current))
+        data = self._aktualni()
+        return self.async_show_menu(step_id="init", menu_options=MENU, description_placeholders={
+            "zdroje": _zapnute(data, ZDROJE), "uloziste": _zapnute(data, ULOZISTE)})
+
+    async def async_step_zdroje(self, user_input=None):
+        return self.async_show_menu(step_id="zdroje", menu_options=[*ZDROJE, "init"],
+                                    description_placeholders={"zdroje": _zapnute(self._aktualni(), ZDROJE)})
+
+    async def async_step_uloziste(self, user_input=None):
+        return self.async_show_menu(step_id="uloziste", menu_options=[*ULOZISTE, "init"],
+                                    description_placeholders={"uloziste": _zapnute(self._aktualni(), ULOZISTE)})
+
+    async def _krok(self, jmeno, user_input):
+        self._aktualni()
+        return await super()._krok(jmeno, user_input)
+
+    async def _po_kroku(self, jmeno):
+        if jmeno in ZDROJE:
+            return await self.async_step_zdroje()
+        if jmeno in ULOZISTE:
+            return await self.async_step_uloziste()
+        return await self.async_step_init()
+
+    async def async_step_ulozit(self, user_input=None):
+        self._aktualni()
+        accounts, prefs = self._rozdel()
+        self.hass.config_entries.async_update_entry(
+            self.config_entry, data={**self.config_entry.data, **accounts})
+        self._cz_pending = {**self.config_entry.options, **prefs}
+        if await self._cztor_needs_pairing(self._cz_pending):
+            return await self.async_step_cztor()
+        return await self._cztor_finish()
 
     async def _cztor_finish(self):
         return self.async_create_entry(title="", data=self._cz_pending)

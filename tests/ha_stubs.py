@@ -213,6 +213,9 @@ def install_homeassistant():
     _module("homeassistant.helpers.entity_registry", async_get=_noop)
     _module("homeassistant.helpers.selector", EntitySelector=_Selector, EntitySelectorConfig=_Selector,
             SelectSelector=_Selector, SelectSelectorConfig=_Selector,
+            SelectSelectorMode=types.SimpleNamespace(LIST="list", DROPDOWN="dropdown"),
+            NumberSelector=_Selector, NumberSelectorConfig=_Selector,
+            NumberSelectorMode=types.SimpleNamespace(BOX="box", SLIDER="slider"),
             TextSelector=TextSelector, TextSelectorConfig=_Selector, TextSelectorType=TextSelectorType)
     _module("homeassistant.helpers.aiohttp_client", async_get_clientsession=_noop)
     _module("homeassistant.helpers.dispatcher", async_dispatcher_connect=_noop, async_dispatcher_send=_noop)

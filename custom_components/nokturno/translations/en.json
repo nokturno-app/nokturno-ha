@@ -23,223 +23,110 @@
           "pair": "Pair CZtor (uncheck to turn CZtor off)"
         }
       },
-      "account": {
-        "title": "Nokturno",
-        "description": "Nokturno mainly plays your own storage (the Own storage section). Third-party search engines are optional. Fill in only the sources and options you want to use – or nothing at all. Even without a single field the integration offers a catalogue and search (through the public Sosáč/Cinemeta database, in Czech with a TMDB key). The values are the same as in the Nokturno add-on for Kodi. Anything can be changed later in the integration settings.",
-        "sections": {
-          "prehravani": {
-            "name": "Playback",
-            "description": "Playback target and the rules for picking a stream.",
-            "data": {
-              "kodi_entity": "Default players (Kodi)",
-              "pref_lang": "Preferred audio language",
-              "pref_surround": "Prefer surround sound (5.1 and up)",
-              "hide_sd": "Hide SD streams",
-              "sort_streams": "Stream order",
-              "max_bitrate_mbps": "Max. bitrate (Mb/s, 0 = unlimited)",
-              "multi_play": "Playback with several players"
-            },
-            "data_description": {
-              "kodi_entity": "The players the card offers to choose from. A service call that names no entity starts playback on all of them.",
-              "pref_lang": "Streams with this audio language are listed first. For Czech, Slovak subtitles count as well, and the other way round. “—” = language is not taken into account.",
-              "pref_surround": "Surround 5.1 and above ranks above stereo. Affects ordering only; stereo streams stay in the list.",
-              "hide_sd": "Streams below 720p are left out of the list. With older titles this can leave the list empty.",
-              "sort_streams": "How streams are ordered when language and audio are the same.",
-              "max_bitrate_mbps": "Upper limit on stream bitrate. 0 = unlimited.",
-              "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
-            }
-          },
-          "webshare": {
-            "name": "WebShare",
-            "description": "Sign-in to WebShare. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "ws_enabled": "Use WebShare",
-              "ws_username": "E-mail",
-              "ws_password": "Password (or stored hash)",
-              "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)"
-            },
-            "data_description": {
-              "ws_password": "Stored as a hash, not as the password. The end of the subscription is detected automatically and reported by the source-status sensor.",
-              "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning."
-            }
-          },
-          "sosac": {
-            "name": "Sosáč",
-            "description": "Sosáč searches and plays through a streamuj.tv account. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "sc_enabled": "Use Sosáč",
-              "streamuj_username": "Streamuj.tv – username (for Sosáč)",
-              "streamuj_password": "Streamuj.tv – password"
-            },
-            "data_description": {
-              "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them."
-            }
-          },
-          "hellspy": {
-            "name": "HellSpy",
-            "description": "A public source, no account needed.",
-            "data": {
-              "hs_enabled": "Use HellSpy"
-            },
-            "data_description": {
-              "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it."
-            }
-          },
-          "sledujteto": {
-            "name": "Sledujteto",
-            "description": "A Sledujteto.cz account. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "st_enabled": "Use Sledujteto",
-              "st_email": "E-mail",
-              "st_password": "Password (playback needs Premium)"
-            },
-            "data_description": {
-              "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not."
-            }
-          },
-          "fastshare": {
-            "name": "FastShare / Sdilej.cz",
-            "description": "A FastShare.cz or Sdilej.cz account. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "fs_enabled": "Use FastShare / Sdilej.cz",
-              "fs_provider": "Account from",
-              "fs_username": "Username",
-              "fs_password": "Password (playback uses your credit or unlimited plan)"
-            },
-            "data_description": {
-              "fs_provider": "Sdilej.cz has the same files as FastShare, only the account is separate. Choose the site where you have your account and credit.",
-              "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan."
-            }
-          },
-          "prehrajto": {
-            "name": "Přehraj.to",
-            "description": "Works without an account, a Premium account adds paging and the original file. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "pt_enabled": "Use Přehraj.to",
-              "pt_email": "E-mail (optional)",
-              "pt_password": "Password (optional)"
-            },
-            "data_description": {
-              "pt_enabled": "Přehraj.to works without an account: the first page of results and a transcoded 1080p file. A Premium account adds paging and the original file.",
-              "pt_email": "Optional. With a Přehraj.to Premium account you get paging and the original file. Přehraj.to counts every sign-in as a device, so Nokturno signs in only once every few hours."
-            }
-          },
-          "cztor": {
-            "name": "CZtor",
-            "description": "The paid cztor.com catalogue, the device is paired with a PIN.",
-            "data": {
-              "cz_enabled": "Use CZtor"
-            },
-            "data_description": {
-              "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password."
-            }
-          },
-          "luna": {
-            "name": "Luna",
-            "description": "Luna on your device – Home Assistant add-on, TV box, computer or NAS. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "luna_enabled": "Use Luna",
-              "luna_url": "Server address",
-              "luna_token": "Token (or the whole install URL)"
-            },
-            "data_description": {
-              "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
-            }
-          },
-          "uloziste1": {
-            "name": "Storage 1 (WebDAV)",
-            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
-            "data": {
-              "dav1_enabled": "Use this storage",
-              "dav1_url": "Folder address (WebDAV)",
-              "dav1_username": "Username",
-              "dav1_password": "Password",
-              "dav1_name": "Name shown with streams"
-            },
-            "data_description": {
-              "dav1_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
-              "dav1_name": "The storage name shown next to its streams."
-            }
-          },
-          "uloziste2": {
-            "name": "Storage 2 (WebDAV)",
-            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
-            "data": {
-              "dav2_enabled": "Use this storage",
-              "dav2_url": "Folder address (WebDAV)",
-              "dav2_username": "Username",
-              "dav2_password": "Password",
-              "dav2_name": "Name shown with streams"
-            },
-            "data_description": {
-              "dav2_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
-              "dav2_name": "The storage name shown next to its streams."
-            }
-          },
-          "uloziste3": {
-            "name": "Storage 3 (WebDAV)",
-            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
-            "data": {
-              "dav3_enabled": "Use this storage",
-              "dav3_url": "Folder address (WebDAV)",
-              "dav3_username": "Username",
-              "dav3_password": "Password",
-              "dav3_name": "Name shown with streams"
-            },
-            "data_description": {
-              "dav3_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
-              "dav3_name": "The storage name shown next to its streams."
-            }
-          },
-          "stahovani": {
-            "name": "Downloads and links",
-            "description": "Where downloads land and how notifications and links to your phone are sent.",
-            "data": {
-              "download_dir": "Download folder",
-              "external_host": "Address outside the home network (Tailscale/VPN) – for phone links",
-              "notify_target": "Notifications about downloads and new episodes (e.g. notify.mobile_app_phone; empty = HA notification)"
-            },
-            "data_description": {
-              "download_dir": "A folder on the Home Assistant disk. It must exist and be writable.",
-              "external_host": "The address where Home Assistant is reachable from outside the home network (Tailscale, VPN, reverse proxy). Used in links sent to a phone.",
-              "notify_target": "A notify service, e.g. notify.mobile_app_phone. Empty = notifications stay inside Home Assistant."
-            }
-          },
-          "synchronizace": {
-            "name": "Sync with Kodi",
-            "description": "Sharing of watched titles, resume points, My list, Watchlist and search history with the Kodi add-on. There are two routes and both can be used at once: Kodi on the home network connects to Home Assistant directly using the key, Kodi outside the home network goes through a group on the Nokturno dashboard that Home Assistant joins with the code. The data is encrypted with a key derived from the group code and the server cannot read it.",
-            "data": {
-              "sync_key": "Key for Kodi on the home network",
-              "sync_code": "Group code (for Kodi outside the home network)",
-              "sync_watched": "Sync watched and resume points",
-              "sync_favourites": "Sync My list",
-              "sync_history": "Sync search history",
-              "sync_watchlist": "Sync Watchlist"
-            },
-            "data_description": {
-              "sync_key": "The key for Kodi on the home network; enter it in the add-on under Settings → Synchronisation. It grants access to watched titles and My list, so it belongs only on your own devices.",
-              "sync_code": "The group code, NKT-XXXX-XXXX-XXXX-XXXX. The first Kodi creates it under Settings → Synchronisation → Create group / open for joining. An empty field means Home Assistant stays out of the group and syncs only with Kodi on the home network.",
-              "sync_watched": "The watched flag and the resume position in a film or episode. When off, it is neither sent nor received.",
-              "sync_favourites": "Titles added to My list in the card and in the add-on.",
-              "sync_history": "The queries entered when searching.",
-              "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device."
-            }
-          },
-          "ostatni": {
-            "name": "Other",
-            "description": "TMDB, Trakt.tv and anonymous statistics.",
-            "data": {
-              "tmdb_api_key": "TMDB – API key (optional, but takes precedence even over Luna – Czech titles and descriptions)",
-              "trakt_client_id": "Trakt.tv – own Client ID (optional)",
-              "trakt_client_secret": "Trakt.tv – own Client Secret (optional)",
-              "stats_enabled": "Send anonymous statistics (when off, only a random id and version are sent)"
-            },
-            "data_description": {
-              "tmdb_api_key": "Your own key from themoviedb.org. Speeds up loading of titles and plots and removes the dependency on Luna.",
-              "trakt_client_id": "Leave empty to use the Nokturno app – then just run the nokturno.trakt_auth service and enter the code on the Trakt website. Works with a free account too. Fill in only if you have your own app.",
-              "stats_enabled": "Anonymous usage data – a random id, the version and the titles played. No accounts, addresses or content. When off, only the id and version are sent."
-            }
-          }
+      "prehravani": {
+        "title": "Playback",
+        "description": "Playback target and the rules for picking a stream.",
+        "data": {
+          "kodi_entity": "Default players (Kodi)",
+          "pref_lang": "Preferred audio language",
+          "pref_surround": "Prefer surround sound (5.1 and up)",
+          "hide_sd": "Hide SD streams",
+          "sort_streams": "Stream order",
+          "max_bitrate_mbps": "Max. bitrate (Mb/s, 0 = unlimited)",
+          "multi_play": "Playback with several players"
+        },
+        "data_description": {
+          "kodi_entity": "The players the card offers to choose from. A service call that names no entity starts playback on all of them.",
+          "pref_lang": "Streams with this audio language are listed first. For Czech, Slovak subtitles count as well, and the other way round. “—” = language is not taken into account.",
+          "pref_surround": "Surround 5.1 and above ranks above stereo. Affects ordering only; stereo streams stay in the list.",
+          "hide_sd": "Streams below 720p are left out of the list. With older titles this can leave the list empty.",
+          "sort_streams": "How streams are ordered when language and audio are the same.",
+          "max_bitrate_mbps": "Upper limit on stream bitrate. 0 = unlimited.",
+          "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
+        }
+      },
+      "webshare": {
+        "title": "WebShare",
+        "description": "Sign-in to WebShare. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "ws_enabled": "Use WebShare",
+          "ws_username": "E-mail",
+          "ws_password": "Password (or stored hash)",
+          "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)"
+        },
+        "data_description": {
+          "ws_password": "Stored as a hash, not as the password. The end of the subscription is detected automatically and reported by the source-status sensor.",
+          "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning."
+        }
+      },
+      "sosac": {
+        "title": "Sosáč",
+        "description": "Sosáč searches and plays through a streamuj.tv account. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "sc_enabled": "Use Sosáč",
+          "streamuj_username": "Streamuj.tv – username (for Sosáč)",
+          "streamuj_password": "Streamuj.tv – password"
+        },
+        "data_description": {
+          "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them."
+        }
+      },
+      "sledujteto": {
+        "title": "Sledujteto",
+        "description": "A Sledujteto.cz account. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "st_enabled": "Use Sledujteto",
+          "st_email": "E-mail",
+          "st_password": "Password (playback needs Premium)"
+        },
+        "data_description": {
+          "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not."
+        }
+      },
+      "fastshare": {
+        "title": "FastShare / Sdilej.cz",
+        "description": "A FastShare.cz or Sdilej.cz account. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "fs_enabled": "Use FastShare / Sdilej.cz",
+          "fs_provider": "Account from",
+          "fs_username": "Username",
+          "fs_password": "Password (playback uses your credit or unlimited plan)"
+        },
+        "data_description": {
+          "fs_provider": "Sdilej.cz has the same files as FastShare, only the account is separate. Choose the site where you have your account and credit.",
+          "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan."
+        }
+      },
+      "prehrajto": {
+        "title": "Přehraj.to",
+        "description": "Works without an account, a Premium account adds paging and the original file. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "pt_enabled": "Use Přehraj.to",
+          "pt_email": "E-mail (optional)",
+          "pt_password": "Password (optional)"
+        },
+        "data_description": {
+          "pt_enabled": "Přehraj.to works without an account: the first page of results and a transcoded 1080p file. A Premium account adds paging and the original file.",
+          "pt_email": "Optional. With a Přehraj.to Premium account you get paging and the original file. Přehraj.to counts every sign-in as a device, so Nokturno signs in only once every few hours."
+        }
+      },
+      "luna": {
+        "title": "Luna",
+        "description": "Luna on your device – Home Assistant add-on, TV box, computer or NAS. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "luna_enabled": "Use Luna",
+          "luna_url": "Server address",
+          "luna_token": "Token (or the whole install URL)"
+        },
+        "data_description": {
+          "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
+        }
+      },
+      "vyber_zdroju": {
+        "title": "Sources",
+        "description": "Pick the sources you want to use. For the selected ones the next steps ask for the account. Everything can be changed later in the integration options.",
+        "data": {
+          "zdroje": "Sources"
         }
       }
     },
@@ -259,224 +146,6 @@
   },
   "options": {
     "step": {
-      "init": {
-        "title": "Nokturno",
-        "sections": {
-          "prehravani": {
-            "name": "Playback",
-            "description": "Playback target and the rules for picking a stream.",
-            "data": {
-              "kodi_entity": "Default players (Kodi)",
-              "pref_lang": "Preferred audio language",
-              "pref_surround": "Prefer surround sound (5.1 and up)",
-              "hide_sd": "Hide SD streams",
-              "sort_streams": "Stream order",
-              "max_bitrate_mbps": "Max. bitrate (Mb/s, 0 = unlimited)",
-              "multi_play": "Playback with several players"
-            },
-            "data_description": {
-              "kodi_entity": "The players the card offers to choose from. A service call that names no entity starts playback on all of them.",
-              "pref_lang": "Streams with this audio language are listed first. For Czech, Slovak subtitles count as well, and the other way round. “—” = language is not taken into account.",
-              "pref_surround": "Surround 5.1 and above ranks above stereo. Affects ordering only; stereo streams stay in the list.",
-              "hide_sd": "Streams below 720p are left out of the list. With older titles this can leave the list empty.",
-              "sort_streams": "How streams are ordered when language and audio are the same.",
-              "max_bitrate_mbps": "Upper limit on stream bitrate. 0 = unlimited.",
-              "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
-            }
-          },
-          "webshare": {
-            "name": "WebShare",
-            "description": "Sign-in to WebShare. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "ws_enabled": "Use WebShare",
-              "ws_username": "E-mail",
-              "ws_password": "Password (or stored hash)",
-              "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)"
-            },
-            "data_description": {
-              "ws_password": "Stored as a hash, not as the password. The end of the subscription is detected automatically and reported by the source-status sensor.",
-              "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning."
-            }
-          },
-          "sosac": {
-            "name": "Sosáč",
-            "description": "Sosáč searches and plays through a streamuj.tv account. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "sc_enabled": "Use Sosáč",
-              "streamuj_username": "Streamuj.tv – username (for Sosáč)",
-              "streamuj_password": "Streamuj.tv – password"
-            },
-            "data_description": {
-              "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them."
-            }
-          },
-          "hellspy": {
-            "name": "HellSpy",
-            "description": "A public source, no account needed.",
-            "data": {
-              "hs_enabled": "Use HellSpy"
-            },
-            "data_description": {
-              "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it."
-            }
-          },
-          "sledujteto": {
-            "name": "Sledujteto",
-            "description": "A Sledujteto.cz account. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "st_enabled": "Use Sledujteto",
-              "st_email": "E-mail",
-              "st_password": "Password (playback needs Premium)"
-            },
-            "data_description": {
-              "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not."
-            }
-          },
-          "fastshare": {
-            "name": "FastShare / Sdilej.cz",
-            "description": "A FastShare.cz or Sdilej.cz account. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "fs_enabled": "Use FastShare / Sdilej.cz",
-              "fs_provider": "Account from",
-              "fs_username": "Username",
-              "fs_password": "Password (playback uses your credit or unlimited plan)"
-            },
-            "data_description": {
-              "fs_provider": "Sdilej.cz has the same files as FastShare, only the account is separate. Choose the site where you have your account and credit.",
-              "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan."
-            }
-          },
-          "prehrajto": {
-            "name": "Přehraj.to",
-            "description": "Works without an account, a Premium account adds paging and the original file. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "pt_enabled": "Use Přehraj.to",
-              "pt_email": "E-mail (optional)",
-              "pt_password": "Password (optional)"
-            },
-            "data_description": {
-              "pt_enabled": "Přehraj.to works without an account: the first page of results and a transcoded 1080p file. A Premium account adds paging and the original file.",
-              "pt_email": "Optional. With a Přehraj.to Premium account you get paging and the original file. Přehraj.to counts every sign-in as a device, so Nokturno signs in only once every few hours."
-            }
-          },
-          "cztor": {
-            "name": "CZtor",
-            "description": "The paid cztor.com catalogue, the device is paired with a PIN.",
-            "data": {
-              "cz_enabled": "Use CZtor"
-            },
-            "data_description": {
-              "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password."
-            }
-          },
-          "luna": {
-            "name": "Luna",
-            "description": "Luna on your device – Home Assistant add-on, TV box, computer or NAS. If you turn the source off, the credentials stay stored.",
-            "data": {
-              "luna_enabled": "Use Luna",
-              "luna_url": "Server address",
-              "luna_token": "Token (or the whole install URL)"
-            },
-            "data_description": {
-              "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
-            }
-          },
-          "uloziste1": {
-            "name": "Storage 1 (WebDAV)",
-            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
-            "data": {
-              "dav1_enabled": "Use this storage",
-              "dav1_url": "Folder address (WebDAV)",
-              "dav1_username": "Username",
-              "dav1_password": "Password",
-              "dav1_name": "Name shown with streams"
-            },
-            "data_description": {
-              "dav1_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
-              "dav1_name": "The storage name shown next to its streams."
-            }
-          },
-          "uloziste2": {
-            "name": "Storage 2 (WebDAV)",
-            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
-            "data": {
-              "dav2_enabled": "Use this storage",
-              "dav2_url": "Folder address (WebDAV)",
-              "dav2_username": "Username",
-              "dav2_password": "Password",
-              "dav2_name": "Name shown with streams"
-            },
-            "data_description": {
-              "dav2_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
-              "dav2_name": "The storage name shown next to its streams."
-            }
-          },
-          "uloziste3": {
-            "name": "Storage 3 (WebDAV)",
-            "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
-            "data": {
-              "dav3_enabled": "Use this storage",
-              "dav3_url": "Folder address (WebDAV)",
-              "dav3_username": "Username",
-              "dav3_password": "Password",
-              "dav3_name": "Name shown with streams"
-            },
-            "data_description": {
-              "dav3_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
-              "dav3_name": "The storage name shown next to its streams."
-            }
-          },
-          "stahovani": {
-            "name": "Downloads and links",
-            "description": "Where downloads land and how notifications and links to your phone are sent.",
-            "data": {
-              "download_dir": "Download folder",
-              "external_host": "Address outside the home network (Tailscale/VPN) – for phone links",
-              "notify_target": "Notifications about downloads and new episodes (e.g. notify.mobile_app_phone; empty = HA notification)"
-            },
-            "data_description": {
-              "download_dir": "A folder on the Home Assistant disk. It must exist and be writable.",
-              "external_host": "The address where Home Assistant is reachable from outside the home network (Tailscale, VPN, reverse proxy). Used in links sent to a phone.",
-              "notify_target": "A notify service, e.g. notify.mobile_app_phone. Empty = notifications stay inside Home Assistant."
-            }
-          },
-          "synchronizace": {
-            "name": "Sync with Kodi",
-            "description": "Sharing of watched titles, resume points, My list, Watchlist and search history with the Kodi add-on. There are two routes and both can be used at once: Kodi on the home network connects to Home Assistant directly using the key, Kodi outside the home network goes through a group on the Nokturno dashboard that Home Assistant joins with the code. The data is encrypted with a key derived from the group code and the server cannot read it.",
-            "data": {
-              "sync_key": "Key for Kodi on the home network",
-              "sync_code": "Group code (for Kodi outside the home network)",
-              "sync_watched": "Sync watched and resume points",
-              "sync_favourites": "Sync My list",
-              "sync_history": "Sync search history",
-              "sync_watchlist": "Sync Watchlist"
-            },
-            "data_description": {
-              "sync_key": "The key for Kodi on the home network; enter it in the add-on under Settings → Synchronisation. It grants access to watched titles and My list, so it belongs only on your own devices.",
-              "sync_code": "The group code, NKT-XXXX-XXXX-XXXX-XXXX. The first Kodi creates it under Settings → Synchronisation → Create group / open for joining. An empty field means Home Assistant stays out of the group and syncs only with Kodi on the home network.",
-              "sync_watched": "The watched flag and the resume position in a film or episode. When off, it is neither sent nor received.",
-              "sync_favourites": "Titles added to My list in the card and in the add-on.",
-              "sync_history": "The queries entered when searching.",
-              "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device."
-            }
-          },
-          "ostatni": {
-            "name": "Other",
-            "description": "TMDB, Trakt.tv and anonymous statistics.",
-            "data": {
-              "tmdb_api_key": "TMDB – API key (optional, but takes precedence even over Luna – Czech titles and descriptions)",
-              "trakt_client_id": "Trakt.tv – own Client ID (optional)",
-              "trakt_client_secret": "Trakt.tv – own Client Secret (optional)",
-              "stats_enabled": "Send anonymous statistics (when off, only a random id and version are sent)"
-            },
-            "data_description": {
-              "tmdb_api_key": "Your own key from themoviedb.org. Speeds up loading of titles and plots and removes the dependency on Luna.",
-              "trakt_client_id": "Leave empty to use the Nokturno app – then just run the nokturno.trakt_auth service and enter the code on the Trakt website. Works with a free account too. Fill in only if you have your own app.",
-              "stats_enabled": "Anonymous usage data – a random id, the version and the titles played. No accounts, addresses or content. When off, only the id and version are sent."
-            }
-          }
-        }
-      },
       "cztor": {
         "title": "CZtor – pairing",
         "description": "On a phone or computer open **{url}**, sign in and enter the PIN **{pin}**. Then press Submit here. The account password is never entered into Home Assistant.",
@@ -489,6 +158,257 @@
         "description": "Version 3 · effective from 30 September 2026\n\n**1. What Nokturno is**\n\nNokturno is an add-on for Kodi and Home Assistant. It is a player and search tool for your own storage (for example WebDAV) and for the storage services and catalogues of third parties that you enable in the settings (WebShare, Sosáč, HellSpy, Sledujteto, FastShare / Sdilej.cz, Přehraj.to, CZtor, Luna). It searches for subtitles on OpenSubtitles. You decide which sources you use. Nokturno is free, without ads and without paid features.\n\n**2. How searching works**\n\nNokturno asks the enabled sources for a title's name or identifier and shows the files they return. The files are stored on the servers of those services, were uploaded by their users, and your player downloads them directly from there. Nokturno does not host or distribute any film, series or other work.\n\nNokturno does not verify the legal status of individual files. It does not check who uploaded a file or whether they had the rightsholder's consent. A file appearing in the results does not mean you may legally play it.\n\nSearching runs on your device with your accounts. The Nokturno server does not search for files. It provides title information (catalogues, TV guide, recommendations), keys for the interfaces of title-information and subtitle services, and synchronisation between your devices.\n\n**3. What you may and may not do**\n\n- Use Nokturno only for content you have the right to – your own recordings, freely licensed works, and content you hold a licence or other legal title to. Playing or downloading a copyrighted work without the rightsholder's consent is prohibited.\n- Do not use Nokturno to infringe the rights of others or to distribute content you have no right to.\n- When you connect a third-party service, its terms apply to you as well. Nokturno gives you no rights to the content of those services.\n- Do not share your source accounts with other people unless the source's terms allow it.\n- Do not send automated requests to the Nokturno server, do not get around limits or blocks, and do not offer access through Nokturno as a paid service.\n\n**4. Reporting content and blocking**\n\nOnly the service that stores a file can actually delete it. We therefore recommend that rightsholders report it there directly (contacts are at the end).\n\nYou can also report it to us. What a notice must contain and how we handle it is described at nokturno.stream/abuse; send it to abuse@nokturno.stream. We reply to a complete notice and block the title or file in Nokturno's results within 48 hours. The block reaches the add-on with a list from the server, older versions after they are updated.\n\n**5. No warranty and limitation of liability**\n\nWe provide Nokturno \"as is\", free of charge and with no warranty of functionality, availability or of what third-party sources contain. You are responsible for what you play and download with Nokturno.\n\nTo the extent permitted by law, we are not liable for damage arising from using Nokturno or from being unable to use it, for the content, availability and terms of third-party services, or for how you use Nokturno. Liability that cannot be excluded by law is not affected.\n\nWe may restrict or end access to the server at any time, especially if these terms are breached.\n\n**6. Personal data**\n\nWhich data Nokturno sends, why, how long we keep it and how to ask for its deletion is described at nokturno.stream/privacy.\n\n**7. Governing law**\n\nThese terms are governed by the law of the Czech Republic. If you are a consumer habitually resident in another country, you keep the protection the law of that country gives you.\n\n**8. Changes to these terms**\n\nEvery version has a number and a date. We will announce significant changes in the add-on, and Kodi and Home Assistant will ask for your consent again.\n\n**9. Contacts**\n\n- reporting content: abuse@nokturno.stream (procedure at nokturno.stream/abuse)\n- personal data: privacy@nokturno.stream\n- everything else: kontakt@nokturno.stream\n- help with the add-on: the help pages and Discord (not for legal matters)\n\n**Reporting directly to the source**\n\n- WebShare – abuse@webshare.cz\n- Sosáč / Streamuj.tv – streamuj.tv/advertise (DMCA)\n- HellSpy – hellspy.to/contact\n- Sledujteto – sledujteto.cz/nahlasit-nelegalni-soubor\n- FastShare – fastshare.cz/abuse\n- Sdilej.cz – abuse@sdilej.cz\n- Přehraj.to – prehrajto.cz/nahlasit-nelegalni-soubor\n- CZtor – contact via cztor.com/kontakt\n- OpenSubtitles – copyright@opensubtitles.org (DMCA)",
         "data": {
           "terms_accepted": "I confirm I will use Nokturno only for content I have the right to, and I agree to the terms of use (version 3)."
+        }
+      },
+      "init": {
+        "title": "Nokturno",
+        "description": "Choose what to configure. Changes are saved only with **Save and close**.\n\nEnabled sources: {zdroje}\nOwn storage: {uloziste}",
+        "menu_options": {
+          "prehravani": "Playback",
+          "zdroje": "Sources and accounts",
+          "uloziste": "Own storage",
+          "stahovani": "Downloads and links",
+          "synchronizace": "Sync with Kodi",
+          "ostatni": "Other",
+          "ulozit": "Save and close"
+        }
+      },
+      "zdroje": {
+        "title": "Sources and accounts",
+        "description": "Enabled: {zdroje}",
+        "menu_options": {
+          "webshare": "WebShare",
+          "sosac": "Sosáč",
+          "hellspy": "HellSpy",
+          "sledujteto": "Sledujteto",
+          "fastshare": "FastShare / Sdilej.cz",
+          "prehrajto": "Přehraj.to",
+          "cztor_zdroj": "CZtor",
+          "luna": "Luna",
+          "init": "← Back"
+        }
+      },
+      "uloziste": {
+        "title": "Own storage",
+        "description": "Configured: {uloziste}",
+        "menu_options": {
+          "uloziste1": "Storage 1 (WebDAV)",
+          "uloziste2": "Storage 2 (WebDAV)",
+          "uloziste3": "Storage 3 (WebDAV)",
+          "init": "← Back"
+        }
+      },
+      "prehravani": {
+        "title": "Playback",
+        "description": "Playback target and the rules for picking a stream.",
+        "data": {
+          "kodi_entity": "Default players (Kodi)",
+          "pref_lang": "Preferred audio language",
+          "pref_surround": "Prefer surround sound (5.1 and up)",
+          "hide_sd": "Hide SD streams",
+          "sort_streams": "Stream order",
+          "max_bitrate_mbps": "Max. bitrate (Mb/s, 0 = unlimited)",
+          "multi_play": "Playback with several players"
+        },
+        "data_description": {
+          "kodi_entity": "The players the card offers to choose from. A service call that names no entity starts playback on all of them.",
+          "pref_lang": "Streams with this audio language are listed first. For Czech, Slovak subtitles count as well, and the other way round. “—” = language is not taken into account.",
+          "pref_surround": "Surround 5.1 and above ranks above stereo. Affects ordering only; stereo streams stay in the list.",
+          "hide_sd": "Streams below 720p are left out of the list. With older titles this can leave the list empty.",
+          "sort_streams": "How streams are ordered when language and audio are the same.",
+          "max_bitrate_mbps": "Upper limit on stream bitrate. 0 = unlimited.",
+          "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
+        }
+      },
+      "webshare": {
+        "title": "WebShare",
+        "description": "Sign-in to WebShare. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "ws_enabled": "Use WebShare",
+          "ws_username": "E-mail",
+          "ws_password": "Password (or stored hash)",
+          "sub_warn_days": "Warn N days before WebShare subscription expires (0 = off)"
+        },
+        "data_description": {
+          "ws_password": "Stored as a hash, not as the password. The end of the subscription is detected automatically and reported by the source-status sensor.",
+          "sub_warn_days": "How many days before the WebShare subscription ends to warn. 0 = no warning."
+        }
+      },
+      "sosac": {
+        "title": "Sosáč",
+        "description": "Sosáč searches and plays through a streamuj.tv account. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "sc_enabled": "Use Sosáč",
+          "streamuj_username": "Streamuj.tv – username (for Sosáč)",
+          "streamuj_password": "Streamuj.tv – password"
+        },
+        "data_description": {
+          "streamuj_username": "A streamuj.tv account. Without it Sosáč finds titles but cannot play them."
+        }
+      },
+      "hellspy": {
+        "title": "HellSpy",
+        "description": "A public source, no account needed.",
+        "data": {
+          "hs_enabled": "Use HellSpy"
+        },
+        "data_description": {
+          "hs_enabled": "HellSpy is public and needs no account. Refused queries (HTTP 429) usually mean HellSpy is blocking your network (VPN, mobile data); the integration then skips it for ten minutes and searches without it."
+        }
+      },
+      "sledujteto": {
+        "title": "Sledujteto",
+        "description": "A Sledujteto.cz account. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "st_enabled": "Use Sledujteto",
+          "st_email": "E-mail",
+          "st_password": "Password (playback needs Premium)"
+        },
+        "data_description": {
+          "st_email": "A Sledujteto.cz account. Search works without Premium, playback does not."
+        }
+      },
+      "fastshare": {
+        "title": "FastShare / Sdilej.cz",
+        "description": "A FastShare.cz or Sdilej.cz account. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "fs_enabled": "Use FastShare / Sdilej.cz",
+          "fs_provider": "Account from",
+          "fs_username": "Username",
+          "fs_password": "Password (playback uses your credit or unlimited plan)"
+        },
+        "data_description": {
+          "fs_provider": "Sdilej.cz has the same files as FastShare, only the account is separate. Choose the site where you have your account and credit.",
+          "fs_username": "A FastShare.cz or Sdilej.cz account, as set in “account from”. Playback is charged against credit or an unlimited plan."
+        }
+      },
+      "prehrajto": {
+        "title": "Přehraj.to",
+        "description": "Works without an account, a Premium account adds paging and the original file. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "pt_enabled": "Use Přehraj.to",
+          "pt_email": "E-mail (optional)",
+          "pt_password": "Password (optional)"
+        },
+        "data_description": {
+          "pt_enabled": "Přehraj.to works without an account: the first page of results and a transcoded 1080p file. A Premium account adds paging and the original file.",
+          "pt_email": "Optional. With a Přehraj.to Premium account you get paging and the original file. Přehraj.to counts every sign-in as a device, so Nokturno signs in only once every few hours."
+        }
+      },
+      "luna": {
+        "title": "Luna",
+        "description": "Luna on your device – Home Assistant add-on, TV box, computer or NAS. If you turn the source off, the credentials stay stored.",
+        "data": {
+          "luna_enabled": "Use Luna",
+          "luna_url": "Server address",
+          "luna_token": "Token (or the whole install URL)"
+        },
+        "data_description": {
+          "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
+        }
+      },
+      "uloziste1": {
+        "title": "Storage 1 (WebDAV)",
+        "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+        "data": {
+          "dav1_enabled": "Use this storage",
+          "dav1_url": "Folder address (WebDAV)",
+          "dav1_username": "Username",
+          "dav1_password": "Password",
+          "dav1_name": "Name shown with streams"
+        },
+        "data_description": {
+          "dav1_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+          "dav1_name": "The storage name shown next to its streams."
+        }
+      },
+      "uloziste2": {
+        "title": "Storage 2 (WebDAV)",
+        "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+        "data": {
+          "dav2_enabled": "Use this storage",
+          "dav2_url": "Folder address (WebDAV)",
+          "dav2_username": "Username",
+          "dav2_password": "Password",
+          "dav2_name": "Name shown with streams"
+        },
+        "data_description": {
+          "dav2_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+          "dav2_name": "The storage name shown next to its streams."
+        }
+      },
+      "uloziste3": {
+        "title": "Storage 3 (WebDAV)",
+        "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+        "data": {
+          "dav3_enabled": "Use this storage",
+          "dav3_url": "Folder address (WebDAV)",
+          "dav3_username": "Username",
+          "dav3_password": "Password",
+          "dav3_name": "Name shown with streams"
+        },
+        "data_description": {
+          "dav3_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+          "dav3_name": "The storage name shown next to its streams."
+        }
+      },
+      "stahovani": {
+        "title": "Downloads and links",
+        "description": "Where downloads land and how notifications and links to your phone are sent.",
+        "data": {
+          "download_dir": "Download folder",
+          "external_host": "Address outside the home network (Tailscale/VPN) – for phone links",
+          "notify_target": "Notifications about downloads and new episodes (e.g. notify.mobile_app_phone; empty = HA notification)"
+        },
+        "data_description": {
+          "download_dir": "A folder on the Home Assistant disk. It must exist and be writable.",
+          "external_host": "The address where Home Assistant is reachable from outside the home network (Tailscale, VPN, reverse proxy). Used in links sent to a phone.",
+          "notify_target": "A notify service, e.g. notify.mobile_app_phone. Empty = notifications stay inside Home Assistant."
+        }
+      },
+      "synchronizace": {
+        "title": "Sync with Kodi",
+        "description": "Sharing of watched titles, resume points, My list, Watchlist and search history with the Kodi add-on. There are two routes and both can be used at once: Kodi on the home network connects to Home Assistant directly using the key, Kodi outside the home network goes through a group on the Nokturno dashboard that Home Assistant joins with the code. The data is encrypted with a key derived from the group code and the server cannot read it.",
+        "data": {
+          "sync_key": "Key for Kodi on the home network",
+          "sync_code": "Group code (for Kodi outside the home network)",
+          "sync_watched": "Sync watched and resume points",
+          "sync_favourites": "Sync My list",
+          "sync_history": "Sync search history",
+          "sync_watchlist": "Sync Watchlist"
+        },
+        "data_description": {
+          "sync_key": "The key for Kodi on the home network; enter it in the add-on under Settings → Synchronisation. It grants access to watched titles and My list, so it belongs only on your own devices.",
+          "sync_code": "The group code, NKT-XXXX-XXXX-XXXX-XXXX. The first Kodi creates it under Settings → Synchronisation → Create group / open for joining. An empty field means Home Assistant stays out of the group and syncs only with Kodi on the home network.",
+          "sync_watched": "The watched flag and the resume position in a film or episode. When off, it is neither sent nor received.",
+          "sync_favourites": "Titles added to My list in the card and in the add-on.",
+          "sync_history": "The queries entered when searching.",
+          "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device."
+        }
+      },
+      "ostatni": {
+        "title": "Other",
+        "description": "TMDB, Trakt.tv and anonymous statistics.",
+        "data": {
+          "tmdb_api_key": "TMDB – API key (optional, but takes precedence even over Luna – Czech titles and descriptions)",
+          "trakt_client_id": "Trakt.tv – own Client ID (optional)",
+          "trakt_client_secret": "Trakt.tv – own Client Secret (optional)",
+          "stats_enabled": "Send anonymous statistics (when off, only a random id and version are sent)"
+        },
+        "data_description": {
+          "tmdb_api_key": "Your own key from themoviedb.org. Speeds up loading of titles and plots and removes the dependency on Luna.",
+          "trakt_client_id": "Leave empty to use the Nokturno app – then just run the nokturno.trakt_auth service and enter the code on the Trakt website. Works with a free account too. Fill in only if you have your own app.",
+          "stats_enabled": "Anonymous usage data – a random id, the version and the titles played. No accounts, addresses or content. When off, only the id and version are sent."
+        }
+      },
+      "cztor_zdroj": {
+        "title": "CZtor",
+        "description": "The paid cztor.com catalogue, the device is paired with a PIN.",
+        "data": {
+          "cz_enabled": "Use CZtor"
+        },
+        "data_description": {
+          "cz_enabled": "The paid cztor.com catalogue. Turning it on opens a PIN step; the integration never receives the account password."
         }
       }
     },
@@ -1046,6 +966,18 @@
         "hs": "HellSpy",
         "st": "Sledujteto",
         "fs": "FastShare / Sdilej.cz"
+      }
+    },
+    "zdroje": {
+      "options": {
+        "webshare": "WebShare",
+        "sosac": "Sosáč",
+        "hellspy": "HellSpy",
+        "sledujteto": "Sledujteto",
+        "fastshare": "FastShare / Sdilej.cz",
+        "prehrajto": "Přehraj.to",
+        "cztor_zdroj": "CZtor",
+        "luna": "Luna"
       }
     }
   }
