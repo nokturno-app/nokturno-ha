@@ -375,7 +375,8 @@
           "sync_watched": "Sync watched and resume points",
           "sync_favourites": "Sync My list",
           "sync_history": "Sync search history",
-          "sync_watchlist": "Sync Watchlist"
+          "sync_watchlist": "Sync Watchlist",
+          "sync_concerts": "Sync concerts"
         },
         "data_description": {
           "sync_key": "The key for Kodi on the home network; enter it in the add-on under Settings → Synchronisation. It grants access to watched titles and My list, so it belongs only on your own devices.",
@@ -383,7 +384,8 @@
           "sync_watched": "The watched flag and the resume position in a film or episode. When off, it is neither sent nor received.",
           "sync_favourites": "Titles added to My list in the card and in the add-on.",
           "sync_history": "The queries entered when searching.",
-          "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device."
+          "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device.",
+          "sync_concerts": "Found concerts are shared with the other devices in the group. Each device shows only files from the sources it has enabled."
         }
       },
       "ostatni": {
@@ -391,12 +393,14 @@
         "description": "TMDB, Trakt.tv and anonymous statistics.",
         "data": {
           "tmdb_api_key": "TMDB – API key (optional, but takes precedence even over Luna – Czech titles and descriptions)",
+          "lastfm_key": "Last.fm – API key (optional, for concerts)",
           "trakt_client_id": "Trakt.tv – own Client ID (optional)",
           "trakt_client_secret": "Trakt.tv – own Client Secret (optional)",
           "stats_enabled": "Send anonymous statistics (when off, only a random id and version are sent)"
         },
         "data_description": {
           "tmdb_api_key": "Your own key from themoviedb.org. Speeds up loading of titles and plots and removes the dependency on Luna.",
+          "lastfm_key": "Key for the list of artists for concerts. Free at last.fm/api. Home Assistant then searches for concerts in the background and shares them with the group.",
           "trakt_client_id": "Leave empty to use the Nokturno app – then just run the nokturno.trakt_auth service and enter the code on the Trakt website. Works with a free account too. Fill in only if you have your own app.",
           "stats_enabled": "Anonymous usage data – a random id, the version and the titles played. No accounts, addresses or content. When off, only the id and version are sent."
         }

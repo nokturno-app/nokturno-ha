@@ -375,7 +375,8 @@
           "sync_watched": "Synchronizovať pozreté a rozpozerané",
           "sync_favourites": "Synchronizovať Môj zoznam",
           "sync_history": "Synchronizovať históriu hľadania",
-          "sync_watchlist": "Synchronizovať Sledované"
+          "sync_watchlist": "Synchronizovať Sledované",
+          "sync_concerts": "Synchronizovať koncerty"
         },
         "data_description": {
           "sync_key": "Kľúč pre Kodi v domácej sieti; zadáva sa v doplnku v Nastavenia → Synchronizácia. Umožňuje prístup k videným titulom a Môjmu zoznamu, preto patrí len vlastným zariadeniam.",
@@ -383,7 +384,8 @@
           "sync_watched": "Označenie videné a pozícia v rozpozeranom filme alebo diele. Vypnuté sa neodosiela ani neprijíma.",
           "sync_favourites": "Tituly pridané do Môjho zoznamu v karte aj v doplnku.",
           "sync_history": "Dotazy zadané pri hľadaní.",
-          "sync_watchlist": "Seriály a tituly v Sledovaných aj s príznakom „kontrolovať ďalej“. Kontrolu potom stačí urobiť na jednom zariadení."
+          "sync_watchlist": "Seriály a tituly v Sledovaných aj s príznakom „kontrolovať ďalej“. Kontrolu potom stačí urobiť na jednom zariadení.",
+          "sync_concerts": "Nájdené koncerty sa zdieľajú s ostatnými zariadeniami v skupine. Každé zariadenie ukáže len súbory zo zdrojov, ktoré má zapnuté."
         }
       },
       "ostatni": {
@@ -391,12 +393,14 @@
         "description": "TMDB, Trakt.tv a anonymné štatistiky.",
         "data": {
           "tmdb_api_key": "TMDB – API kľúč (nepovinné, ale má prednosť aj pred Lunou – pre české názvy a popisy)",
+          "lastfm_key": "Last.fm – API kľúč (nepovinné, pre koncerty)",
           "trakt_client_id": "Trakt.tv – vlastné Client ID (nepovinné)",
           "trakt_client_secret": "Trakt.tv – vlastný Client Secret (nepovinné)",
           "stats_enabled": "Posielať anonymné štatistiky (aj vypnuté pošlú len náhodné id a verziu)"
         },
         "data_description": {
           "tmdb_api_key": "Vlastný kľúč z themoviedb.org. Zrýchľuje načítanie názvov a popisov a nevyžaduje k nim Lunu.",
+          "lastfm_key": "Kľúč pre zoznam interpretov koncertov. Zdarma na last.fm/api. Home Assistant potom koncerty hľadá na pozadí a zdieľa ich so skupinou.",
           "trakt_client_id": "Nechaj prázdne, použije sa aplikácia Nokturna – potom stačí služba nokturno.trakt_auth a zadať kód na webe Traktu. Ide to aj s free účtom. Vlastnú aplikáciu vyplň, len ak ju máš.",
           "stats_enabled": "Anonymné údaje o používaní – náhodné id, verzia a prehrané tituly. Bez účtov, adries a obsahu. Vypnuté odosiela len id a verziu."
         }

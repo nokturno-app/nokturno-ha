@@ -839,18 +839,19 @@ class TestSynchronizaceVNastaveni(unittest.TestCase):
         self.assertIn(const.CONF_SYNC_CODE, config_flow.KROKY["synchronizace"])
 
     def test_vychozi_stav_je_vse_zapnute(self):
-        self.assertEqual(sync_circles(self._Entry()), ("watched", "favourites", "history", "watchlist", "catalogs"))
+        self.assertEqual(sync_circles(self._Entry()), ("watched", "favourites", "history", "watchlist", "concerts", "catalogs"))
 
     def test_vypnuty_okruh_vypadne(self):
         entry = self._Entry(options={const.CONF_SYNC_HISTORY: False})
-        self.assertEqual(sync_circles(entry), ("watched", "favourites", "watchlist", "catalogs"))
+        self.assertEqual(sync_circles(entry), ("watched", "favourites", "watchlist", "concerts", "catalogs"))
 
     def test_vypnute_vse_neposila_nic(self):
         """Prázdná sada znamená „nic", ne „vše" — `filter_circles(None)` by bylo „vše"."""
         entry = self._Entry(options={const.CONF_SYNC_WATCHED: False,
                                      const.CONF_SYNC_FAVOURITES: False,
                                      const.CONF_SYNC_HISTORY: False,
-                                     const.CONF_SYNC_WATCHLIST: False})
+                                     const.CONF_SYNC_WATCHLIST: False,
+                                     const.CONF_SYNC_CONCERTS: False})
         self.assertEqual(sync_circles(entry), ("catalogs",))   # vlastní katalogy se vypnout nedají, jen pozastavit
         from custom_components.nokturno.lib.sync import filter_circles
         self.assertEqual(filter_circles({"watched": {"x": {}}}, sync_circles(entry)), {})
@@ -1089,8 +1090,10 @@ class TestKatalogyVHA(unittest.TestCase):
     def test_verify_catalogs_volani_jadra_v_executoru(self):
         src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
         telo = src[src.index("async def verify_catalogs("):src.index("async def handle_catalogs(")]
-        self.assertIn("hass.async_add_executor_job(\n                    partial(mycat_lib.refresh", telo)
+        self.assertIn("hass.async_add_executor_job(job)", telo)
+        self.assertIn("partial(mycat_lib.refresh", telo)
         self.assertNotIn("mycat_lib.refresh(", telo.replace("partial(mycat_lib.refresh", ""))
+        self.assertIn("partial(concertcat_lib.refresh", telo)   # koncerty s klíčem Last.fm
 
     def test_koncertni_katalog_ha_neoveruje_ani_neukazuje(self):
         """Katalog koncertů přijde synchronizací, ale HA ho neověřuje (round-robin) ani nehlásí (služba, senzor)."""

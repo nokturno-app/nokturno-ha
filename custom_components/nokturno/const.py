@@ -71,11 +71,14 @@ CONF_SYNC_WATCHED = "sync_watched"
 CONF_SYNC_FAVOURITES = "sync_favourites"
 CONF_SYNC_HISTORY = "sync_history"
 CONF_SYNC_WATCHLIST = "sync_watchlist"
+CONF_SYNC_CONCERTS = "sync_concerts"
+CONF_LASTFM_KEY = "lastfm_key"   # klíč Last.fm: seznam interpretů pro koncerty hledané na pozadí
 SYNC_CIRCLE_OPTIONS = (
     ("watched", CONF_SYNC_WATCHED),
     ("favourites", CONF_SYNC_FAVOURITES),
     ("history", CONF_SYNC_HISTORY),
     ("watchlist", CONF_SYNC_WATCHLIST),
+    ("concerts", CONF_SYNC_CONCERTS),
 )
 
 SUB_CHECK_INTERVAL_HOURS = 12

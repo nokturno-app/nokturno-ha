@@ -118,6 +118,7 @@ from .lib.store import Store
 from .lib.webshare_api import WebshareApiError
 from .lib.sync import apply_changes, collect_changes, filter_circles
 from .lib import syncbox
+from .lib import concertcat as concertcat_lib
 from .lib import mycat as mycat_lib
 from .lib import watch as watch_lib
 from .engine import Engine, NokturnoError, split_episode_id
@@ -1280,8 +1281,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     katalogy_pristi = [0]
 
     async def verify_catalogs(_now=None, cid=None, size=1, manual=False):
-        """Vlastní katalogy z Kodi (okruh synchronizace `catalogs`): jedna dávka jednoho katalogu,
-        z časovače round-robin. Logika je v jádru (`lib/mycat.py`), sdílí ji s doplňkem pro Kodi;
+        """Vlastní katalogy z Kodi (okruh synchronizace `catalogs`) a koncerty (`concerts`, s klíčem Last.fm):
+        jedna dávka jednoho cíle, z časovače round-robin. Logika je v jádru (`lib/mycat.py`), sdílí ji s doplňkem pro Kodi;
         Kodi, které vidí čerstvé výsledky odsud, samo neověřuje. Pozastavení (`catalog_pause`)
         se týká jen časovače, ruční volání (`manual`) ověřuje vždy. Vrací počet ověřených titulů."""
         if katalogy_zamek.locked():
@@ -1290,7 +1291,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             def cile():
                 if not manual and (engine.store.load(mycat_lib.PAUSED, {}) or {}).get("on"):
                     return []
-                return [c["id"] for c in mycat_lib.verified(engine.store)]
+                ids = [c["id"] for c in mycat_lib.verified(engine.store)]
+                # koncerty: pool z Last.fm potřebuje vlastní klíč a vybrané žánry (synchronizují se z Kodi)
+                if concertcat_lib.configured(engine.store) and engine._opt("lastfm_key"):
+                    ids.append(concertcat_lib.SECTION)
+                return ids
 
             targets = await hass.async_add_executor_job(cile)
             if not targets:
@@ -1301,8 +1306,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             elif cid not in targets:
                 return 0
             try:
-                done = await hass.async_add_executor_job(
-                    partial(mycat_lib.refresh, engine, engine.store, engine.dash, cid, size))
+                job = (partial(concertcat_lib.refresh, engine, engine.store, size) if cid == concertcat_lib.SECTION
+                       else partial(mycat_lib.refresh, engine, engine.store, engine.dash, cid, size))
+                done = await hass.async_add_executor_job(job)
             except Exception as err:  # noqa: BLE001 – výpadek zdroje nesmí shodit časovač
                 _LOGGER.debug("ověřování katalogu %s: %s", cid, err)
                 return 0

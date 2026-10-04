@@ -23,6 +23,8 @@ from .const import (
     CONF_SYNC_FAVOURITES,
     CONF_SYNC_HISTORY,
     CONF_SYNC_WATCHLIST,
+    CONF_SYNC_CONCERTS,
+    CONF_LASTFM_KEY,
     CONF_SYNC_KEY,
     CONF_SYNC_WATCHED,
     CONF_EXTERNAL_HOST,
@@ -69,10 +71,10 @@ STORAGE_KEYS = [key for slot in STORAGE_OPTIONS for key in slot]
 # účty a klíče patří do `entry.data`, ne do options — od 2026-09-14 i Trakt
 ACCOUNT_KEYS = [CONF_WS_USER, CONF_WS_PASS, CONF_STREAMUJ_USER, CONF_STREAMUJ_PASS, CONF_ST_EMAIL, CONF_ST_PASS,
                 CONF_FS_USER, CONF_FS_PASS, CONF_PT_EMAIL, CONF_PT_PASS, CONF_LUNA_URL, CONF_LUNA_TOKEN, CONF_SYNC_KEY, CONF_SYNC_CODE, CONF_TMDB_KEY,
-                CONF_TRAKT_ID, CONF_TRAKT_SECRET, *STORAGE_KEYS]
+                CONF_TRAKT_ID, CONF_TRAKT_SECRET, CONF_LASTFM_KEY, *STORAGE_KEYS]
 # ve formuláři skrytě — každé otevření Nastavení dřív ukázalo všech dvanáct hesel čitelně
 SECRET_KEYS = frozenset({CONF_WS_PASS, CONF_STREAMUJ_PASS, CONF_ST_PASS, CONF_FS_PASS, CONF_PT_PASS, CONF_LUNA_TOKEN, CONF_TMDB_KEY, CONF_SYNC_KEY,
-                         CONF_TRAKT_SECRET,
+                         CONF_TRAKT_SECRET, CONF_LASTFM_KEY,
                          *(key for slot in STORAGE_OPTIONS for key in slot if key.endswith("_password"))})
 ACCOUNT_DEFAULTS = {CONF_LUNA_URL: DEFAULT_LUNA_URL}
 
@@ -119,8 +121,8 @@ KROKY = {
     **{f"uloziste{n}": [f"dav{n}_enabled", *slot] for n, slot in enumerate(STORAGE_OPTIONS, 1)},
     "stahovani": [CONF_DOWNLOAD_DIR, CONF_EXTERNAL_HOST, CONF_NOTIFY_TARGET],
     "synchronizace": [CONF_SYNC_KEY, CONF_SYNC_CODE, CONF_SYNC_WATCHED,
-                      CONF_SYNC_FAVOURITES, CONF_SYNC_HISTORY, CONF_SYNC_WATCHLIST],
-    "ostatni": [CONF_TMDB_KEY, CONF_TRAKT_ID, CONF_TRAKT_SECRET, CONF_STATS_ENABLED],
+                      CONF_SYNC_FAVOURITES, CONF_SYNC_HISTORY, CONF_SYNC_WATCHLIST, CONF_SYNC_CONCERTS],
+    "ostatni": [CONF_TMDB_KEY, CONF_LASTFM_KEY, CONF_TRAKT_ID, CONF_TRAKT_SECRET, CONF_STATS_ENABLED],
 }
 ZDROJE = ["webshare", "sosac", "hellspy", "sledujteto", "fastshare", "prehrajto", "cztor_zdroj", "luna"]
 ULOZISTE = [f"uloziste{n}" for n in range(1, len(STORAGE_OPTIONS) + 1)]
@@ -257,6 +259,7 @@ def preferences_schema(data: dict) -> vol.Schema:
         vol.Optional(CONF_SYNC_FAVOURITES, default=data.get(CONF_SYNC_FAVOURITES, True)): bool,
         vol.Optional(CONF_SYNC_HISTORY, default=data.get(CONF_SYNC_HISTORY, True)): bool,
         vol.Optional(CONF_SYNC_WATCHLIST, default=data.get(CONF_SYNC_WATCHLIST, True)): bool,
+        vol.Optional(CONF_SYNC_CONCERTS, default=data.get(CONF_SYNC_CONCERTS, True)): bool,
     })
 
 
