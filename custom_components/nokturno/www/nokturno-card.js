@@ -17,7 +17,7 @@
  *   downloads: sensor.nokturno_stahovani
  */
 
-const CARD_VERSION = "10.6.0";
+const CARD_VERSION = "10.6.1";
 console.info(`%c NOKTURNO-CARD %c ${CARD_VERSION} `, "background:#5b4b8a;color:#fff;border-radius:3px 0 0 3px", "background:#f0b429;color:#222;border-radius:0 3px 3px 0");
 
 const SOURCE_COLORS = { "Luna": "#8e7cc3", "WebShare": "#4a90d9", "Sosáč": "#e08b3c",
@@ -107,6 +107,8 @@ const SK = {
   "Odebrat z Hlídaných": "Odobrať zo Sledovaných",
   "Přidat do Hlídaných": "Pridať do Sledovaných",
   "Odebrat z Pokračovat ve sledování": "Odobrať z Pokračovať v sledovaní",
+  "Vybrat jiný stream": "Vybrať iný stream",
+  "Původní stream se nepodařilo přehrát – vyber jiný.": "Pôvodný stream sa nepodarilo prehrať – vyber iný.",
   "Uvolněné hledání podle slov v názvu souboru – najde i to, co přísný filtr zahodí jako podobný, ale jiný titul": "Voľnejšie hľadanie podľa slov v názve súboru – nájde aj to, čo prísny filter zahodí ako podobný, ale iný titul",
   "Hledám…": "Hľadám…",
   "Zkusit fulltext na {0}": "Skúsiť fulltext na {0}",
@@ -683,6 +685,21 @@ class NokturnoCard extends HTMLElement {
       }, false);
       this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
     });
+    if (!this._state.error) this._watchStart(entityId, item);
+  }
+
+  /** Kodi neúspěšné přehrání do HA nehlásí – když se do 30 s nerozjede, nabídne výběr streamu. */
+  _watchStart(entityId, item) {
+    const playing = () => ["playing", "paused"].includes((this._hass.states[entityId] || {}).state);
+    if (playing()) return;   // hrálo už něco jiného, rozjezd nového nejde poznat
+    const started = Date.now();
+    const timer = setInterval(() => {
+      if (playing()) { clearInterval(timer); return; }
+      if (Date.now() - started < 30000) return;
+      clearInterval(timer);
+      this._toast(this._t("Původní stream se nepodařilo přehrát – vyber jiný."));
+      this._openContinue(item);
+    }, 2000);
   }
 
   /** Rozkoukané: otevře streamy titulu v kartě (id a typ nese plugin odkaz z Kodi). */
@@ -1089,6 +1106,9 @@ class NokturnoCard extends HTMLElement {
               ${this._t("pokračovat")}</span>
             <span class="label">${this._esc(c.label)}${manyKodi ? ` <span class="muted">· ${this._esc(c.player)}</span>` : ""}</span>
             <span class="icons">
+              ${this._continueStream(c) ? `<ha-icon-button data-contpick="${i}" title="${this._t("Vybrat jiný stream")}">
+                <ha-icon icon="mdi:format-list-bulleted"></ha-icon>
+              </ha-icon-button>` : ""}
               <ha-icon-button data-contremove="${i}" title="${this._t("Odebrat z Pokračovat ve sledování")}">
                 <ha-icon icon="mdi:close-circle-outline"></ha-icon>
               </ha-icon-button>
@@ -1786,6 +1806,11 @@ class NokturnoCard extends HTMLElement {
       if (!long && this._continueStream(item)) return this._playContinue(item);
       st.loading = `cont:${+data.cont}`;
       return this._openContinue(item);
+    }
+    if (data.contpick !== undefined) {
+      // výběr streamu i bez dlouhého stisku (ovladač TV)
+      st.loading = `cont:${+data.contpick}`;
+      return this._openContinue(st.continueItems[+data.contpick]);
     }
     if (data.contremove !== undefined) {
       const item = st.continueItems[+data.contremove];
