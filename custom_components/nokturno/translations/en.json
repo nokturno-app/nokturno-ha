@@ -122,9 +122,23 @@
           "luna_url": "Address of the device running Luna, with port 7126 – the Home Assistant host for the HA add-on, or the IP address of the TV box, computer or NAS running Luna. The whole install address from the /setup page can be pasted; the token is read from it."
         }
       },
+      "uloziste1": {
+        "title": "Storage 1 (WebDAV)",
+        "description": "Nokturno plays mainly from your own storage (WebDAV – NAS, Nextcloud). Fill in the folder address, or skip this step and add the storage later in the integration options.",
+        "data": {
+          "dav1_url": "Folder address (WebDAV)",
+          "dav1_username": "Username",
+          "dav1_password": "Password",
+          "dav1_name": "Name shown with streams"
+        },
+        "data_description": {
+          "dav1_url": "Address of the folder with films and shows on a NAS or Nextcloud. It must be reachable from Home Assistant.",
+          "dav1_name": "The storage name shown next to its streams."
+        }
+      },
       "vyber_zdroju": {
-        "title": "Sources",
-        "description": "Pick the sources you want to use. For the selected ones the next steps ask for the account. Everything can be changed later in the integration options.",
+        "title": "Optional sources",
+        "description": "Third-party storage services are optional and off by default. Pick only the ones you want to use. For the selected ones the next steps ask for the account. Everything can be changed later in the integration options.",
         "data": {
           "zdroje": "Sources"
         }
@@ -162,7 +176,7 @@
       },
       "init": {
         "title": "Nokturno",
-        "description": "Choose what to configure. Changes are saved only with **Save and close**.\n\nEnabled sources: {zdroje}\nOwn storage: {uloziste}",
+        "description": "Choose what to configure. Changes are saved only with **Save and close**.\n\nOwn storage: {uloziste}\nEnabled third-party sources: {zdroje}",
         "menu_options": {
           "prehravani": "Playback",
           "zdroje": "Sources and accounts",
@@ -175,7 +189,7 @@
       },
       "zdroje": {
         "title": "Sources and accounts",
-        "description": "Enabled: {zdroje}",
+        "description": "Optional third-party storage services. Enabled: {zdroje}",
         "menu_options": {
           "webshare": "WebShare",
           "sosac": "Sosáč",
@@ -309,7 +323,7 @@
       },
       "uloziste1": {
         "title": "Storage 1 (WebDAV)",
-        "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+        "description": "Your own folder over WebDAV (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
         "data": {
           "dav1_enabled": "Use this storage",
           "dav1_url": "Folder address (WebDAV)",
@@ -324,7 +338,7 @@
       },
       "uloziste2": {
         "title": "Storage 2 (WebDAV)",
-        "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+        "description": "Your own folder over WebDAV (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
         "data": {
           "dav2_enabled": "Use this storage",
           "dav2_url": "Folder address (WebDAV)",
@@ -339,7 +353,7 @@
       },
       "uloziste3": {
         "title": "Storage 3 (WebDAV)",
-        "description": "Your own folder over WebDAV (NAS, Nextcloud). Files found there are offered as extra streams. If you turn the storage off, the credentials stay stored.",
+        "description": "Your own folder over WebDAV (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
         "data": {
           "dav3_enabled": "Use this storage",
           "dav3_url": "Folder address (WebDAV)",
@@ -385,7 +399,7 @@
           "sync_favourites": "Titles added to My list in the card and in the add-on.",
           "sync_history": "The queries entered when searching.",
           "sync_watchlist": "Series and titles on the Watchlist, including the “keep checking” flag. The check then only needs to run on one device.",
-          "sync_concerts": "Concerts found in third-party storages are shared with the other devices in the group; each device shows only files from the sources it has enabled. Files from your own storage stay on this device."
+          "sync_concerts": "Files from your own storage stay on this device. Concerts found in the third-party storages you have enabled are shared with the other devices in the group; each device shows only files from the sources it has enabled."
         }
       },
       "ostatni": {
@@ -427,7 +441,7 @@
   "services": {
     "search": {
       "name": "Search",
-      "description": "Searches for a movie or series in the sources (Luna, Sosáč), directly on WebShare, or in the movie database (`catalog` / `catalog_series` – finds titles no source has yet). Returns results as a response.",
+      "description": "Searches for a movie or series in the catalogues of the enabled sources (Luna, Sosáč, WebShare) or in the movie database (`catalog` / `catalog_series` – finds titles no source has yet). Returns results as a response.",
       "fields": {
         "query": {
           "name": "Query"

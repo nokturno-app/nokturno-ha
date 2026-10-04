@@ -122,9 +122,23 @@
           "luna_url": "Adresa zařízení, kde Luna běží, s portem 7126 – u doplňku v Home Assistantu jeho jméno, u Luny na TV boxu, počítači nebo NAS jejich IP adresa. Vložit lze i celou instalační adresu ze stránky /setup, token se z ní načte."
         }
       },
+      "uloziste1": {
+        "title": "Úložiště 1 (WebDAV)",
+        "description": "Nokturno přehrává hlavně z tvého vlastního úložiště (WebDAV – NAS, Nextcloud). Vyplň adresu složky, nebo krok přeskoč a úložiště doplň později v Nastavení integrace.",
+        "data": {
+          "dav1_url": "Adresa složky (WebDAV)",
+          "dav1_username": "Uživatel",
+          "dav1_password": "Heslo",
+          "dav1_name": "Název u streamů"
+        },
+        "data_description": {
+          "dav1_url": "Adresa složky s filmy a seriály na NAS nebo v Nextcloudu. Musí být dosažitelná z Home Assistantu.",
+          "dav1_name": "Název úložiště zobrazený u jeho streamů."
+        }
+      },
       "vyber_zdroju": {
-        "title": "Zdroje",
-        "description": "Vyber zdroje, které chceš používat. U vybraných se v dalších krocích zeptáme na účet. Vše jde později změnit v Nastavení integrace.",
+        "title": "Volitelné zdroje",
+        "description": "Úložiště třetích stran jsou volitelná a ve výchozím stavu vypnutá. Vyber jen ta, která chceš používat. U vybraných se v dalších krocích zeptáme na účet. Vše jde později změnit v Nastavení integrace.",
         "data": {
           "zdroje": "Zdroje"
         }
@@ -162,7 +176,7 @@
       },
       "init": {
         "title": "Nokturno",
-        "description": "Vyber, co chceš nastavit. Změny se uloží až volbou **Uložit a zavřít**.\n\nZapnuté zdroje: {zdroje}\nVlastní úložiště: {uloziste}",
+        "description": "Vyber, co chceš nastavit. Změny se uloží až volbou **Uložit a zavřít**.\n\nVlastní úložiště: {uloziste}\nZapnuté zdroje třetích stran: {zdroje}",
         "menu_options": {
           "prehravani": "Přehrávání",
           "zdroje": "Zdroje a účty",
@@ -175,7 +189,7 @@
       },
       "zdroje": {
         "title": "Zdroje a účty",
-        "description": "Zapnuté: {zdroje}",
+        "description": "Volitelná úložiště třetích stran. Zapnuté: {zdroje}",
         "menu_options": {
           "webshare": "WebShare",
           "sosac": "Sosáč",
@@ -309,7 +323,7 @@
       },
       "uloziste1": {
         "title": "Úložiště 1 (WebDAV)",
-        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
         "data": {
           "dav1_enabled": "Použít toto úložiště",
           "dav1_url": "Adresa složky (WebDAV)",
@@ -324,7 +338,7 @@
       },
       "uloziste2": {
         "title": "Úložiště 2 (WebDAV)",
-        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
         "data": {
           "dav2_enabled": "Použít toto úložiště",
           "dav2_url": "Adresa složky (WebDAV)",
@@ -339,7 +353,7 @@
       },
       "uloziste3": {
         "title": "Úložiště 3 (WebDAV)",
-        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nalezené soubory se nabídnou jako další streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
         "data": {
           "dav3_enabled": "Použít toto úložiště",
           "dav3_url": "Adresa složky (WebDAV)",
@@ -385,7 +399,7 @@
           "sync_favourites": "Tituly přidané do Mého seznamu v kartě i v doplňku.",
           "sync_history": "Dotazy zadané při hledání.",
           "sync_watchlist": "Seriály a tituly v Hlídaných i s příznakem „kontrolovat dál“. Kontrolu pak stačí udělat na jednom zařízení.",
-          "sync_concerts": "Koncerty nalezené v úložištích třetích stran se sdílí s ostatními zařízeními ve skupině, každé ukáže jen soubory ze zdrojů, které má zapnuté. Soubory z vlastního úložiště zůstávají jen na tomto zařízení."
+          "sync_concerts": "Soubory z vlastního úložiště zůstávají jen na tomto zařízení. Koncerty nalezené v úložištích třetích stran, která máš povolená a nastavená, se sdílí s ostatními zařízeními ve skupině, každé ukáže jen soubory ze zdrojů, které má zapnuté."
         }
       },
       "ostatni": {
@@ -427,7 +441,7 @@
   "services": {
     "search": {
       "name": "Hledat",
-      "description": "Vyhledá film nebo seriál ve zdrojích (Luna, Sosáč), přímo ve WebShare, nebo v databázi filmů (`catalog` / `catalog_series` – najde i tituly, které zatím nikde nejsou). Vrací výsledky jako odpověď.",
+      "description": "Vyhledá film nebo seriál v katalozích zapnutých zdrojů (Luna, Sosáč, WebShare) nebo v databázi filmů (`catalog` / `catalog_series` – najde i tituly, které zatím nikde nejsou). Vrací výsledky jako odpověď.",
       "fields": {
         "query": {
           "name": "Dotaz"

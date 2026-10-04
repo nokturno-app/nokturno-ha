@@ -17,7 +17,7 @@
  *   downloads: sensor.nokturno_stahovani
  */
 
-const CARD_VERSION = "10.4.0";
+const CARD_VERSION = "10.4.1";
 console.info(`%c NOKTURNO-CARD %c ${CARD_VERSION} `, "background:#5b4b8a;color:#fff;border-radius:3px 0 0 3px", "background:#f0b429;color:#222;border-radius:0 3px 3px 0");
 
 const SOURCE_COLORS = { "Luna": "#8e7cc3", "WebShare": "#4a90d9", "Sosáč": "#e08b3c",
@@ -50,7 +50,7 @@ const SK = {
   "Zkopíruj odkaz (Ctrl+C):": "Skopíruj odkaz (Ctrl+C):",
   "Titul se nepodařilo najít.": "Titul sa nepodarilo nájsť.",
   "Název filmu nebo seriálu": "Názov filmu alebo seriálu",
-  "Hledat ve všech zapnutých zdrojích": "Hľadať vo všetkých zapnutých zdrojoch",
+  "Hledat ve vlastním úložišti i zapnutých zdrojích": "Hľadať vo vlastnom úložisku aj zapnutých zdrojoch",
   "Hledat": "Hľadať",
   "Vymazat cache hledání a streamů": "Vymazať cache vyhľadávania a streamov",
   "Zopakovat hledání „{0}“": "Zopakovať hľadanie „{0}“",
@@ -921,7 +921,7 @@ class NokturnoCard extends HTMLElement {
         <div class="bar" id="search">
           <ha-input id="q" placeholder="${this._t("Název filmu nebo seriálu")}" with-clear></ha-input>
           <div class="searchrow">
-            <ha-control-button id="go" title="${this._t("Hledat ve všech zapnutých zdrojích")}"><ha-icon icon="mdi:magnify"></ha-icon> ${this._t("Hledat")}<span class="pct"></span></ha-control-button>
+            <ha-control-button id="go" title="${this._t("Hledat ve vlastním úložišti i zapnutých zdrojích")}"><ha-icon icon="mdi:magnify"></ha-icon> ${this._t("Hledat")}<span class="pct"></span></ha-control-button>
             <ha-control-button id="clearcache" title="${this._t("Vymazat cache hledání a streamů")}"><ha-icon icon="mdi:trash-can-outline"></ha-icon></ha-control-button>
           </div>
           <ha-control-select id="type"></ha-control-select>

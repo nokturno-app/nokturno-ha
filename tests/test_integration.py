@@ -414,7 +414,12 @@ class TestSouboryProHomeAssistant(unittest.TestCase):
 
         result = asyncio.run(flow.async_step_user({"terms_accepted": True}))
         self.assertEqual(result, ("form", "prehravani"))
-        self.assertEqual(asyncio.run(flow.async_step_prehravani({"pref_lang": "—"})), ("form", "vyber_zdroju"))
+        self.assertEqual(asyncio.run(flow.async_step_prehravani({"pref_lang": "—"})), ("form", "uloziste1"))
+        # vlastní úložiště je první, bez přepínače; prázdné jde přeskočit
+        self.assertNotIn("dav1_enabled", {m.schema for m in shown[-1]["data_schema"].schema})
+        self.assertEqual(asyncio.run(flow.async_step_uloziste1({})), ("form", "vyber_zdroju"))
+        # zdroje třetích stran jsou ve výchozím stavu vypnuté
+        self.assertEqual([m.default for m in shown[-1]["data_schema"].schema], [[]])
         # vybrané zdroje s účtem dostanou svůj krok (bez přepínače), HellSpy ne
         result = asyncio.run(flow.async_step_vyber_zdroju({"zdroje": ["hellspy", "webshare"]}))
         self.assertEqual(result, ("form", "webshare"))
@@ -542,9 +547,9 @@ class TestPrehrajto(unittest.TestCase):
         self.assertIn(const.CONF_PT_PASS, config_flow.SECRET_KEYS)
         self.assertNotIn(const.CONF_PT_EMAIL, config_flow.SECRET_KEYS)
 
-    def test_zapnute_ve_vychozim_stavu(self):
+    def test_vypnute_ve_vychozim_stavu(self):
         vychozi = {m.schema: m.default for m in config_flow.preferences_schema({}).schema}
-        self.assertIs(vychozi[const.CONF_PT_ENABLED], True)
+        self.assertIs(vychozi[const.CONF_PT_ENABLED], False)
         # uložený vypnutý stav se respektuje
         u = {m.schema: m.default for m in config_flow.preferences_schema({const.CONF_PT_ENABLED: False}).schema}
         self.assertIs(u[const.CONF_PT_ENABLED], False)

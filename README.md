@@ -43,9 +43,9 @@ Přehrávač a vyhledávač pro Home Assistant – nad tvým vlastním úložiš
 <summary><b>Všechny funkce podrobně</b></summary>
 
 - **Vlastní úložiště** (od 3.1.1) – až tři WebDAV složky (NAS, Nextcloud, server) v nastavení integrace. Soubory, které k titulu patří, jsou v kartě mezi streamy první se zeleným štítkem. Kodi je přehraje rovnou s heslem v hlavičce, ostatní přehrávače, odkazy do mobilu i stahování jdou přes Home Assistant (podepsaný odkaz na `/api/nokturno/storage/…`, přetáčení funguje, heslo z HA neodejde). Podrobně v [návodu](https://nokturno-app.github.io/nokturno-napoveda/navody/ha/nastaveni#vlastni-uloziste).
-- **Jedno hledání ve všech zapnutých zdrojích** – stejný titul z Luny i Sosáče se sloučí do jedné položky, streamy se pak nabídnou ze všech zdrojů naráz (vlastní úložiště, WebShare, Sosáč, HellSpy, Sledujteto, FastShare, Přehraj.to, CZtor, Luna). Stejný soubor nalezený víc cestami se ukáže jednou. U každého streamu je zdroj, kvalita, název souboru, jazyky zvuku i titulků a velikost.
+- **Jedno hledání ve vlastním úložišti i ve volitelných zdrojích** – stejný titul z Luny i Sosáče se sloučí do jedné položky, streamy se pak nabídnou naráz – nejdřív z vlastního úložiště, pak z volitelně zapnutých úložišť třetích stran (WebShare, Sosáč, HellSpy, Sledujteto, FastShare, Přehraj.to, CZtor, Luna). Stejný soubor nalezený víc cestami se ukáže jednou. U každého streamu je zdroj, kvalita, název souboru, jazyky zvuku i titulků a velikost.
 - **CZtor jako sedmý volitelný zdroj** (od 6.0.0) – placený katalog cztor.com. Zapneš přepínačem v nastavení integrace a spáruješ ho PINem z `cztor.com/activate`; heslo integrace nevidí. Podrobně v [nápovědě](https://nokturno-app.github.io/nokturno-napoveda/cs/cztor).
-- **Přehraj.to jako osmý volitelný zdroj** (od 7.1.0) – zapnuté ve výchozím stavu, **funguje i bez účtu** (první strana výsledků a překódovaný soubor v 1080p). Nepovinný Premium účet (pole v nastavení integrace) přidá stránkování a původní soubor včetně 4K.
+- **Přehraj.to jako osmý volitelný zdroj** (od 7.1.0) – zapneš přepínačem v nastavení integrace, **funguje i bez účtu** (první strana výsledků a překódovaný soubor v 1080p). Nepovinný Premium účet (pole v nastavení integrace) přidá stránkování a původní soubor včetně 4K.
 - **Stav zdrojů** (od 6.3.2) – `sensor.nokturno_stav_zdroju` počítá zdroje, které potřebují zásah (vypršelé předplatné, nespárovaný CZtor, Luna, která neběží…); `0` = vše v pořádku.
 - **Přehrání v Kodi přes doplněk Nokturno**, takže si Kodi vede „Pokračovat ve sledování" a pamatuje si pozici. Ostatní přehrávače (TV, Cast) dostanou přímé URL.
 - **Odeslání do mobilu** – notifikace s odkazem, klepnutím se spustí ve VLC (posílá se jako Android intent s typem videa, jinak by telefon soubor jen stáhl).
@@ -87,11 +87,11 @@ Zkopíruj složku `custom_components/nokturno` do své konfigurace a restartuj H
 
 ## Nastavení integrace
 
-Vlastní úložiště (WebDAV) nastavíš přímo v tomhle formuláři – nic dalšího není potřeba. Formulář má sbalitelné sekce **Přehrávání**, **Zdroje a účty**, **Vlastní úložiště**, **Stahování a odkazy**, **Synchronizace s Kodi** a **Ostatní**; vyplň jen to, co chceš používat. Hesla se zadávají skrytě a ukládají se odděleně od předvoleb.
+Vlastní úložiště (WebDAV) nastavíš přímo v tomhle formuláři – nic dalšího není potřeba. Nastavení má kroky **Přehrávání**, **Vlastní úložiště**, **Zdroje a účty**, **Stahování**, **Synchronizace** a **Ostatní**. Průvodce při přidání integrace se po přehrávání ptá nejdřív na vlastní úložiště, volitelné zdroje třetích stran jsou ve výchozím stavu vypnuté; vyplň jen to, co chceš používat. Hesla se zadávají skrytě a ukládají se odděleně od předvoleb.
 
 <img src="https://raw.githubusercontent.com/nokturno-app/nokturno-ha/main/docs/05-nastaveni.jpg" alt="Nastavení integrace – sekce Přehrávání" width="400">
 
-Volitelné vyhledávače (sekce *Zdroje a účty*):
+Volitelná úložiště třetích stran (krok *Zdroje a účty*), všechna ve výchozím stavu vypnutá:
 
 | Pole | Bez čeho to nejde | Co tím získáš |
 |---|---|---|
@@ -100,12 +100,12 @@ Volitelné vyhledávače (sekce *Zdroje a účty*):
 | HellSpy – jen přepínač | nic, rozhraní je veřejné | další soubory k titulu z hellspy.to. Nabízí se původní soubor, ne překódování, takže velikost i kvalita v seznamu odpovídají tomu, co se přehraje. Rychlost bez účtu kolísá, naměřeno 37 až 400 Mb/s. |
 | Sledujteto – e-mail a heslo (od 3.0.0) | účet Sledujteto, k přehrání **Premium** | další soubory k titulu ze sledujteto.cz; rozlišení, kanály a kodek zvuku posílá přímo jejich API, soubor se nečte |
 | FastShare / Sdilej.cz – uživatel, heslo a *účet z* (od 5.1.0) | účet FastShare nebo Sdilej.cz (volba *účet z*, od 8.4.0), přehrání z **kreditu** nebo neomezeného tarifu | další soubory k titulu z fastshare.cz; hledá se i bez účtu, zvuk se dočte z hlavičky souboru (pár set kB z kreditu, jednou za 30 dní). Mimo Kodi jde soubor přes HA – přehrávač cookie z přihlášení neumí poslat. [Nápověda](https://nokturno-app.github.io/nokturno-napoveda/cs/sdilej-cz) |
-| Přehraj.to – přepínač, e-mail a heslo (od 7.1.0) | nic, zapnuté ve výchozím stavu | další soubory k titulu z prehraj.to. Bez účtu první strana výsledků a překódovaný soubor v 1080p, s Premium účtem stránkování a původní soubor včetně 4K. |
+| Přehraj.to – přepínač, e-mail a heslo (od 7.1.0) | nic, stačí zapnout přepínač | další soubory k titulu z prehraj.to. Bez účtu první strana výsledků a překódovaný soubor v 1080p, s Premium účtem stránkování a původní soubor včetně 4K. |
 | CZtor – přepínač a PIN (od 6.0.0) | placený účet cztor.com | další soubory k titulu; po zapnutí se otevře krok s PINem z `cztor.com/activate`, tokeny se ukládají do `.storage/nokturno/`, heslo ne |
 | Luna – adresa, token | běžící server [Luna](https://stremio.cz/d/47-luna-absolute-cinema-addon-pro-prehravani-sifrovaneho-obsahu-z-webshare) v síti: addon HA, APK na Android TV boxu nebo program pro Windows/Linux/macOS/NAS; vždy s WebShare VIP | katalogy a metadata z TMDB (české názvy, popisy, plakáty) a streamy z WebShare přes Lunu. Token lze vložit i jako celou instalační URL, adresa se z ní vytáhne sama. |
 | TMDB – API klíč | zdarma klíč z [themoviedb.org](https://www.themoviedb.org/signup) (ikona profilu → *Nastavení* → *API* → *Request an API Key* → *Developer* → zkopírovat **API Key (v3 auth)**) | vlastní databáze filmů a seriálů – jakmile je klíč vyplněný, katalog i hledání jedou přes TMDB **přednostně i před Lunou** (umí i český popis a obsazení, ne jen název); Luna zůstává zdrojem streamů. Bez klíče je primární Luna (je-li dostupná), jinak zdarma veřejný katalog Sosáče a nakonec Cinemeta (obojí bez popisu, nebo jen anglicky). |
 
-Stačí jeden zdroj – integrace se přizpůsobí tomu, co je vyplněné. Katalog i hledání titulů fungují dokonce i úplně bez jediného vyplněného zdroje (viz [Vlastní databáze filmů a seriálů](#vlastní-databáze-filmů-a-seriálů) níž). HellSpy a Přehraj.to jsou zapnuté a vypínají se v sekci *Zdroje a účty*.
+Hlavní je vlastní úložiště, volitelné zdroje stačí podle potřeby – integrace se přizpůsobí tomu, co je zapnuté. Katalog i hledání titulů fungují dokonce i úplně bez jediného vyplněného zdroje (viz [Vlastní databáze filmů a seriálů](#vlastní-databáze-filmů-a-seriálů) níž). Každý zdroj třetí strany zapneš přepínačem v kroku *Zdroje a účty*; od 10.4.1 jsou u nové instalace všechny vypnuté.
 
 ### Vlastní databáze filmů a seriálů
 
@@ -193,7 +193,7 @@ Mřížka plakátů s názvem a rokem. Po klepnutí se přes plakát položí ko
 
 | Situace | Co karta udělá |
 |---|---|
-| Napíšeš název | zeptá se Luny i Sosáče naráz a stejný titul z obou spojí do jedné dlaždice |
+| Napíšeš název | najde titul v katalogu (TMDB, případně zapnutá Luna nebo Sosáč) a stejný titul z víc katalogů spojí do jedné dlaždice; streamy pak hledá nejdřív ve vlastním úložišti |
 | Napíšeš rok („Duna 2021") | rok odřízne z dotazu a použije ho jako filtr; projdou tituly z toho roku a ty, u kterých zdroj rok neuvádí |
 | Číslo patří k názvu („Blade Runner 2049", „2012") | rok v budoucnosti se nebere jako filtr, hledá se celý název |
 | Dotaz sedí jen na seriál (nebo jen na film) | výsledky se ukážou rovnou, přepínač *Filmy / Seriály* zůstane skrytý |
@@ -223,7 +223,7 @@ Nahoře fanart a popis (klepnutím se rozbalí celý), pod ním název s rokem, 
 
 <img src="https://raw.githubusercontent.com/nokturno-app/nokturno-ha/main/docs/04-streamy.jpg" alt="Streamy" width="352">
 
-Každý řádek má **štítek zdroje** (WebShare modrý, Sosáč oranžový, Luna fialová, HellSpy červený, Sledujteto tyrkysový, FastShare zlatý, Přehraj.to růžový; vlastní úložiště zelený se svým názvem) s 🌐 u odkazů, které hrají i mimo domácí síť, **nad** popisem `kvalita · název souboru · zvuk · titulky · velikost`, který jde přes celou šířku karty. Tlačítka jsou pod ním na vlastním řádku, takže nezkracují název. Po najetí myší se v bublině ukáže celý název souboru, titulky, bitrate a jestli hraje venku. Kvalita s vlnovkou (`~4K`) je odhad z velikosti souboru – zdroj ji v názvu neuvedl. Čtyři akce:
+Každý řádek má **štítek zdroje** (vlastní úložiště zelený se svým názvem, WebShare modrý, Sosáč oranžový, Luna fialová, HellSpy červený, Sledujteto tyrkysový, FastShare zlatý, Přehraj.to růžový) s 🌐 u odkazů, které hrají i mimo domácí síť, **nad** popisem `kvalita · název souboru · zvuk · titulky · velikost`, který jde přes celou šířku karty. Tlačítka jsou pod ním na vlastním řádku, takže nezkracují název. Po najetí myší se v bublině ukáže celý název souboru, titulky, bitrate a jestli hraje venku. Kvalita s vlnovkou (`~4K`) je odhad z velikosti souboru – zdroj ji v názvu neuvedl. Čtyři akce:
 
 | Ikona | Co udělá |
 |---|---|
@@ -362,7 +362,7 @@ actions:
 
 ## Jak to funguje uvnitř
 
-- **Zdroje jsou rovnocenné** a žádný není povinný. Luna přidává katalogy a metadata, Sosáč české tituly, WebShare fulltext a přímé odkazy, HellSpy další soubory bez nutnosti účtu.
+- **Hlavní je vlastní úložiště**, úložiště třetích stran jsou volitelná a žádné není povinné. Luna přidává katalogy a metadata, Sosáč české tituly, WebShare fulltext a přímé odkazy, HellSpy další soubory bez nutnosti účtu.
 - **Slučování titulů**: shoda názvu (i originálu) a roku ±1; u dlouhých názvů s podtitulem se zkouší i část před pomlčkou, protože fulltext Sosáče na celý název nic nenajde; id protějšku putuje dál jako `alt`, takže se u titulu nabídnou streamy z obou zdrojů.
 - **Odkazy mimo síť**: streamy z Luny míří na její adresu v LAN, proto se páruje s fulltextem WebShare podle velikosti (±0,25 GB) a kvality a k položce se přibalí přímý odkaz z CDN. Hledá se pod českým i originálním názvem (z Sosáče nebo z Cinemety). Zbytek se přepíše na `external_host`, pokud addon Tailscale běží.
 - **Jazyk zvuku** se bere z metadat zdroje a doplňuje z názvu souboru – Luna občas hlásí `EN` u souboru, který má v názvu `cz`. Značky pro titulky (`cz tit`, `cztit`) se do zvuku nepočítají.

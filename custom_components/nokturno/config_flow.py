@@ -104,8 +104,8 @@ def _kod_skupiny(accounts: dict) -> str | None:
 # Synchronizace, Ostatní a Uložit. Každý krok je krátký formulář. Změny se drží
 # v paměti flow (`_data`) a zapíšou se až volbou Uložit.
 #
-# Přidání integrace je průvodce: souhlas → přehrávání → výběr zdrojů → formuláře
-# jen vybraných zdrojů. Úložiště, stahování a synchronizace jsou až v Nastavení.
+# Přidání integrace je průvodce: souhlas → přehrávání → vlastní úložiště → výběr volitelných
+# zdrojů → formuláře jen vybraných zdrojů. Další úložiště, stahování a synchronizace jsou až v Nastavení.
 # Uloženo zůstává naplocho jako dřív (`entry.data` účty, `entry.options` předvolby).
 KROKY = {
     "prehravani": [CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONF_PREF_LANG, CONF_PREF_SURROUND,
@@ -130,9 +130,9 @@ ULOZISTE = [f"uloziste{n}" for n in range(1, len(STORAGE_OPTIONS) + 1)]
 PREPINAC = {jmeno: KROKY[jmeno][0] for jmeno in ZDROJE + ULOZISTE}
 JMENA_ZDROJU = {"webshare": "WebShare", "sosac": "Sosáč", "hellspy": "HellSpy", "sledujteto": "Sledujteto",
                 "fastshare": "FastShare / Sdilej.cz", "prehrajto": "Přehraj.to", "cztor_zdroj": "CZtor", "luna": "Luna"}
-MENU = ["prehravani", "zdroje", "uloziste", "stahovani", "synchronizace", "ostatni", "ulozit"]
-# v průvodci předvybrané – fungují bez účtu
-VYCHOZI_ZDROJE = ["hellspy", "prehrajto"]
+MENU = ["prehravani", "uloziste", "zdroje", "stahovani", "synchronizace", "ostatni", "ulozit"]
+# Zdroje třetích stran jsou volitelné: v průvodci nepředvybírá nic, zapne je jen uživatel sám.
+VYCHOZI_ZDROJE: list[str] = []
 
 
 def _pole(current: dict) -> dict:
@@ -240,13 +240,13 @@ def preferences_schema(data: dict) -> vol.Schema:
         vol.Optional(CONF_FS_PROVIDER, default=data.get(CONF_FS_PROVIDER, "fastshare")):
             selector.SelectSelector(selector.SelectSelectorConfig(
                 options=list(FS_PROVIDERS), translation_key="fs_provider")),
-        vol.Optional(CONF_HS_ENABLED, default=data.get(CONF_HS_ENABLED, True)): bool,
+        vol.Optional(CONF_HS_ENABLED, default=data.get(CONF_HS_ENABLED, False)): bool,
         # „Používat …“ u zdrojů s účtem — vypnutý zdroj si údaje nechá (`SOURCE_TOGGLES`)
         **{vol.Optional(k, default=data.get(k, True)): bool for k in SOURCE_TOGGLES},
         # Přehraj.to funguje i bez účtu (první strana + překódovaný soubor), účet
         # je nepovinný a přidá stránkování i původní soubor — proto zapnuté ve výchozím
         # stavu jako HellSpy; e-mail a heslo jsou v ACCOUNT_KEYS (entry.data)
-        vol.Optional(CONF_PT_ENABLED, default=data.get(CONF_PT_ENABLED, True)): bool,
+        vol.Optional(CONF_PT_ENABLED, default=data.get(CONF_PT_ENABLED, False)): bool,
         # CZtor účet do formuláře nepatří — zařízení se spáruje PINem v dalším kroku (`CztorPairing`)
         vol.Optional(CONF_CZ_ENABLED, default=data.get(CONF_CZ_ENABLED, False)): bool,
         # 0 = upozornění na konec předplatného WebShare vypnuté
@@ -349,7 +349,7 @@ for _jmeno in KROKY:
 
 
 class NokturnoConfigFlow(Kroky, ConfigFlow, domain=DOMAIN):
-    """Průvodce: souhlas → přehrávání → výběr zdrojů → údaje vybraných zdrojů.
+    """Průvodce: souhlas → přehrávání → vlastní úložiště → výběr volitelných zdrojů → údaje vybraných zdrojů.
     Zbytek (úložiště, stahování, synchronizace…) je v Nastavení integrace."""
 
     VERSION = 1
@@ -389,6 +389,9 @@ class NokturnoConfigFlow(Kroky, ConfigFlow, domain=DOMAIN):
 
     async def _po_kroku(self, jmeno):
         if jmeno == "prehravani":
+            return await self.async_step_uloziste1()
+        if jmeno == "uloziste1":
+            self._data["dav1_enabled"] = True
             return await self.async_step_vyber_zdroju()
         return await self._dalsi()
 
