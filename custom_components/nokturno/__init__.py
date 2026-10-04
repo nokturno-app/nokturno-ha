@@ -155,6 +155,9 @@ PLAY_SCHEMA = STREAMS_SCHEMA.extend({
     vol.Optional("stream"): vol.Any(vol.Coerce(int), None),
     vol.Optional("url"): vol.Any(cv.string, None),
     vol.Optional("direct", default=False): cv.boolean,
+    # `url` z Pokračovat ve sledování: stream je známý, nehledat znovu
+    vol.Optional("known", default=False): cv.boolean,
+    vol.Optional("subs"): vol.Any(cv.string, None),
 })
 
 RESOLVE_SCHEMA = STREAMS_SCHEMA.extend({
@@ -1596,6 +1599,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             if not call_data.get("id"):
                 # holá adresa bez titulu (automatizace) — nic k dohledání
                 return None, None, None, None, {"url": url, "label": "", "subtitles": []}
+            if call_data.get("known"):
+                # stream, na kterém titul skončil (Pokračovat ve sledování) – bez nového hledání
+                subs = [x for x in str(call_data.get("subs") or "").split("|") if x]
+                return (call_data.get("type", "movie"), call_data["id"], call_data.get("series"),
+                        call_data.get("alt"), {"url": url, "label": call_data.get("name") or "", "subtitles": subs})
             # adresu si HA nepamatuje (restart mezi výpisem a kliknutím) — spočítat znovu a najít ji tam
         ctype, item_id, series, alt, streams, warnings = await _streams(call_data)
         if not streams:

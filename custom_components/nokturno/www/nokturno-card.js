@@ -17,7 +17,7 @@
  *   downloads: sensor.nokturno_stahovani
  */
 
-const CARD_VERSION = "10.5.0";
+const CARD_VERSION = "10.6.0";
 console.info(`%c NOKTURNO-CARD %c ${CARD_VERSION} `, "background:#5b4b8a;color:#fff;border-radius:3px 0 0 3px", "background:#f0b429;color:#222;border-radius:0 3px 3px 0");
 
 const SOURCE_COLORS = { "Luna": "#8e7cc3", "WebShare": "#4a90d9", "Sosáč": "#e08b3c",
@@ -659,6 +659,29 @@ class NokturnoCard extends HTMLElement {
       } else {
         window.prompt(this._t("Zkopíruj odkaz (Ctrl+C):"), res.url);
       }
+    });
+  }
+
+  /** Stream, na kterém titul skončil – nese ho plugin odkaz z Kodi (`action=play&url=…`). */
+  _continueStream(item) {
+    const params = new URLSearchParams(((item && item.file) || "").split("?")[1] || "");
+    return params.get("action") === "play" && params.get("id") && params.get("url") ? params : null;
+  }
+
+  /** Rozkoukané: pustí stejný stream bez nového hledání, přehrávač se vybírá jako u Přehrát. */
+  async _playContinue(item) {
+    const params = this._continueStream(item);
+    const entityId = await this._choose("player");
+    if (!entityId) { if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    this._state.player = entityId;
+    await this._guard(async () => {
+      await this._call("play", {
+        id: params.get("id"), type: params.get("type") || (item.series ? "series" : "movie"),
+        series: params.get("series") || undefined, alt: params.get("alt") || undefined,
+        url: params.get("url"), subs: params.get("subs") || undefined,
+        name: item.label || item.title, known: true, entity_id: entityId,
+      }, false);
+      this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
     });
   }
 
@@ -1758,8 +1781,11 @@ class NokturnoCard extends HTMLElement {
     }
     if (data.histclear !== undefined) return this._call("clear_history", {}, false).then(() => this._paint());
     if (data.cont !== undefined) {
+      const item = st.continueItems[+data.cont];
+      // klik = stejný stream, na kterém titul skončil; dlouhý stisk = výběr streamu
+      if (!long && this._continueStream(item)) return this._playContinue(item);
       st.loading = `cont:${+data.cont}`;
-      return this._openContinue(st.continueItems[+data.cont]);
+      return this._openContinue(item);
     }
     if (data.contremove !== undefined) {
       const item = st.continueItems[+data.contremove];
