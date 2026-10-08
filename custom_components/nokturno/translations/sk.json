@@ -31,6 +31,9 @@
           "pref_lang": "Preferovaný jazyk zvuku",
           "pref_surround": "Preferovať priestorový zvuk (5.1 a viac)",
           "hide_sd": "Skryť SD streamy",
+          "hide_3d": "Skryť 3D streamy",
+          "hide_dv": "Skryť Dolby Vision streamy",
+          "hide_hdr": "Skryť HDR streamy",
           "sort_streams": "Radenie streamov",
           "max_bitrate_mbps": "Max. dátový tok (Mb/s, 0 = bez obmedzenia)",
           "multi_play": "Prehrávanie pri viacerých prehrávačoch"
@@ -40,6 +43,9 @@
           "pref_lang": "Streamy s týmto jazykom zvuku sa v ponuke radia prvé. Pri slovenčine sa počítajú aj české titulky a naopak. „—“ = jazyk sa nezohľadňuje.",
           "pref_surround": "Priestorový zvuk 5.1 a vyšší sa radí pred stereo. Ovplyvňuje iba poradie, stereo streamy z ponuky nemiznú.",
           "hide_sd": "Streamy s rozlíšením pod 720p sa do ponuky nezaradia. Pri starších tituloch tým ponuka môže zostať prázdna.",
+          "hide_3d": "Súbory 3D (podľa názvu: 3D, H-SBS, Half-OU, MVC, alebo podľa hlavičky MKV) sa nezobrazia nikdy, ani keď iný stream nie je.",
+          "hide_dv": "Súbory Dolby Vision (podľa názvu: DV, DoVi, Dolby Vision) sa nezobrazia nikdy, ani keď iný stream nie je.",
+          "hide_hdr": "Súbory HDR, vrátane Dolby Vision (podľa názvu: HDR, HDR10, HDR10+, DV, DoVi, Dolby Vision), sa nezobrazia nikdy, ani keď iný stream nie je.",
           "sort_streams": "Kritérium poradia streamov vo chvíli, keď je jazyk aj zvuk zhodný.",
           "max_bitrate_mbps": "Horná hranica dátového toku streamu. 0 = bez obmedzenia.",
           "multi_play": "Platí, len keď je nastavený viac než jeden prehrávač. „Spýtať sa“ po klepnutí na Prehrať ukáže okno s výberom, „prvý v zozname“ spustí prehrávanie rovno na prvom prehrávači a výber otvorí dlhé stlačenie tlačidla."
@@ -220,6 +226,9 @@
           "pref_lang": "Preferovaný jazyk zvuku",
           "pref_surround": "Preferovať priestorový zvuk (5.1 a viac)",
           "hide_sd": "Skryť SD streamy",
+          "hide_3d": "Skryť 3D streamy",
+          "hide_dv": "Skryť Dolby Vision streamy",
+          "hide_hdr": "Skryť HDR streamy",
           "sort_streams": "Radenie streamov",
           "max_bitrate_mbps": "Max. dátový tok (Mb/s, 0 = bez obmedzenia)",
           "multi_play": "Prehrávanie pri viacerých prehrávačoch"
@@ -229,6 +238,9 @@
           "pref_lang": "Streamy s týmto jazykom zvuku sa v ponuke radia prvé. Pri slovenčine sa počítajú aj české titulky a naopak. „—“ = jazyk sa nezohľadňuje.",
           "pref_surround": "Priestorový zvuk 5.1 a vyšší sa radí pred stereo. Ovplyvňuje iba poradie, stereo streamy z ponuky nemiznú.",
           "hide_sd": "Streamy s rozlíšením pod 720p sa do ponuky nezaradia. Pri starších tituloch tým ponuka môže zostať prázdna.",
+          "hide_3d": "Súbory 3D (podľa názvu: 3D, H-SBS, Half-OU, MVC, alebo podľa hlavičky MKV) sa nezobrazia nikdy, ani keď iný stream nie je.",
+          "hide_dv": "Súbory Dolby Vision (podľa názvu: DV, DoVi, Dolby Vision) sa nezobrazia nikdy, ani keď iný stream nie je.",
+          "hide_hdr": "Súbory HDR, vrátane Dolby Vision (podľa názvu: HDR, HDR10, HDR10+, DV, DoVi, Dolby Vision), sa nezobrazia nikdy, ani keď iný stream nie je.",
           "sort_streams": "Kritérium poradia streamov vo chvíli, keď je jazyk aj zvuk zhodný.",
           "max_bitrate_mbps": "Horná hranica dátového toku streamu. 0 = bez obmedzenia.",
           "multi_play": "Platí, len keď je nastavený viac než jeden prehrávač. „Spýtať sa“ po klepnutí na Prehrať ukáže okno s výberom, „prvý v zozname“ spustí prehrávanie rovno na prvom prehrávači a výber otvorí dlhé stlačenie tlačidla."

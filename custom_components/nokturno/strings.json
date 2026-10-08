@@ -31,6 +31,9 @@
           "pref_lang": "Preferred audio language",
           "pref_surround": "Prefer surround sound (5.1 and up)",
           "hide_sd": "Hide SD streams",
+          "hide_3d": "Hide 3D streams",
+          "hide_dv": "Hide Dolby Vision streams",
+          "hide_hdr": "Hide HDR streams",
           "sort_streams": "Stream order",
           "max_bitrate_mbps": "Max. bitrate (Mb/s, 0 = unlimited)",
           "multi_play": "Playback with several players"
@@ -40,6 +43,9 @@
           "pref_lang": "Streams with this audio language are listed first. For Czech, Slovak subtitles count as well, and the other way round. “—” = language is not taken into account.",
           "pref_surround": "Surround 5.1 and above ranks above stereo. Affects ordering only; stereo streams stay in the list.",
           "hide_sd": "Streams below 720p are left out of the list. With older titles this can leave the list empty.",
+          "hide_3d": "3D files (by name: 3D, H-SBS, Half-OU, MVC, or by the MKV header) are never shown, not even when there is no other stream.",
+          "hide_dv": "Dolby Vision files (by name: DV, DoVi, Dolby Vision) are never shown, not even when there is no other stream.",
+          "hide_hdr": "HDR files, including Dolby Vision (by name: HDR, HDR10, HDR10+, DV, DoVi, Dolby Vision), are never shown, not even when there is no other stream.",
           "sort_streams": "How streams are ordered when language and audio are the same.",
           "max_bitrate_mbps": "Upper limit on stream bitrate. 0 = unlimited.",
           "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
@@ -220,6 +226,9 @@
           "pref_lang": "Preferred audio language",
           "pref_surround": "Prefer surround sound (5.1 and up)",
           "hide_sd": "Hide SD streams",
+          "hide_3d": "Hide 3D streams",
+          "hide_dv": "Hide Dolby Vision streams",
+          "hide_hdr": "Hide HDR streams",
           "sort_streams": "Stream order",
           "max_bitrate_mbps": "Max. bitrate (Mb/s, 0 = unlimited)",
           "multi_play": "Playback with several players"
@@ -229,6 +238,9 @@
           "pref_lang": "Streams with this audio language are listed first. For Czech, Slovak subtitles count as well, and the other way round. “—” = language is not taken into account.",
           "pref_surround": "Surround 5.1 and above ranks above stereo. Affects ordering only; stereo streams stay in the list.",
           "hide_sd": "Streams below 720p are left out of the list. With older titles this can leave the list empty.",
+          "hide_3d": "3D files (by name: 3D, H-SBS, Half-OU, MVC, or by the MKV header) are never shown, not even when there is no other stream.",
+          "hide_dv": "Dolby Vision files (by name: DV, DoVi, Dolby Vision) are never shown, not even when there is no other stream.",
+          "hide_hdr": "HDR files, including Dolby Vision (by name: HDR, HDR10, HDR10+, DV, DoVi, Dolby Vision), are never shown, not even when there is no other stream.",
           "sort_streams": "How streams are ordered when language and audio are the same.",
           "max_bitrate_mbps": "Upper limit on stream bitrate. 0 = unlimited.",
           "multi_play": "Applies only when more than one player is set. “Ask” opens a list of players when Play is tapped; “first one listed” starts playback right away on the first player and a long press on the button opens the list."
