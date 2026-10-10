@@ -999,7 +999,7 @@ class TestVyberPrehravace(unittest.TestCase):
         self.assertIn(const.CONF_MULTI_PLAY, config_flow.KROKY["prehravani"])
 
     def test_dv_hdr_filtr_je_v_sekci_prehravani(self):
-        for klic in (const.CONF_HIDE_3D, const.CONF_HIDE_DV, const.CONF_HIDE_HDR):
+        for klic in (const.CONF_HIDE_3D, const.CONF_HIDE_DV, const.CONF_HIDE_DV_ONLY, const.CONF_HIDE_HDR, const.CONF_HIDE_AV1):
             self.assertIn(klic, config_flow.KROKY["prehravani"])
 
     def test_senzor_vystavuje_prehravace_i_rezim(self):

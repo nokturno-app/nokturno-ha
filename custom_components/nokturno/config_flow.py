@@ -32,7 +32,9 @@ from .const import (
     CONF_TRAKT_ID,
     CONF_TRAKT_SECRET,
     CONF_HIDE_3D,
+    CONF_HIDE_AV1,
     CONF_HIDE_DV,
+    CONF_HIDE_DV_ONLY,
     CONF_HIDE_HDR,
     CONF_HIDE_SD,
     CONF_KODI_ENTITY,
@@ -112,7 +114,8 @@ def _kod_skupiny(accounts: dict) -> str | None:
 # Uloženo zůstává naplocho jako dřív (`entry.data` účty, `entry.options` předvolby).
 KROKY = {
     "prehravani": [CONF_KODI_ENTITY, CONF_MULTI_PLAY, CONF_PREF_LANG, CONF_PREF_SURROUND,
-                   CONF_HIDE_SD, CONF_HIDE_3D, CONF_HIDE_DV, CONF_HIDE_HDR, CONF_MAX_BITRATE, CONF_SORT],
+                   CONF_HIDE_SD, CONF_HIDE_3D, CONF_HIDE_DV, CONF_HIDE_DV_ONLY, CONF_HIDE_HDR,
+                   CONF_HIDE_AV1, CONF_MAX_BITRATE, CONF_SORT],
     "webshare": ["ws_enabled", CONF_WS_USER, CONF_WS_PASS, CONF_SUB_WARN_DAYS],
     "sosac": ["sc_enabled", CONF_STREAMUJ_USER, CONF_STREAMUJ_PASS],
     "hellspy": [CONF_HS_ENABLED],
@@ -230,7 +233,9 @@ def preferences_schema(data: dict) -> vol.Schema:
         vol.Optional(CONF_HIDE_SD, default=data.get(CONF_HIDE_SD, False)): bool,
         vol.Optional(CONF_HIDE_3D, default=data.get(CONF_HIDE_3D, False)): bool,
         vol.Optional(CONF_HIDE_DV, default=data.get(CONF_HIDE_DV, False)): bool,
+        vol.Optional(CONF_HIDE_DV_ONLY, default=data.get(CONF_HIDE_DV_ONLY, False)): bool,
         vol.Optional(CONF_HIDE_HDR, default=data.get(CONF_HIDE_HDR, False)): bool,
+        vol.Optional(CONF_HIDE_AV1, default=data.get(CONF_HIDE_AV1, False)): bool,
         # NumberSelector místo vol.Range: HA by u nepovinného čísla kreslilo zaškrtávátko + posuvník
         vol.Optional(CONF_MAX_BITRATE, default=data.get(CONF_MAX_BITRATE, 0)):
             selector.NumberSelector(selector.NumberSelectorConfig(
