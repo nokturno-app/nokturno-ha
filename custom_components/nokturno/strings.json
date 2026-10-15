@@ -133,10 +133,10 @@
         }
       },
       "uloziste1": {
-        "title": "Storage 1 (WebDAV)",
-        "description": "Nokturno plays mainly from your own storage (WebDAV – NAS, Nextcloud). Fill in the folder address, or skip this step and add the storage later in the integration options.",
+        "title": "Storage 1 (WebDAV, SMB)",
+        "description": "Nokturno plays mainly from your own storage (WebDAV or SMB – NAS, Nextcloud). Fill in the folder address, or skip this step and add the storage later in the integration options.",
         "data": {
-          "dav1_url": "Folder address (WebDAV)",
+          "dav1_url": "Folder address (WebDAV, SMB)",
           "dav1_username": "Username",
           "dav1_password": "Password",
           "dav1_name": "Name shown with streams"
@@ -216,9 +216,9 @@
         "title": "Own storage",
         "description": "Configured: {uloziste}",
         "menu_options": {
-          "uloziste1": "Storage 1 (WebDAV)",
-          "uloziste2": "Storage 2 (WebDAV)",
-          "uloziste3": "Storage 3 (WebDAV)",
+          "uloziste1": "Storage 1 (WebDAV, SMB)",
+          "uloziste2": "Storage 2 (WebDAV, SMB)",
+          "uloziste3": "Storage 3 (WebDAV, SMB)",
           "init": "← Back"
         }
       },
@@ -342,11 +342,11 @@
         }
       },
       "uloziste1": {
-        "title": "Storage 1 (WebDAV)",
-        "description": "Your own folder over WebDAV (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
+        "title": "Storage 1 (WebDAV, SMB)",
+        "description": "Your own folder over WebDAV or SMB (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
         "data": {
           "dav1_enabled": "Use this storage",
-          "dav1_url": "Folder address (WebDAV)",
+          "dav1_url": "Folder address (WebDAV, SMB)",
           "dav1_username": "Username",
           "dav1_password": "Password",
           "dav1_name": "Name shown with streams"
@@ -357,11 +357,11 @@
         }
       },
       "uloziste2": {
-        "title": "Storage 2 (WebDAV)",
-        "description": "Your own folder over WebDAV (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
+        "title": "Storage 2 (WebDAV, SMB)",
+        "description": "Your own folder over WebDAV or SMB (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
         "data": {
           "dav2_enabled": "Use this storage",
-          "dav2_url": "Folder address (WebDAV)",
+          "dav2_url": "Folder address (WebDAV, SMB)",
           "dav2_username": "Username",
           "dav2_password": "Password",
           "dav2_name": "Name shown with streams"
@@ -372,11 +372,11 @@
         }
       },
       "uloziste3": {
-        "title": "Storage 3 (WebDAV)",
-        "description": "Your own folder over WebDAV (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
+        "title": "Storage 3 (WebDAV, SMB)",
+        "description": "Your own folder over WebDAV or SMB (NAS, Nextcloud). Nokturno searches it for films, series and concerts and offers the files among the streams. If you turn the storage off, the credentials stay stored.",
         "data": {
           "dav3_enabled": "Use this storage",
-          "dav3_url": "Folder address (WebDAV)",
+          "dav3_url": "Folder address (WebDAV, SMB)",
           "dav3_username": "Username",
           "dav3_password": "Password",
           "dav3_name": "Name shown with streams"

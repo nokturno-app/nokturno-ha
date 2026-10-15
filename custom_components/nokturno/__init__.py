@@ -111,6 +111,7 @@ from homeassistant.util import slugify
 from .downloader import Downloader
 from .lib import accounts as accounts_lib
 from .lib import keepalive
+from .lib import smbfs
 from .lib.enrich import _capped, shutdown_pool
 from .lib.source_errors import summarize as summarize_failures
 from .lib.stats import COLLECT_URL, Stats
@@ -850,6 +851,8 @@ async def _proxy_file(hass: HomeAssistant, request, ref: str, label: str):
         url, headers = await hass.async_add_executor_job(engine.file_request, ref)
     except (HomeAssistantError, NokturnoError) as err:
         return web.Response(status=404, text=str(err))
+    if hasattr(url, "chunks"):   # SMB (`storage_api.SmbStorage.reader`), HTTP adresu nemá
+        return await _proxy_smb(hass, request, url, label)
     headers = dict(headers)
     for name in ("Range", "If-Range"):
         if request.headers.get(name):
@@ -872,6 +875,40 @@ async def _proxy_file(hass: HomeAssistant, request, ref: str, label: str):
             await response.write(chunk)
         await response.write_eof()
         return response
+
+
+async def _proxy_smb(hass: HomeAssistant, request, soubor, label: str):
+    """Soubor ze SMB po kusech (`SmbFile.chunks`) s `Range`, ať jde přetáčet; čte se v executoru."""
+    import mimetypes
+
+    from aiohttp import web
+
+    try:
+        size = await hass.async_add_executor_job(soubor.size)
+    except Exception as err:  # noqa: BLE001 – síť, SMB, přihlášení
+        _LOGGER.info("%s neodpovídá: %s", label, err)
+        return web.Response(status=502, text=f"{label} neodpovídá.")
+    try:
+        rozsah = smbfs.parse_range(request.headers.get("Range"), size)
+    except ValueError:
+        return web.Response(status=416, headers={"Content-Range": f"bytes */{size}"})
+    start, end = rozsah or (0, size - 1)
+    response = web.StreamResponse(status=206 if rozsah else 200)
+    response.headers["Content-Type"] = mimetypes.guess_type(soubor.name)[0] or "application/octet-stream"
+    response.headers["Accept-Ranges"] = "bytes"
+    response.headers["Content-Length"] = str(max(0, end - start + 1))
+    if rozsah:
+        response.headers["Content-Range"] = f"bytes {start}-{end}/{size}"
+    await response.prepare(request)
+    if request.method != "HEAD":
+        kusy = soubor.chunks(start, end)
+        while True:
+            kus = await hass.async_add_executor_job(next, kusy, None)
+            if not kus:
+                break
+            await response.write(kus)
+    await response.write_eof()
+    return response
 
 
 # odkazy, které hrají jen s hlavičkou (heslo úložiště, cookie FastShare) — mimo Kodi jdou přes HA

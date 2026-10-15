@@ -133,10 +133,10 @@
         }
       },
       "uloziste1": {
-        "title": "Úložiště 1 (WebDAV)",
-        "description": "Nokturno přehrává hlavně z tvého vlastního úložiště (WebDAV – NAS, Nextcloud). Vyplň adresu složky, nebo krok přeskoč a úložiště doplň později v Nastavení integrace.",
+        "title": "Úložiště 1 (WebDAV, SMB)",
+        "description": "Nokturno přehrává hlavně z tvého vlastního úložiště (WebDAV nebo SMB – NAS, Nextcloud). Vyplň adresu složky, nebo krok přeskoč a úložiště doplň později v Nastavení integrace.",
         "data": {
-          "dav1_url": "Adresa složky (WebDAV)",
+          "dav1_url": "Adresa složky (WebDAV, SMB)",
           "dav1_username": "Uživatel",
           "dav1_password": "Heslo",
           "dav1_name": "Název u streamů"
@@ -216,9 +216,9 @@
         "title": "Vlastní úložiště",
         "description": "Nastavená: {uloziste}",
         "menu_options": {
-          "uloziste1": "Úložiště 1 (WebDAV)",
-          "uloziste2": "Úložiště 2 (WebDAV)",
-          "uloziste3": "Úložiště 3 (WebDAV)",
+          "uloziste1": "Úložiště 1 (WebDAV, SMB)",
+          "uloziste2": "Úložiště 2 (WebDAV, SMB)",
+          "uloziste3": "Úložiště 3 (WebDAV, SMB)",
           "init": "← Zpět"
         }
       },
@@ -342,11 +342,11 @@
         }
       },
       "uloziste1": {
-        "title": "Úložiště 1 (WebDAV)",
-        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+        "title": "Úložiště 1 (WebDAV, SMB)",
+        "description": "Vlastní složka přes WebDAV nebo SMB (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
         "data": {
           "dav1_enabled": "Použít toto úložiště",
-          "dav1_url": "Adresa složky (WebDAV)",
+          "dav1_url": "Adresa složky (WebDAV, SMB)",
           "dav1_username": "Uživatel",
           "dav1_password": "Heslo",
           "dav1_name": "Název u streamů"
@@ -357,11 +357,11 @@
         }
       },
       "uloziste2": {
-        "title": "Úložiště 2 (WebDAV)",
-        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+        "title": "Úložiště 2 (WebDAV, SMB)",
+        "description": "Vlastní složka přes WebDAV nebo SMB (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
         "data": {
           "dav2_enabled": "Použít toto úložiště",
-          "dav2_url": "Adresa složky (WebDAV)",
+          "dav2_url": "Adresa složky (WebDAV, SMB)",
           "dav2_username": "Uživatel",
           "dav2_password": "Heslo",
           "dav2_name": "Název u streamů"
@@ -372,11 +372,11 @@
         }
       },
       "uloziste3": {
-        "title": "Úložiště 3 (WebDAV)",
-        "description": "Vlastní složka přes WebDAV (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
+        "title": "Úložiště 3 (WebDAV, SMB)",
+        "description": "Vlastní složka přes WebDAV nebo SMB (NAS, Nextcloud). Nokturno v ní hledá filmy, seriály i koncerty a nabídne je mezi streamy. Když úložiště vypneš, údaje zůstanou uložené.",
         "data": {
           "dav3_enabled": "Použít toto úložiště",
-          "dav3_url": "Adresa složky (WebDAV)",
+          "dav3_url": "Adresa složky (WebDAV, SMB)",
           "dav3_username": "Uživatel",
           "dav3_password": "Heslo",
           "dav3_name": "Název u streamů"
