@@ -651,6 +651,15 @@ class TestKarta(unittest.TestCase):
         self.assertIn("(${this._esc(t.year)})", card)
 
 
+    def test_fulltext_umi_fastshare_i_prehrajto(self):
+        """Karta posílala `fs`, ale schéma služby znalo jen ws/hs/st → „Zkusit fulltext“ s FastShare
+        spadl na validaci; Přehraj.to ve fulltextu chybělo úplně."""
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn('vol.In(["ws", "hs", "st", "fs", "pt"])', src)
+        card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        self.assertIn('if (src.prehrajto) out.push("pt");', card)
+
+
 class TestUdrzbaHA(unittest.TestCase):
     def test_cache_se_prorezava_a_readme_nelze(self):
         src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")

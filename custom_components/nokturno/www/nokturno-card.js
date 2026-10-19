@@ -593,6 +593,7 @@ class NokturnoCard extends HTMLElement {
     if (src.hellspy) out.push("hs");
     if (src.sledujteto) out.push("st");
     if (src.fastshare) out.push("fs");
+    if (src.prehrajto) out.push("pt");
     return out;
   }
 
@@ -1524,7 +1525,7 @@ class NokturnoCard extends HTMLElement {
     // skutečnou shodu zahodil (nebo naopak, i mezi nalezenými je dobré umět ověřit).
     // Proto je dole i u titulu, který streamy už má – ne jen v prázdném stavu.
     const fsrc = this._fulltextSources();
-    const fNames = fsrc.map((k) => ({ ws: "WebShare", hs: "HellSpy", st: "Sledujteto", fs: "FastShare" })[k]);
+    const fNames = fsrc.map((k) => ({ ws: "WebShare", hs: "HellSpy", st: "Sledujteto", fs: "FastShare", pt: "Přehraj.to" })[k]);
     const fLabel = fNames.length > 1 ? `${fNames.slice(0, -1).join(", ")} a ${fNames[fNames.length - 1]}` : (fNames[0] || "");
     const fulltextBtn = st.fulltext || !fsrc.length ? "" : `<div class="chips" style="margin:8px 0 2px">
       <button class="chip" data-findfulltext="1"${st.busy ? " disabled" : ""} title="${this._t("Uvolněné hledání podle slov v názvu souboru – najde i to, co přísný filtr zahodí jako podobný, ale jiný titul")}">

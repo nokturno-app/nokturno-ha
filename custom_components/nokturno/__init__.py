@@ -198,7 +198,7 @@ SHARE_SCHEMA = vol.Schema({
 })
 
 FULLTEXT_SCHEMA = STREAMS_SCHEMA.extend({
-    vol.Optional("source"): vol.All(cv.ensure_list, [vol.In(["ws", "hs", "st"])]),
+    vol.Optional("source"): vol.All(cv.ensure_list, [vol.In(["ws", "hs", "st", "fs", "pt"])]),
 })
 
 CATALOG_VERIFY_SCHEMA = vol.Schema({
@@ -1700,14 +1700,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return {"count": len(streams), "streams": streams, "warnings": warnings}
 
     async def handle_fulltext(call: ServiceCall):
-        """Ruční, uvolněné hledání na WebShare/HellSpy/Sledujteto/FastShare — tlačítko „Zkusit fulltext"
+        """Ruční, uvolněné hledání na WebShare/HellSpy/Sledujteto/FastShare/Přehraj.to — tlačítko „Zkusit fulltext"
         na kartě, pro případ, že přísný automatický filtr skutečnou shodu zahodil
         (nebo naopak: i mezi nalezenými streamy se dá ověřit, jestli nejsou omylem)."""
         call_data = await _with_query(dict(call.data))
         if not call_data.get("id"):
             raise HomeAssistantError("Chybí `id` titulu nebo `query`.")
         ctype, item_id, series, alt = await hass.async_add_executor_job(episode_target, engine, call_data)
-        sources = tuple(call.data.get("source") or ("ws", "hs", "st", "fs"))
+        sources = tuple(call.data.get("source") or ("ws", "hs", "st", "fs", "pt"))
         rows = await _in_executor(engine.fulltext_streams, ctype, item_id, series, alt, sources)
         return {"count": len(rows), "streams": rows}
 
