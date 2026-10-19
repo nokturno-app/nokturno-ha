@@ -1034,7 +1034,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     downloader = Downloader(hass, options.get(CONF_DOWNLOAD_DIR) or DEFAULT_DOWNLOAD_DIR,
                             store=engine.store)
     # odkazy z WebShare po pár hodinách vyprší — po restartu si downloader vyžádá nový
-    downloader.resolver = engine.resolve
+    downloader.resolver = lambda source: engine.resolve(source, download=True)
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "engine": engine,
         "downloader": downloader,
@@ -1783,9 +1783,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def handle_download(call: ServiceCall):
         ctype, item_id, series, alt, stream = await _chosen_stream(call.data)
+        if stream.get("_no_download"):
+            raise HomeAssistantError("CZtor stažení tohohle streamu nepovoluje.")
         is_storage = str(stream.get("url", "")).startswith(PROXY_SCHEMES)
         # stahovač jede přes aiohttp, hlavičky za svislítkem nezná → soubor z úložiště přes vlastní proxy
-        url = storage_link(hass, stream["url"], hours=48) if is_storage else await _in_executor(engine.resolve, stream["url"])
+        if is_storage:
+            url = storage_link(hass, stream["url"], hours=48)
+        elif str(stream.get("url", "")).startswith("cz:"):
+            url = ""   # adresu ke stažení vydá CZtor až při zahájení (downloader.resolver), nikam se neukládá
+        else:
+            url = await _in_executor(engine.resolve, stream["url"])
         name = call.data.get("name")
         if not name and item_id:
             meta, video = await _in_executor(engine.meta, ctype, item_id, series)

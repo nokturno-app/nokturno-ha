@@ -293,11 +293,15 @@ class Downloader:
         tmp = job["path"] + ".part"
         # co už je na disku z minula (restart HA) — na to se dá navázat
         have = await self.hass.async_add_executor_job(_file_size, tmp)
-        if have and self.resolver and job.get("source_url"):
-            try:  # odkaz z WebShare mezitím vypršel, tak si vyžádáme nový
+        if (have or not job.get("url")) and self.resolver and job.get("source_url"):
+            resolve_error = None
+            try:  # odkaz z WebShare mezitím vypršel (nebo ho CZtor vydá až teď), tak si vyžádáme nový
                 job["url"] = await self.hass.async_add_executor_job(self.resolver, job["source_url"])
             except Exception as err:  # noqa: BLE001 – když to nevyjde, zkusíme starý odkaz
+                resolve_error = err
                 _LOGGER.debug("obnova odkazu %s: %s", job["name"], err)
+            if not job.get("url"):
+                raise RuntimeError(str(resolve_error))
         headers = {"Range": f"bytes={have}-"} if have else {}
         last = time.time()
         last_done = job["done"]
