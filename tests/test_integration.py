@@ -659,6 +659,22 @@ class TestKarta(unittest.TestCase):
         card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
         self.assertIn('if (src.prehrajto) out.push("pt");', card)
 
+    def test_kazdy_text_karty_ma_slovensky_preklad(self):
+        card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        sk = card.split("const SK = {")[1].split("\n};")[0]
+        keys = set(re.findall(r'^  "((?:[^"\\]|\\.)*)":', sk, re.M))
+        used = set(re.findall(r'_t\("((?:[^"\\]|\\.)*)"', card)) | set(re.findall(r'^      [a-z_]+: "([^"]+)",$', card, re.M))
+        used |= set(re.findall(r'(?:continue|watched|mylist|catalogs|downloads): "([^"]+)"', card.split("const SECTION_LABELS")[1].split(";")[0]))
+        self.assertEqual(sorted(used - keys - {"…"}), [])
+
+    def test_editor_zna_nove_volby_a_rady_maji_male_nahledy(self):
+        card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        for key in ("layout", "sections", "continue_limit", "only_available", "player"):
+            self.assertIn(f'name: "{key}"', card)
+        self.assertIn('this._config.layout === "rows"', card)
+        self.assertIn("w185", card)
+        self.assertIn('"catalog_items"', card)
+
 
 class TestPrehraniWebShare(unittest.TestCase):
     """P54: stream WebShare s id titulu jde do Kodi přes action=play (plakát, popis, zhlédnuto);

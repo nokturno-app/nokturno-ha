@@ -10,11 +10,15 @@
  *
  * Konfigurace karty (vše volitelné):
  *   type: custom:nokturno-card
- *   player: media_player.coreelec      # výchozí přehrávač
+ *   player: media_player.coreelec      # výchozí přehrávač: ▶ ho pustí bez výběru, dlouhý stisk nabídne seznam
  *   players: [media_player.coreelec, media_player.samsung_tv_q6]
  *   phone: notify.mobile_app_sm_s921b  # výchozí mobil (jinak první nabídnutý)
  *   phones: [...]                      # ruční seznam mobilů
  *   downloads: sensor.nokturno_stahovani
+ *   layout: rows                       # úvod jako řady plakátů (výchozí `list` = seznam s taby)
+ *   sections: [continue, catalogs, watched, mylist, downloads]   # sekce řad a jejich pořadí
+ *   continue_limit: 8                  # kolik položek Pokračovat ve sledování ukázat (zbytek „Zobrazit vše“)
+ *   only_available: true               # v katalozích jen tituly, které mají stream
  */
 
 const CARD_VERSION = "11.5.0";
@@ -27,6 +31,9 @@ const KINDS = [
   { value: "movie", label: "Filmy" },
   { value: "series", label: "Seriály" },
 ];
+const ROW_SECTIONS = ["continue", "watched", "mylist", "catalogs", "downloads"];
+const SECTION_LABELS = { continue: "Pokračovat ve sledování", watched: "Hlídané", mylist: "Můj seznam",
+                         catalogs: "Katalogy", downloads: "Stažené" };
 
 /* Slovenčina. Klíč je přesný český text z karty, hodnota jeho slovenská verze;
    {0}, {1}… jsou dosazované hodnoty. Karta mluví slovensky, když má uživatel v HA
@@ -152,6 +159,14 @@ const SK = {
   "Zatím nic v Mém seznamu.": "Zatiaľ nič v Mojom zozname.",
   "pokračovat": "pokračovať",
   "Nadpis karty": "Nadpis karty",
+  "Zobrazit vše": "Zobraziť všetko",
+  "Katalogy": "Katalógy",
+  "Seznam s taby": "Zoznam so záložkami",
+  "Řady plakátů": "Rady plagátov",
+  "Rozložení úvodní obrazovky": "Rozloženie úvodnej obrazovky",
+  "Sekce a jejich pořadí (řady plakátů)": "Sekcie a ich poradie (rady plagátov)",
+  "Počet položek v Pokračovat": "Počet položiek v Pokračovať",
+  "V katalozích jen dostupné": "V katalógoch len dostupné",
 };
 
 /** Text v jazyce UI z HA (`hass.locale.language`, u starších verzí `hass.language`). */
@@ -189,6 +204,18 @@ class NokturnoCard extends HTMLElement {
       continueItems: null, continueSource: null, stack: [], homeTab: "domov",
     };
     this._started = false;
+  }
+
+  _rows() { return this._config.layout === "rows"; }
+
+  _sections() {
+    const s = Array.isArray(this._config.sections) && this._config.sections.length ? this._config.sections : ROW_SECTIONS;
+    return s.filter((x) => ROW_SECTIONS.includes(x));
+  }
+
+  _limit(key) {
+    if ((this._state.rowAll || {})[key]) return Infinity;
+    return key === "continue" ? (+this._config.continue_limit || Infinity) : key === "watched" ? 12 : key === "mylist" ? 20 : Infinity;
   }
 
   set hass(hass) {
@@ -491,10 +518,12 @@ class NokturnoCard extends HTMLElement {
         .nokturno-chooser .pick:hover { background: var(--secondary-background-color, #2a2a2a); }
         .nokturno-chooser .pick ha-icon { --mdc-icon-size:18px; color: var(--secondary-text-color, #9e9e9e); }
         .nokturno-chooser .ptext { padding:2px 10px 10px; font-size:.9rem; line-height:1.35; }
-        .nokturno-chooser .pfoot { display:flex; justify-content:flex-end; gap:8px; padding:4px; }
+        .nokturno-chooser .pfoot { display:flex; justify-content:flex-end; gap:8px; padding:4px; clear:both; }
         .nokturno-chooser .pbtn { border:none; border-radius:8px; padding:8px 14px; font:inherit;
           cursor:pointer; background: var(--secondary-background-color, #2a2a2a); color:inherit; }
         .nokturno-chooser .pbtn.danger { background: var(--error-color, #c0392b); color:#fff; }
+        .nokturno-chooser .pbtn.primary { background: var(--primary-color); color: var(--text-primary-color); }
+        .nokturno-chooser .pposter { width:92px; border-radius:8px; float:left; margin:0 10px 6px 4px; }
       </style>${body}`;
       const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); close(null); } };
       const close = (value) => {
@@ -544,6 +573,8 @@ class NokturnoCard extends HTMLElement {
     const name = (v) => (kind === "phone" ? this._phoneName(v) : this._friendly(v));
     if (!list.length) return Promise.resolve(null);
     if (list.length === 1) return Promise.resolve(list[0]);
+    // výchozí přehrávač z karty: ▶ ho pustí bez ptaní, dlouhý stisk (`force`) nabídne seznam
+    if (kind === "player" && !force && this._config.player && list.includes(this._config.player)) return Promise.resolve(this._config.player);
     // režim „první v seznamu" – modal jen na vynucení (dlouhý stisk)
     if (kind === "player" && !force && this._multiPlay() === "first") return Promise.resolve(list[0]);
     return this._modal(`<div class="panel">
@@ -922,6 +953,13 @@ class NokturnoCard extends HTMLElement {
         /* rozkoukané: dlaždice na šířku, ať je poznat záběr z filmu */
         .cont { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; margin-top:8px; }
         .cont .poster .thumb { aspect-ratio:16/9; }
+        /* řady plakátů (layout: rows) */
+        .row { display:grid; grid-auto-flow:column; grid-auto-columns:92px; gap:8px; overflow-x:auto;
+               margin-top:8px; padding-bottom:4px; scroll-snap-type:x proximity; }
+        .row .poster { scroll-snap-align:start; }
+        .where.rate { left:auto; right:6px; top:6px; bottom:auto; }
+        .thumb.dim img { opacity:.45; }
+        .chip.active { background: var(--primary-color); color: var(--text-primary-color); }
         .where { position:absolute; left:6px; bottom:6px; font-size:.68rem; font-weight:600; padding:2px 6px;
                  border-radius:6px; background:rgba(0,0,0,.65); color:#fff; }
         .icons ha-icon-button { --mdc-icon-button-size:40px; --mdc-icon-size:20px; }
@@ -1074,6 +1112,7 @@ class NokturnoCard extends HTMLElement {
     const series = this._watchlist();
     const jobs = (sensor && sensor.attributes.downloads) || [];
     const activeCount = jobs.filter((j) => j.status === "running" || j.status === "queued").length;
+    if (this._rows()) return html + this._homeRows(cont, trakt, fav, series);
     const tabs = [
       { id: "domov", label: this._t("Domů"), icon: "mdi:home-outline" },
       { id: "knihovna", label: this._t("Knihovna"), icon: "mdi:bookmark-multiple-outline" },
@@ -1098,7 +1137,7 @@ class NokturnoCard extends HTMLElement {
       // Plakáty/fanart v plné velikosti se tu dřív dekódovaly do paměti prohlížeče
       // (desítky MB na obrázek) a při delším prohlížení to vedlo ke „stránka neodpovídá".
       html += `<div class="section"><ha-icon icon="mdi:play-circle-outline"></ha-icon> ${this._t("Pokračovat ve sledování")}</div>
-        <div>${cont.map((c, i) => {
+        <div>${cont.slice(0, this._limit("continue")).map((c, i) => {
           const loading = st.busy && st.loading === `cont:${i}`;
           return `
           <div class="stream stacked" data-cont="${i}" style="cursor:pointer" title="${this._esc(c.plot)}">
@@ -1115,11 +1154,13 @@ class NokturnoCard extends HTMLElement {
               </ha-icon-button>
             </span>
           </div>`;
-        }).join("")}</div>`;
+        }).join("")}</div>
+        ${cont.length > this._limit("continue") ? `<button class="chip" data-rowall="continue">${this._t("Zobrazit vše")} (${cont.length})</button>` : ""}`;
     }
     // díl s vlaječkou u hlídaného seriálu se kreslí na řádku seriálu (jako v Kodi)
     const onSeriesRow = new Set(series.filter((w) => w.available && w.available.id).map((w) => w.available.id));
-    const titles = trakt.map((t, i) => [t, i]).filter(([t]) => !onSeriesRow.has(t.id)).slice(0, 12);
+    const titlesAll = trakt.map((t, i) => [t, i]).filter(([t]) => !onSeriesRow.has(t.id));
+    const titles = titlesAll.slice(0, this._limit("watched"));
     if (series.length || titles.length) {
       html += `<div class="section"><ha-icon icon="mdi:bell-outline"></ha-icon> ${this._t("Hlídané")}</div>
         <div>${this._seriesRows(series)}${titles.map(([t, i]) => {
@@ -1147,10 +1188,177 @@ class NokturnoCard extends HTMLElement {
               </ha-icon-button>
             </span>` : ""}
           </div>`;
-        }).join("")}</div>`;
+        }).join("")}</div>
+        ${titlesAll.length > titles.length ? `<button class="chip" data-rowall="watched">${this._t("Zobrazit vše")} (${titlesAll.length})</button>` : ""}`;
     }
     if (!cont.length && !series.length && !titles.length) html += `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
     return html;
+  }
+
+  /** Úvod jako řady plakátů – pořadí a výběr sekcí z `sections`; Stažené kreslí `_renderDownloads` dole. */
+  _homeRows(cont, trakt, fav, series) {
+    const st = this._state;
+    const ICONS = { continue: "mdi:play-circle-outline", watched: "mdi:bell-outline",
+                    mylist: "mdi:bookmark-multiple-outline", catalogs: "mdi:playlist-check" };
+    const manyKodi = new Set(cont.map((c) => c.entity_id)).size > 1;
+    this._rowItems = {};
+    let html = "";
+    for (const key of this._sections()) {
+      if (key === "downloads") continue;
+      let head = "";
+      let entries;
+      if (key === "catalogs") {
+        const cats = this._sensorAttr("catalogs") || [];
+        if (!cats.length) continue;
+        const cid = cats.some((c) => c.id === st.catalogId) ? st.catalogId : cats[0].id;
+        if (cid !== st.catalogId) this._loadCatalog(cid);
+        head = `<div class="chips">${cats.map((c) => `<button class="chip${c.id === cid ? " active" : ""}" data-catpick="${this._esc(c.id)}">${this._esc(c.name)}</button>`).join("")}</div>`;
+        const loaded = (st.catalogItems || {})[cid];
+        entries = loaded ? this._rowEntries(key, loaded) : null;
+      } else {
+        entries = this._rowEntries(key, { cont, trakt, fav, series, manyKodi });
+        if (!entries.length) continue;
+      }
+      this._rowItems[key] = entries || [];
+      const shown = (entries || []).slice(0, this._limit(key));
+      html += `<div class="section"><ha-icon icon="${ICONS[key]}"></ha-icon> ${this._t(SECTION_LABELS[key])}</div>${head}`;
+      if (!entries) html += `<div class="muted">…</div>`;
+      else if (shown.length) {
+        html += `<div class="row">${shown.map((e, i) => this._tile(key, e, i)).join("")}${
+          entries.length > shown.length
+            ? `<button class="poster" data-rowall="${key}"><span class="thumb"><ha-icon icon="mdi:dots-horizontal"></ha-icon></span><div class="t">${this._t("Zobrazit vše")}</div></button>`
+            : ""}</div>`;
+      }
+    }
+    if (!html) html = `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
+    return html;
+  }
+
+  /** Dlaždice řady: `e` je položka z `_rowEntries`, klik otevře `_rowDetail`. */
+  _tile(key, e, i) {
+    return `<button class="poster" data-rowitem="${key}:${i}" title="${this._esc(e.title)}">
+      <span class="thumb${e.dim ? " dim" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
+        ${e.poster ? `<img src="${this._esc(this._thumbSmall(e.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
+        ${e.rating ? `<span class="where rate">★ ${this._esc(e.rating)}</span>` : ""}
+        ${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}
+      </span><div class="t">${this._esc(e.title)}${e.year ? ` <span class="year">(${this._esc(e.year)})</span>` : ""}</div></button>`;
+  }
+
+  /** Položky jedné řady jako `{title, year, poster, rating, plot, badge, dim, play, open}`;
+      `play` je null, když se titul pustit nedá. Pro `catalogs` je `src` pole z `catalog_items`,
+      jinak `{cont, trakt, fav, series, manyKodi}`. */
+  _rowEntries(key, src) {
+    const st = this._state;
+    if (key === "continue") {
+      return src.cont.map((c) => ({
+        title: c.label, poster: c.thumbnail, rating: c.rating, plot: c.plot,
+        badge: src.manyKodi ? c.player : "",
+        play: () => (this._continueStream(c) ? this._playContinue(c) : this._openContinue(c)),
+        open: () => { st.loading = "cont"; return this._openContinue(c); },
+      }));
+    }
+    if (key === "watched") {
+      const out = src.series.map((w) => ({
+        title: w.title, poster: w.poster, badge: w.new ? this._t("nový díl") : "", dim: !w.available,
+        play: w.available && w.available.id
+          ? () => this._playTitle({ id: w.available.id, type: "series", series: w.id, alt: w.alt || undefined })
+          : null,
+        open: () => this._openItem({ id: w.id, type: "series", title: w.title, alt: w.alt, poster: w.poster }),
+      }));
+      const onSeriesRow = new Set(src.series.filter((w) => w.available && w.available.id).map((w) => w.available.id));
+      src.trakt.forEach((t, i) => {
+        if (onSeriesRow.has(t.id)) return;
+        const parts = String(t.id).split(":");
+        const alt = t.alt || undefined;
+        let play = null;
+        if (t.streams && parts.length === 3) play = () => this._playTitle({ id: t.id, type: "series", series: t.series || parts[0], alt });
+        else if (t.streams && t.type !== "series") play = () => this._playTitle({ id: t.id, type: "movie", alt });
+        out.push({ title: t.title, year: t.year, poster: t.poster, plot: t.description, dim: !t.streams,
+                   play, open: () => this._openTrakt(i) });
+      });
+      return out;
+    }
+    if (key === "mylist") {
+      return src.fav.map((f, i) => ({
+        title: f.title, poster: f.poster,
+        play: f.type !== "series" ? () => this._playTitle({ id: f.id, type: "movie", alt: f.alt || undefined }) : null,
+        open: () => this._openItem({ id: f.id, type: f.type || "movie", title: f.title, year: f.year,
+                                     alt: f.alt || null, poster: f.poster || "" }),
+      }));
+    }
+    // catalogs
+    return src.map((m) => ({
+      title: m.title, year: m.year, poster: m.poster, rating: m.rating, plot: m.description, dim: !m.available,
+      play: m.type !== "series" && m.available ? () => this._playTitle({ id: m.id, type: "movie" }) : null,
+      open: () => this._openItem({ id: m.id, type: m.type, title: m.title, year: m.year, poster: m.poster || "",
+                                   description: m.description || "", source: "katalog" }),
+    }));
+  }
+
+  /** Detail položky z řady: plakát, popis, Otevřít / Přehrát. */
+  async _rowDetail(e) {
+    const act = await this._modal(`<div class="panel">
+      <div class="phead"><span class="ptitle">${this._esc(e.title)}${e.year ? ` (${this._esc(e.year)})` : ""}${e.rating ? ` · ★ ${this._esc(e.rating)}` : ""}</span>
+        <button class="pclose" title="${this._t("Zavřít")}">×</button></div>
+      ${e.poster ? `<img class="pposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
+      ${e.plot ? `<div class="ptext">${this._esc(e.plot)}</div>` : ""}
+      <div class="pfoot">
+        <button class="pbtn" data-act="close">${this._t("Zavřít")}</button>
+        <button class="pbtn" data-act="open">${this._t("Otevřít")}</button>
+        ${e.play ? `<button class="pbtn primary" data-act="play">${this._t("Přehrát")}</button>` : ""}
+      </div></div>`, (wrap, close) => wrap.querySelectorAll("[data-act]").forEach((b) =>
+        b.addEventListener("click", () => close(b.dataset.act))));
+    if (act === "play") return e.play();
+    if (act === "open") return e.open();
+    return undefined;
+  }
+
+  /** Přehraje titul přes službu `play` (hledá nejlepší stream sama) na vybraném přehrávači. */
+  async _playTitle(data) {
+    const entityId = await this._choose("player");
+    if (!entityId) { if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    this._state.player = entityId;
+    await this._guard(async () => {
+      await this._call("play", { ...data, entity_id: entityId }, false);
+      this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
+    });
+  }
+
+  /** Titul vlastního katalogu do řady (`catalog_items`); výsledek se drží ve stavu karty. */
+  async _loadCatalog(id) {
+    const st = this._state;
+    st.catalogId = id;
+    st.catalogItems = st.catalogItems || {};
+    if (!st.catalogItems[id]) {
+      try {
+        const res = await this._call("catalog_items", { catalog_id: id, only_available: this._config.only_available !== false, limit: 50 });
+        st.catalogItems[id] = res.items || [];
+      } catch (err) { st.catalogItems[id] = []; }
+    }
+    if (st.view === "search") this._paint();
+  }
+
+  /** Otevření titulu z Hlídaných (index do `_traktList()`). */
+  _openTrakt(i) {
+    const st = this._state;
+    const t = this._traktList()[i];
+    if (!t) return undefined;
+    if (t.pending) { this._toast(this._t("Titul zatím žádný zdroj nemá – je v Hlídaných.")); return undefined; }
+    st.loading = `trakt:${i}`;
+    const parts = String(t.id).split(":");
+    if (parts.length === 3) {
+      // uložený díl: seznam epizod by byl objížďka, otevřít rovnou jeho streamy
+      const series = t.series || parts[0];
+      st.item = { id: series, type: "series", title: t.title, year: t.year,
+                  alt: t.alt || null, poster: t.poster || "" };
+      st.title = t.title;
+      st.episode = { id: t.id, season: +parts[1], episode: +parts[2], title: "" };
+      st.descOpen = false;
+      return this._loadStreams({ id: t.id, type: "series", series, alt: t.alt || null })
+        .then(() => this._fillDetail());   // plakát a popis seriálu k dílu
+    }
+    return this._openItem({ id: t.id, type: t.type, title: t.title, year: t.year, alt: t.alt || null,
+                            poster: t.poster || "", description: t.description || "" });
   }
 
   _homeTabKnihovna(fav) {
@@ -1158,7 +1366,7 @@ class NokturnoCard extends HTMLElement {
     let html = "";
     if (fav.length) {
       html += `<div class="section"><ha-icon icon="mdi:bookmark-multiple-outline"></ha-icon> ${this._t("Můj seznam")}</div>
-        <div>${fav.slice(0, 20).map((f, i) => {
+        <div>${fav.slice(0, this._limit("mylist")).map((f, i) => {
           const opening = st.busy && st.loading === `fav:${i}`;
           return `
           <div class="stream stacked" data-fav="${i}" style="cursor:pointer">
@@ -1170,7 +1378,8 @@ class NokturnoCard extends HTMLElement {
               </ha-icon-button>
             </span>
           </div>`;
-        }).join("")}</div>`;
+        }).join("")}</div>
+        ${fav.length > this._limit("mylist") ? `<button class="chip" data-rowall="mylist">${this._t("Zobrazit vše")} (${fav.length})</button>` : ""}`;
     }
     if (!fav.length) html += `<div class="muted empty">${this._t("Zatím nic v Mém seznamu.")}</div>`;
     return html;
@@ -1603,7 +1812,8 @@ class NokturnoCard extends HTMLElement {
     const files = (sensor && sensor.attributes.files) || [];
     const activeAll = jobs.filter((j) => j.status === "running" || j.status === "queued");
     // Stažené je vlastní tab na úvodní obrazovce; v detailu titulu by jen odváděly pozornost od streamů.
-    const home = !["results", "episodes", "streams"].includes(this._state.view) && this._state.homeTab === "stazene";
+    const home = !["results", "episodes", "streams"].includes(this._state.view)
+      && (this._state.homeTab === "stazene" || (this._rows() && this._sections().includes("downloads")));
     const active = home ? activeAll : [];
     const shown = home ? files : [];
     this._files = shown;
@@ -1788,11 +1998,18 @@ class NokturnoCard extends HTMLElement {
     const keys = ["open", "back", "ep", "play", "phone", "dl", "link", "toggle", "hist", "histclear", "cont", "contpick",
                   "contremove", "watch", "wopen", "wremove", "wseen", "wflag", "trakt", "traktflag", "traktflagdetail",
                   "want", "catalog", "research", "findfulltext", "removeprogress",
-                  "favmove", "fav", "favremove", "favtoggle", "hometab"];
+                  "favmove", "fav", "favremove", "favtoggle", "hometab", "rowitem", "rowall", "catpick"];
     const hit = event.composedPath().find((el) => el.dataset && keys.some((k) => k in el.dataset));
     if (!hit) return;
     const data = hit.dataset;
     if (data.hometab !== undefined) { st.homeTab = data.hometab; this._paint(); return; }
+    if (data.rowall !== undefined) { st.rowAll = { ...(st.rowAll || {}), [data.rowall]: true }; this._paint(); return; }
+    if (data.catpick !== undefined) { st.catalogId = data.catpick; this._paint(); return this._loadCatalog(data.catpick); }
+    if (data.rowitem !== undefined) {
+      const [key, i] = data.rowitem.split(":");
+      const e = ((this._rowItems || {})[key] || [])[+i];
+      return e ? this._rowDetail(e) : undefined;
+    }
     if (data.toggle === "desc") { this._state.descOpen = !this._state.descOpen; this._paint(); return; }
     if (data.hist !== undefined) {
       const sensor = this._hass.states[this._config.downloads];
@@ -1874,26 +2091,7 @@ class NokturnoCard extends HTMLElement {
                               alt: f.alt || null, poster: f.poster || "" });
     }
     if (data.favtoggle !== undefined) return this._toggleFavourite();
-    if (data.trakt !== undefined) {
-      const t = this._traktList()[+data.trakt];
-      if (!t) return undefined;
-      if (t.pending) { this._toast(this._t("Titul zatím žádný zdroj nemá – je v Hlídaných.")); return undefined; }
-      st.loading = `trakt:${data.trakt}`;
-      const parts = String(t.id).split(":");
-      if (parts.length === 3) {
-        // uložený díl: seznam epizod by byl objížďka, otevřít rovnou jeho streamy
-        const series = t.series || parts[0];
-        st.item = { id: series, type: "series", title: t.title, year: t.year,
-                    alt: t.alt || null, poster: t.poster || "" };
-        st.title = t.title;
-        st.episode = { id: t.id, season: +parts[1], episode: +parts[2], title: "" };
-        st.descOpen = false;
-        return this._loadStreams({ id: t.id, type: "series", series, alt: t.alt || null })
-          .then(() => this._fillDetail());   // plakát a popis seriálu k dílu
-      }
-      return this._openItem({ id: t.id, type: t.type, title: t.title, year: t.year, alt: t.alt || null,
-                              poster: t.poster || "", description: t.description || "" });
-    }
+    if (data.trakt !== undefined) return this._openTrakt(+data.trakt);
     if (data.wflag !== undefined) {
       const w = this._watchlist()[+data.wflag];
       if (!w || !w.available) return undefined;
@@ -1962,6 +2160,13 @@ class NokturnoCard extends HTMLElement {
       .replace(/(image\.tmdb\.org\/t\/p\/)w600_and_h900_bestv2\//, "$1w300_and_h450_bestv2/");
   }
 
+  /** Řady plakátů: ~92 px dlaždice, w185 stačí i na HiDPI – drží paměť záložky nízko. */
+  _thumbSmall(url) {
+    return String(url || "")
+      .replace(/(image\.tmdb\.org\/t\/p\/)(w\d+|original)\//, "$1w185/")
+      .replace(/(image\.tmdb\.org\/t\/p\/)w600_and_h900_bestv2\//, "$1w220_and_h330_face/");
+  }
+
   _esc(text) {
     return String(text == null ? "" : text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
@@ -2001,6 +2206,12 @@ class NokturnoCardEditor extends HTMLElement {
       { name: "show_header", selector: { boolean: {} } },
       { name: "player", selector: { entity: { domain: "media_player" } } },
       { name: "players", selector: { entity: { domain: "media_player", multiple: true } } },
+      { name: "layout", selector: { select: { mode: "dropdown", options: [
+        { value: "list", label: this._t("Seznam s taby") }, { value: "rows", label: this._t("Řady plakátů") } ] } } },
+      { name: "sections", selector: { select: { multiple: true, reorder: true,
+        options: ROW_SECTIONS.map((v) => ({ value: v, label: this._t(SECTION_LABELS[v]) })) } } },
+      { name: "continue_limit", selector: { number: { min: 1, max: 50, mode: "box" } } },
+      { name: "only_available", selector: { boolean: {} } },
       phones.length
         ? { name: "phone", selector: { select: { options: phones, mode: "dropdown" } } }
         : { name: "phone", selector: { text: {} } },
@@ -2016,19 +2227,23 @@ class NokturnoCardEditor extends HTMLElement {
       players: "Přehrávače na výběr",
       phone: "Výchozí mobil",
       downloads: "Senzor stahování",
+      layout: "Rozložení úvodní obrazovky",
+      sections: "Sekce a jejich pořadí (řady plakátů)",
+      continue_limit: "Počet položek v Pokračovat",
+      only_available: "V katalozích jen dostupné",
     }[schema.name] || schema.name;
     return this._t(label);
   }
 
   _render() {
     if (this._form) {
-      this._form.data = this._config;
+      this._form.data = { only_available: true, ...this._config };
       return;
     }
     this.innerHTML = "";
     const form = document.createElement("ha-form");
     form.hass = this._hass;
-    form.data = this._config;
+    form.data = { only_available: true, ...this._config };
     form.schema = this._schema();
     form.computeLabel = (schema) => this._label(schema);
     form.addEventListener("value-changed", (e) => {

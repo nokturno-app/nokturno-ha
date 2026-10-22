@@ -496,7 +496,7 @@ async def _kodi_continue_one(hass: HomeAssistant, kodi: dict) -> list[dict]:
     session = async_get_clientsession(hass)
     payload = {"jsonrpc": "2.0", "id": 1, "method": "Files.GetDirectory", "params": {
         "directory": f"{KODI_PLUGIN}?action=continue", "media": "video",
-        "properties": ["title", "thumbnail", "art", "year", "plot", "season", "episode", "showtitle"],
+        "properties": ["title", "thumbnail", "art", "year", "plot", "season", "episode", "showtitle", "rating"],
     }}
     kwargs = {"json": payload, "timeout": 30}
     if kodi["auth"]:
@@ -517,6 +517,7 @@ async def _kodi_continue_one(hass: HomeAssistant, kodi: dict) -> list[dict]:
             "fanart": kodi_image(art.get("landscape") or art.get("fanart") or "", "w1280"),
             "year": f.get("year") or (re.search(r"\((\d{4})\)\s*$", f.get("label") or "") or [None, None])[1],
             "plot": (f.get("plot") or "")[:400],
+            "rating": round(float(f.get("rating") or 0), 1) or None,
             "series": f.get("showtitle") or "",
             "season": f.get("season"),
             "episode": f.get("episode"),
