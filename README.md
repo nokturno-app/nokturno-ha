@@ -151,6 +151,16 @@ Přidej kartu **Nokturno** (`custom:nokturno-card`). Má vizuální editor, tak�
 type: custom:nokturno-card
 title: Nokturno                  # nadpis karty
 show_header: true                # false skryje nadpis i ikonu
+player: media_player.coreelec    # výchozí přehrávač: ▶ ho pustí bez ptaní, dlouhý stisk nabídne seznam
+layout: rows                     # úvod jako řady plakátů (výchozí list = seznam s taby)
+sections:                        # sekce řad a jejich pořadí (Stažené jsou vždy dole)
+  - continue
+  - catalogs
+  - watched
+  - mylist
+  - downloads
+continue_limit: 8                # kolik položek Pokračovat ukázat, zbytek za „Zobrazit vše“
+only_available: true             # v katalozích jen tituly, které mají stream
 players:                         # nabídka v detailu (víc Kodi, TV, Cast…)
   - media_player.coreelec
   - media_player.samsung_tv_q6
@@ -166,7 +176,12 @@ Vše je volitelné: bez `players` se nabídnou přehrávače z nastavení integr
 |---|---|
 | Nadpis karty | `title` |
 | Zobrazit nadpis a ikonu | `show_header` |
+| Výchozí přehrávač | `player` (▶ ho pustí bez výběru, dlouhý stisk nabídne seznam) |
 | Přehrávače na výběr | `players` |
+| Rozložení úvodní obrazovky | `layout` (`list` = seznam s taby, `rows` = řady plakátů) |
+| Sekce a jejich pořadí (řady plakátů) | `sections` |
+| Počet položek v Pokračovat | `continue_limit` |
+| V katalozích jen dostupné | `only_available` |
 | Výchozí mobil | `phone` (nabídka se plní z telefonů, které integrace našla, i se jménem majitele) |
 | Senzor stahování | `downloads` |
 
