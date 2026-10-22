@@ -1404,6 +1404,50 @@ class NokturnoCard extends HTMLElement {
   }
 
   /** Detail položky z řady: plakát, popis, Otevřít / Přehrát. */
+  /** Detail titulu v `ha-dialog` HA – stejné okno, jaké používá more-info. Vrací id zvolené
+      volby, `null` při zavření, `undefined` když `ha-dialog` v HA není (pak se použije záložní okno). */
+  _haDialog(e, meta, rows) {
+    if (!customElements.get("ha-dialog")) return Promise.resolve(undefined);
+    return new Promise((resolve) => {
+      const dlg = document.createElement("ha-dialog");
+      dlg.setAttribute("open", "");
+      dlg.heading = true;
+      let result = null;
+      dlg.innerHTML = `<style>
+          .nk-more { min-width:min(80vw,420px); }
+          .nk-more .mhead { display:flex; gap:16px; align-items:flex-start; }
+          .nk-more .mposter { width:110px; border-radius:12px; flex:none; box-shadow:0 2px 10px rgba(0,0,0,.4); }
+          .nk-more .mmeta { font-size:.95rem; color:var(--secondary-text-color); }
+          .nk-more .minfo { margin-top:6px; font-size:.9rem; font-weight:600; }
+          .nk-more .mplot { margin-top:12px; font-size:.95rem; line-height:1.5; }
+          .nk-more .mrows { margin:16px -8px -8px; border-top:1px solid var(--divider-color); padding-top:8px; }
+          .nk-more .mrow { display:flex; align-items:center; gap:16px; width:100%; border:none; background:none; color:var(--primary-text-color);
+            font:inherit; text-align:left; padding:8px 12px; border-radius:12px; cursor:pointer; min-height:48px; }
+          .nk-more .mrow:hover { background:var(--secondary-background-color); }
+          .nk-more .mic { width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+            background:rgba(var(--rgb-primary-color, 3,169,244), .15); color:var(--primary-color); --mdc-icon-size:22px; }
+          .nk-more .mrow.danger, .nk-more .mrow.danger .mic { color:var(--error-color, #db4437); }
+          .nk-more .mrow.danger .mic { background:rgba(var(--rgb-error-color, 219,68,55), .15); }
+        </style>
+        <ha-dialog-header slot="heading">
+          <ha-icon-button slot="navigationIcon" dialogAction="cancel" label="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></ha-icon-button>
+          <span slot="title">${this._esc(e.title)}</span>
+        </ha-dialog-header>
+        <div class="nk-more">
+          <div class="mhead">
+            ${e.poster ? `<img class="mposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
+            <div>${meta ? `<div class="mmeta">${meta}</div>` : ""}${e.info ? `<div class="minfo">${this._esc(e.info)}</div>` : ""}</div>
+          </div>
+          ${e.plot ? `<div class="mplot">${this._esc(e.plot)}</div>` : ""}
+          <div class="mrows">${rows.map((r) => `<button class="mrow${r.danger ? " danger" : ""}" data-act="${r.id}">
+            <span class="mic"><ha-icon icon="${r.icon}"></ha-icon></span><span>${this._esc(r.label)}</span></button>`).join("")}</div>
+        </div>`;
+      dlg.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => { result = b.dataset.act; dlg.close(); }));
+      dlg.addEventListener("closed", () => { dlg.remove(); resolve(result); });
+      document.body.appendChild(dlg);
+    });
+  }
+
   async _rowDetail(e, key, idx) {
     const acts = e.actions || [];
     const has = (...icons) => acts.some((a) => icons.includes(a.icon));
@@ -1415,7 +1459,8 @@ class NokturnoCard extends HTMLElement {
         danger: ["mdi:close-circle-outline", "mdi:eye-off-outline"].includes(a.icon) })),
     ];
     const meta = [e.year, e.rating ? `★ ${e.rating}` : ""].filter(Boolean).map((x) => this._esc(x)).join(" · ");
-    const act = await this._modal(`<div class="panel more">
+    // vlastní dialog HA (`ha-dialog`, jako more-info a Browser Mod); bez něj záložní okno karty
+    const act = await this._haDialog(e, meta, rows) || (customElements.get("ha-dialog") ? null : await this._modal(`<div class="panel more">
       <div class="mbar"><button class="mclose" title="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></button>
         <div class="mbtitle">${this._esc(e.title)}</div></div>
       <div class="mbody">
@@ -1431,7 +1476,7 @@ class NokturnoCard extends HTMLElement {
     </div>`, (wrap, close) => {
       wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => close(b.dataset.act)));
       wrap.querySelector(".mclose").addEventListener("click", () => close(null));
-    });
+    }));
     if (!act) return undefined;
     if (key !== undefined) this._state.loading = `${key}:${idx}`;
     if (/^a\d+$/.test(act)) return acts[+act.slice(1)].run();
