@@ -74,6 +74,7 @@ const SK = {
   "Přestat kontrolovat díl {0}": "Prestať kontrolovať diel {0}",
   "Kontrolovat dál (streamy nevyhovují)": "Kontrolovať ďalej (streamy nevyhovujú)",
   "Přestat kontrolovat dál": "Prestať kontrolovať ďalej",
+  "Vybrat stream": "Vybrať stream",
   "Kontrolovat dál díl {0} (streamy nevyhovují)": "Kontrolovať ďalej diel {0} (streamy nevyhovujú)",
   "Díl {0} má streamy, ale ne takové, jaké chceš (např. bez CZ titulků) – kontrolovat dál": "Diel {0} má streamy, ale nie také, aké chceš (napr. bez CZ titulkov) – kontrolovať ďalej",
   "Přidáno – až streamů přibude, přijde oznámení": "Pridané – keď streamov pribudne, príde oznámenie",
@@ -1136,7 +1137,7 @@ class NokturnoCard extends HTMLElement {
       <button class="tab${st.homeTab === tb.id ? " active" : ""}" data-hometab="${tb.id}">
         <ha-icon icon="${tb.icon}"></ha-icon> ${tb.label}${tb.badge ? `<span class="tabbadge">${tb.badge}</span>` : ""}
       </button>`).join("")}</div>`;
-    if (st.homeTab === "domov") html += this._homeTabDomov(cont, trakt, series);
+    if (st.homeTab === "domov") html += this._homeTabDomov(cont, trakt, series) + this._homeRows(cont, trakt, fav, series, ["catalogs"]);
     else if (st.homeTab === "knihovna") html += this._homeTabKnihovna(fav);
     // obsah tabu Stažené kreslí samostatně `_renderDownloads` do #downloads
     return html;
@@ -1210,14 +1211,14 @@ class NokturnoCard extends HTMLElement {
   }
 
   /** Úvod jako řady plakátů – pořadí a výběr sekcí z `sections`; Stažené kreslí `_renderDownloads` dole. */
-  _homeRows(cont, trakt, fav, series) {
+  _homeRows(cont, trakt, fav, series, only) {
     const st = this._state;
     const ICONS = { continue: "mdi:play-circle-outline", watched: "mdi:bell-outline",
                     mylist: "mdi:bookmark-multiple-outline", catalogs: "mdi:playlist-check" };
     const manyKodi = new Set(cont.map((c) => c.entity_id)).size > 1;
     this._rowItems = {};
     let html = "";
-    for (const key of this._sections()) {
+    for (const key of only || this._sections()) {
       if (key === "downloads") continue;
       let head = "";
       let entries;
@@ -1245,7 +1246,7 @@ class NokturnoCard extends HTMLElement {
             : ""}</div>`;
       }
     }
-    if (!html) html = `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
+    if (!html && !only) html = `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
     return html;
   }
 
@@ -1271,6 +1272,11 @@ class NokturnoCard extends HTMLElement {
       return src.cont.map((c) => ({
         title: c.label, poster: c.thumbnail, rating: c.rating, plot: c.plot,
         badge: src.manyKodi ? c.player : "",
+        actions: [
+          { icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => { st.loading = "cont"; return this._openContinue(c); } },
+          ...(c.entity_id ? [{ icon: "mdi:close-circle-outline", label: this._t("Odebrat z Pokračovat ve sledování"),
+                               run: () => this._removeProgress({ entity_id: c.entity_id, file: c.file }) }] : []),
+        ],
         play: () => (this._continueStream(c) ? this._playContinue(c) : this._openContinue(c)),
         open: () => { st.loading = "cont"; return this._openContinue(c); },
       }));
