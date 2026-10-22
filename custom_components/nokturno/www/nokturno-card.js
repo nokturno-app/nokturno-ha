@@ -964,6 +964,7 @@ class NokturnoCard extends HTMLElement {
         .where.rate { left:auto; right:6px; top:6px; bottom:auto; }
         .thumb.dim img { opacity:.45; }
         .tags { display:contents; }
+        .chip[data-rowall] { margin:10px 0 0 8px; }
         .acts { display:none; position:absolute; inset:0; flex-wrap:wrap; align-content:center; justify-content:center;
                 gap:6px; padding:6px; }
         .act { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%;
