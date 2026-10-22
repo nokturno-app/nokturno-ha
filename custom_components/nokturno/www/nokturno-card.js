@@ -2117,8 +2117,9 @@ class NokturnoCard extends HTMLElement {
       const [key, i] = data.rowitem.split(":");
       const e = ((this._rowItems || {})[key] || [])[+i];
       if (!e) return undefined;
-      // dlaždice s ikonami akcí detail nepotřebuje: klepnutí pustí titul, nebo ho otevře
-      if ((e.actions || []).some((x) => x.icon)) return e.play ? e.play() : e.open();
+      // dlaždice s ikonami akcí detail nepotřebuje; jako v seznamu: rozkoukané se pustí na tomtéž Kodi,
+      // Hlídané a Můj seznam se otevřou (přehrávač se vybírá až ve streamech)
+      if ((e.actions || []).some((x) => x.icon)) return key === "continue" && e.play ? e.play() : e.open();
       return this._rowDetail(e);
     }
     if (data.toggle === "desc") { this._state.descOpen = !this._state.descOpen; this._paint(); return; }
