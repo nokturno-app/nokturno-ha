@@ -297,7 +297,7 @@ def catalog_items(store, catalog_id: str, only_available: bool = True, limit: in
             "type": cat.get("kind"),
             "genres": list(m.get("genres") or []),
             "released": m.get("released") or None,
-            "description": (m.get("description") or "")[:300] or None,
+            "description": (m.get("description") or "")[:1000] or None,
         })
     return {"catalog_id": catalog_id, "name": cat.get("name") or catalog_id, "total": len(metas),
             "count": len(rows), "items": rows}
@@ -516,7 +516,7 @@ async def _kodi_continue_one(hass: HomeAssistant, kodi: dict) -> list[dict]:
             "thumbnail": kodi_image(art.get("thumb") or art.get("poster") or f.get("thumbnail") or "", "w500"),
             "fanart": kodi_image(art.get("landscape") or art.get("fanart") or "", "w1280"),
             "year": f.get("year") or (re.search(r"\((\d{4})\)\s*$", f.get("label") or "") or [None, None])[1],
-            "plot": (f.get("plot") or "")[:400],
+            "plot": (f.get("plot") or "")[:1000],
             "rating": round(float(f.get("rating") or 0), 1) or None,
             "series": f.get("showtitle") or "",
             "season": f.get("season"),

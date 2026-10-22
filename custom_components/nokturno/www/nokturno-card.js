@@ -525,6 +525,8 @@ class NokturnoCard extends HTMLElement {
         .nokturno-chooser .pfoot { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; padding:4px; clear:both; }
         .nokturno-chooser .pbtn { border:none; border-radius:8px; padding:8px 14px; font:inherit;
           cursor:pointer; background: var(--secondary-background-color, #2a2a2a); color:inherit; }
+        .nokturno-chooser .ptitle.big { font-size:1.05rem; color: var(--primary-text-color, #fff); }
+        .nokturno-chooser .pbtn.icon { display:inline-flex; align-items:center; padding:8px 12px; --mdc-icon-size:22px; }
         .nokturno-chooser .pbtn.danger { background: var(--error-color, #c0392b); color:#fff; }
         .nokturno-chooser .pbtn.primary { background: var(--primary-color); color: var(--text-primary-color); }
         .nokturno-chooser .pposter { width:92px; border-radius:8px; float:left; margin:0 10px 6px 4px; }
@@ -1405,16 +1407,15 @@ class NokturnoCard extends HTMLElement {
   /** Detail položky z řady: plakát, popis, Otevřít / Přehrát. */
   async _rowDetail(e) {
     const act = await this._modal(`<div class="panel">
-      <div class="phead"><span class="ptitle">${this._esc(e.title)}${e.year ? ` (${this._esc(e.year)})` : ""}${e.rating ? ` · ★ ${this._esc(e.rating)}` : ""}</span>
+      <div class="phead"><span class="ptitle big">${this._esc(e.title)}${e.year ? ` (${this._esc(e.year)})` : ""}${e.rating ? ` · ★ ${this._esc(e.rating)}` : ""}</span>
         <button class="pclose" title="${this._t("Zavřít")}">×</button></div>
       ${e.poster ? `<img class="pposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
       ${e.info ? `<div class="ptext"><b>${this._esc(e.info)}</b></div>` : ""}
       ${e.plot ? `<div class="ptext">${this._esc(e.plot)}</div>` : ""}
       <div class="pfoot">
         ${(e.actions || []).map((a, i) => `<button class="pbtn" data-act="a${i}">${this._esc(a.label)}</button>`).join("")}
-        <button class="pbtn" data-act="close">${this._t("Zavřít")}</button>
-        <button class="pbtn" data-act="open">${this._t("Otevřít")}</button>
-        ${e.play ? `<button class="pbtn primary" data-act="play">${this._t("Přehrát")}</button>` : ""}
+        <button class="pbtn icon" data-act="open" title="${this._t("Otevřít")}"><ha-icon icon="mdi:folder-open-outline"></ha-icon></button>
+        ${e.play ? `<button class="pbtn icon primary" data-act="play" title="${this._t("Přehrát")}"><ha-icon icon="mdi:play"></ha-icon></button>` : ""}
       </div></div>`, (wrap, close) => wrap.querySelectorAll("[data-act]").forEach((b) =>
         b.addEventListener("click", () => close(b.dataset.act))));
     if (/^a\d+$/.test(act || "")) return (e.actions || [])[+act.slice(1)].run();
