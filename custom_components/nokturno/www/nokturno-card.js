@@ -522,7 +522,7 @@ class NokturnoCard extends HTMLElement {
         .nokturno-chooser .pick:hover { background: var(--secondary-background-color, #2a2a2a); }
         .nokturno-chooser .pick ha-icon { --mdc-icon-size:18px; color: var(--secondary-text-color, #9e9e9e); }
         .nokturno-chooser .ptext { padding:2px 10px 10px; font-size:.9rem; line-height:1.35; }
-        .nokturno-chooser .pfoot { display:flex; justify-content:flex-end; gap:8px; padding:4px; clear:both; }
+        .nokturno-chooser .pfoot { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; padding:4px; clear:both; }
         .nokturno-chooser .pbtn { border:none; border-radius:8px; padding:8px 14px; font:inherit;
           cursor:pointer; background: var(--secondary-background-color, #2a2a2a); color:inherit; }
         .nokturno-chooser .pbtn.danger { background: var(--error-color, #c0392b); color:#fff; }
@@ -2116,7 +2116,10 @@ class NokturnoCard extends HTMLElement {
     if (data.rowitem !== undefined) {
       const [key, i] = data.rowitem.split(":");
       const e = ((this._rowItems || {})[key] || [])[+i];
-      return e ? this._rowDetail(e) : undefined;
+      if (!e) return undefined;
+      // dlaždice s ikonami akcí detail nepotřebuje: klepnutí pustí titul, nebo ho otevře
+      if ((e.actions || []).some((x) => x.icon)) return e.play ? e.play() : e.open();
+      return this._rowDetail(e);
     }
     if (data.toggle === "desc") { this._state.descOpen = !this._state.descOpen; this._paint(); return; }
     if (data.hist !== undefined) {
