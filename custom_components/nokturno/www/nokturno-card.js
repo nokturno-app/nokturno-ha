@@ -1282,7 +1282,7 @@ class NokturnoCard extends HTMLElement {
     if (key === "continue") {
       return src.cont.map((c) => ({
         title: c.label, poster: c.thumbnail, rating: c.rating, plot: c.plot,
-        badge: src.manyKodi ? c.player : "",
+        badge: "",
         actions: [
           { icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => { st.loading = "cont"; return this._openContinue(c); } },
           ...(c.entity_id ? [{ icon: "mdi:close-circle-outline", label: this._t("Odebrat z Pokračovat ve sledování"),
