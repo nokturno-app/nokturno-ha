@@ -1298,7 +1298,7 @@ class NokturnoCard extends HTMLElement {
     if (key === "watched") {
       const ep = (x) => `${x.season}x${String(x.episode).padStart(2, "0")}`;
       const out = src.series.map((w) => ({
-        title: w.title, poster: w.poster, badge: w.new ? this._t("nový díl") : "", dim: !w.available,
+        title: w.title, poster: w.poster, badge: w.new ? `${this._t("nový díl")} ${ep(w.new)}` : "", dim: !w.available,
         info: w.new ? `${this._t("nový díl")} ${ep(w.new)} ${w.new.title || ""}`.trim()
           : [w.available ? `${this._t("ke sledování")} ${ep(w.available)}` : this._t("zatím bez streamu"),
              w.latest && (!w.available || ep(w.latest) !== ep(w.available)) ? `${this._t("odvysíláno")} ${ep(w.latest)}` : ""]
@@ -1351,7 +1351,7 @@ class NokturnoCard extends HTMLElement {
             run: () => this._guard(async () => { await this._call("trakt_flag", { id: t.id }, false); }) });
         }
         out.push({ title: t.title, year: t.year, poster: t.poster, plot: t.description, dim: !t.streams,
-                   badge: t.flagged ? this._t("kontrolovat dál") : "",
+                   badge: parts.length === 3 ? `${parts[1]}x${parts[2].padStart(2, "0")}` : (t.flagged ? this._t("kontrolovat dál") : ""),
                    info: `${this._t(state)}${t.streams ? ` ${this._t("· {0} streamů", t.streams)}` : ""}`,
                    actions, play, open: () => this._openTrakt(i) });
       });
