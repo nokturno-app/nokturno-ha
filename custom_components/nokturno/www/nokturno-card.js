@@ -970,6 +970,7 @@ class NokturnoCard extends HTMLElement {
         @media (hover:hover) {
           .poster:hover .thumb.hasacts img { opacity:.15; }
           .poster:hover .thumb.hasacts .where { display:none; }
+          .poster:hover .thumb.hasacts > ha-icon { display:none; }
           .poster:hover .thumb.hasacts .acts { display:flex; }
         }
         .chip.active { background: var(--primary-color); color: var(--text-primary-color); }
