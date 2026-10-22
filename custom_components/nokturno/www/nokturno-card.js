@@ -968,6 +968,12 @@ class NokturnoCard extends HTMLElement {
         .act { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%;
                background:rgba(0,0,0,.6); color:#fff; --mdc-icon-size:20px; }
         .act:hover { background: var(--primary-color); }
+        @media (hover:none) {
+          .thumb.hasacts .acts { display:flex; inset:auto 0 0 0; justify-content:flex-end; align-content:flex-end;
+                                 gap:4px; padding:4px; background:linear-gradient(transparent, rgba(0,0,0,.7)); }
+          .thumb.hasacts .act { width:28px; height:28px; --mdc-icon-size:16px; background:rgba(0,0,0,.55); }
+          .thumb.hasacts .where:not(.rate) { bottom:auto; top:6px; }
+        }
         @media (hover:hover) {
           .poster:hover .thumb.hasacts img { opacity:.15; }
           .poster:hover .thumb.hasacts .where { display:none; }
