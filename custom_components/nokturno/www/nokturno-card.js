@@ -963,6 +963,7 @@ class NokturnoCard extends HTMLElement {
         .row .poster { scroll-snap-align:start; }
         .where.rate { left:auto; right:6px; top:6px; bottom:auto; }
         .thumb.dim img { opacity:.45; }
+        .tags { display:contents; }
         .acts { display:none; position:absolute; inset:0; flex-wrap:wrap; align-content:center; justify-content:center;
                 gap:6px; padding:6px; }
         .act { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%;
@@ -973,7 +974,10 @@ class NokturnoCard extends HTMLElement {
           .thumb.hasacts .acts { display:flex; inset:auto 0 0 0; justify-content:flex-end; align-content:flex-end;
                                  gap:4px; padding:4px; background:linear-gradient(transparent, rgba(0,0,0,.7)); }
           .thumb.hasacts .act { width:28px; height:28px; --mdc-icon-size:16px; background:rgba(0,0,0,.55); }
-          .thumb.hasacts .where:not(.rate) { bottom:auto; top:6px; }
+          .thumb.hasacts .tags { position:absolute; top:6px; left:6px; right:6px; display:flex; flex-wrap:wrap;
+                                 align-items:flex-start; gap:4px; }
+          .thumb.hasacts .tags .where { position:static; }
+          .thumb.hasacts .tags .rate { margin-left:auto; }
         }
         @media (hover:hover) {
           .poster:hover .thumb.hasacts img { opacity:.15; }
@@ -1264,8 +1268,8 @@ class NokturnoCard extends HTMLElement {
     return `<button class="poster" data-rowitem="${key}:${i}" title="${this._esc(e.title)}">
       <span class="thumb${e.dim ? " dim" : ""}${acts ? " hasacts" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
         ${e.poster ? `<img src="${this._esc(this._thumbSmall(e.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
-        ${e.rating ? `<span class="where rate">★ ${this._esc(e.rating)}</span>` : ""}
-        ${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}
+        <span class="tags">${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}${
+          e.rating ? `<span class="where rate">★ ${this._esc(e.rating)}</span>` : ""}</span>
         ${acts ? `<span class="acts">${acts}</span>` : ""}
       </span><div class="t">${this._esc(e.title)}${e.year ? ` <span class="year">(${this._esc(e.year)})</span>` : ""}</div></button>`;
   }
