@@ -63,6 +63,7 @@ from .const import (
     EVENT_DOWNLOAD_DONE,
     EVENT_NEW_EPISODE,
     KODI_PLUGIN,
+    SERVICE_CATALOG_ITEMS,
     SERVICE_CATALOG_PAUSE,
     SERVICE_CATALOG_VERIFY,
     SERVICE_CATALOGS,
@@ -208,6 +209,13 @@ CATALOG_VERIFY_SCHEMA = vol.Schema({
 
 CATALOG_PAUSE_SCHEMA = vol.Schema({vol.Required("paused"): cv.boolean})
 
+CATALOG_ITEMS_MAX = 200
+CATALOG_ITEMS_SCHEMA = vol.Schema({
+    vol.Required("catalog_id"): cv.string,
+    vol.Optional("only_available", default=True): cv.boolean,
+    vol.Optional("limit", default=50): vol.All(vol.Coerce(int), vol.Range(min=1, max=CATALOG_ITEMS_MAX)),
+})
+
 WANT_SCHEMA = vol.Schema({
     vol.Optional("id"): cv.string,
     vol.Optional("query"): cv.string,
@@ -255,6 +263,44 @@ TRAKT_WATCHED_SCHEMA = vol.Schema({
     vol.Optional("episode"): vol.Any(vol.Coerce(int), None),
     vol.Optional("remove", default=False): cv.boolean,
 })
+
+
+def catalog_items(store, catalog_id: str, only_available: bool = True, limit: int = 50) -> dict:
+    """Tituly ověřovaného vlastního katalogu z místního indexu (`mycat.load_index`) – bez sítě.
+    `available` = titul vyhověl ověření (má stream); ostatní jdou za nimi v pořadí poolu.
+    Co index u titulu nemá (plakát, hodnocení, rok), je `None`."""
+    cat = next((c for c in mycat_lib.verified(store) if c["id"] == catalog_id), None)
+    if cat is None:
+        raise HomeAssistantError(
+            f"Ověřovaný vlastní katalog „{catalog_id}“ neexistuje (ID vrací služba nokturno.catalogs).")
+    index = mycat_lib.load_index(store, cat)
+    metas = list(mycat_lib.shown(index))
+    ok = {m.get("id") for m in metas}
+    if not only_available:
+        rest = sorted((e for e in (index.get("items") or {}).values() if e.get("meta") and e["meta"].get("id") not in ok),
+                      key=lambda e: e.get("rank", 0))
+        metas += mycat_lib.released([e["meta"] for e in rest])
+    rows = []
+    for m in metas[:limit]:
+        year = str(m.get("year") or "")[:4]
+        try:
+            rating = round(float(m.get("imdbRating")), 1) or None
+        except (TypeError, ValueError):
+            rating = None
+        rows.append({
+            "id": m.get("id"),
+            "title": m.get("_title") or m.get("name") or "",
+            "year": int(year) if year.isdigit() else None,
+            "poster": _capped(m.get("poster"), "w500") or None,
+            "rating": rating,
+            "available": m.get("id") in ok,
+            "type": cat.get("kind"),
+            "genres": list(m.get("genres") or []),
+            "released": m.get("released") or None,
+            "description": (m.get("description") or "")[:300] or None,
+        })
+    return {"catalog_id": catalog_id, "name": cat.get("name") or catalog_id, "total": len(metas),
+            "count": len(rows), "items": rows}
 
 
 def _entry_data(hass: HomeAssistant) -> dict:
@@ -1358,6 +1404,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     async def handle_catalogs(call: ServiceCall):
         return await hass.async_add_executor_job(mycat_lib.overview, engine.store)
 
+    async def handle_catalog_items(call: ServiceCall):
+        return await hass.async_add_executor_job(
+            catalog_items, engine.store, call.data["catalog_id"], call.data["only_available"], call.data["limit"])
+
     async def handle_catalog_verify(call: ServiceCall):
         done = await verify_catalogs(cid=call.data.get("id") or None, size=call.data["count"], manual=True)
         return {"verified": done}
@@ -1937,6 +1987,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         (SERVICE_WATCH, handle_watch, WATCH_SCHEMA, SupportsResponse.OPTIONAL),
         (SERVICE_CHECK_SERIES, handle_check_series, vol.Schema({}), SupportsResponse.OPTIONAL),
         (SERVICE_CATALOGS, handle_catalogs, vol.Schema({}), SupportsResponse.ONLY),
+        (SERVICE_CATALOG_ITEMS, handle_catalog_items, CATALOG_ITEMS_SCHEMA, SupportsResponse.ONLY),
         (SERVICE_CATALOG_VERIFY, handle_catalog_verify, CATALOG_VERIFY_SCHEMA, SupportsResponse.OPTIONAL),
         (SERVICE_CATALOG_PAUSE, handle_catalog_pause, CATALOG_PAUSE_SCHEMA, SupportsResponse.NONE),
         (SERVICE_CLEAR_HISTORY, handle_clear_history, vol.Schema({}), SupportsResponse.NONE),

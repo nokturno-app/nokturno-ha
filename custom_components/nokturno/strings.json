@@ -748,6 +748,24 @@
       "name": "Own catalogs status",
       "description": "Returns the verified own catalogs: how many titles were checked, how many match and when the last check ran."
     },
+    "catalog_items": {
+      "name": "List own catalog titles",
+      "description": "Returns titles of a verified own catalog from the local index (poster, rating, year, whether a stream was found). Makes no network requests.",
+      "fields": {
+        "catalog_id": {
+          "name": "Catalog ID",
+          "description": "ID of the own catalog (see the Catalogs service)."
+        },
+        "only_available": {
+          "name": "Only available",
+          "description": "On = only titles with a stream found. Off = the rest of the pool follows."
+        },
+        "limit": {
+          "name": "Limit",
+          "description": "Maximum number of titles (1–200)."
+        }
+      }
+    },
     "catalog_verify": {
       "name": "Verify catalog now",
       "description": "Runs a batch of stream checks for an own catalog right away (without an ID the next catalog in turn). Ignores the pause.",

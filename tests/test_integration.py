@@ -27,7 +27,7 @@ ha_stubs.install()
 from custom_components.nokturno import (                 # noqa: E402
     KODI_PLUGIN, SYNC_KEY_MIN_HEX, _continue_key, _encode_signed, _removed_by_user, _stats_title,
     _varovat_kratky_klic, aired_episodes, android_play_intent, episode_target, kodi_image, kodi_url,
-    skip_gap_candidates, sync_circles,
+    skip_gap_candidates, sync_circles, catalog_items,
 )
 from custom_components.nokturno import sensor as nokturno_sensor  # noqa: E402
 from custom_components.nokturno import config_flow, const  # noqa: E402
@@ -1126,6 +1126,57 @@ class TestKatalogyVHA(unittest.TestCase):
             mycat.save(store, {"id": "c1", "kind": "concert", "name": "K", "verify": True, "tags": ["rock"]})
             self.assertEqual([c["id"] for c in mycat.verified(store)], ["k1"])
             self.assertEqual([c["id"] for c in mycat.overview(store)["catalogs"]], ["k1"])
+
+    def test_sluzba_catalog_items_je_registrovana(self):
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn("(SERVICE_CATALOG_ITEMS, handle_catalog_items, CATALOG_ITEMS_SCHEMA, SupportsResponse.ONLY)", src)
+        self.assertIn("hass.async_add_executor_job(\n            catalog_items,", src)   # čtení indexu z disku mimo event loop
+
+    def test_catalog_items_z_indexu_bez_site(self):
+        import tempfile
+        from custom_components.nokturno.lib import mycat
+        from custom_components.nokturno.lib.store import Store
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(tmp)
+            cat = {"id": "k1", "kind": "movie", "name": "Pohádky", "verify": True}
+            mycat.save(store, cat)
+            mycat.save(store, {"id": "k2", "kind": "movie", "name": "Bez ověřování"})
+            store.save(mycat.INDEX + "k1", {"sig": mycat.sig(mycat.catalogs(store)[0]), "items": {
+                "tt1": {"ok": True, "ts": 5, "found": 9, "rank": 1, "meta": {
+                    "id": "tt1", "name": "Jedna", "year": "2020", "poster": "https://x/p1.jpg", "imdbRating": "7.45",
+                    "genres": ["Komedie"], "released": "2020-05-01", "description": "Popis"}},
+                "tt2": {"ok": False, "ts": 5, "rank": 0, "meta": {"id": "tt2", "name": "Dva", "year": 2019}},
+                "tt3": {"ok": True, "ts": 5, "found": 3, "rank": 2, "meta": {"id": "tt3", "name": "Tři"}},
+                "tt4": {"ok": None, "ts": 0, "rank": 3, "meta": {"id": "tt4", "name": "Budoucí", "released": "2999-01-01"}},
+            }})
+            hotove = catalog_items(store, "k1")
+            self.assertEqual([r["id"] for r in hotove["items"]], ["tt1", "tt3"])   # nově nalezené první
+            self.assertEqual(hotove["name"], "Pohádky")
+            jedna = hotove["items"][0]
+            self.assertEqual((jedna["title"], jedna["year"], jedna["rating"], jedna["available"]), ("Jedna", 2020, 7.5, True))
+            self.assertEqual(jedna["poster"], "https://x/p1.jpg")
+            tri = hotove["items"][1]   # index nemá rok, plakát ani hodnocení
+            self.assertEqual((tri["year"], tri["poster"], tri["rating"]), (None, None, None))
+            vse = catalog_items(store, "k1", only_available=False)
+            self.assertEqual([(r["id"], r["available"]) for r in vse["items"]],
+                             [("tt1", True), ("tt3", True), ("tt2", False)])   # nevydaný tt4 se nevrací
+            self.assertEqual(vse["total"], 3)
+            omezene = catalog_items(store, "k1", only_available=False, limit=1)
+            self.assertEqual((omezene["count"], omezene["total"]), (1, 3))
+
+    def test_catalog_items_neznamy_nebo_neoverovany_katalog_je_srozumitelna_chyba(self):
+        import tempfile
+        from custom_components.nokturno.lib import mycat
+        from custom_components.nokturno.lib.store import Store
+        with tempfile.TemporaryDirectory() as tmp:
+            store = Store(tmp)
+            mycat.save(store, {"id": "k2", "kind": "movie", "name": "Bez ověřování"})
+            for cid in ("nic", "k2"):
+                with self.assertRaises(ha_stubs.HomeAssistantError) as ctx:
+                    catalog_items(store, cid)
+                self.assertIn(cid, str(ctx.exception))
+            mycat.save(store, {"id": "k1", "kind": "movie", "name": "F", "verify": True})
+            self.assertEqual(catalog_items(store, "k1")["items"], [])   # katalog bez indexu = prázdný seznam
 
 
 class TestPresunCache(unittest.TestCase):

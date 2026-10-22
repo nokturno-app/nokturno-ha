@@ -310,6 +310,22 @@ watch_series:
         boolean: null
 check_series: {}
 catalogs: {}
+catalog_items:
+  fields:
+    catalog_id:
+      required: true
+      selector:
+        text: null
+    only_available:
+      default: true
+      selector:
+        boolean: null
+    limit:
+      default: 50
+      selector:
+        number:
+          min: 1
+          max: 200
 catalog_verify:
   fields:
     id:

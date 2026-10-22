@@ -116,6 +116,7 @@ SERVICE_FAVOURITE_ADD = "favourite_add"
 SERVICE_FAVOURITE_TOGGLE = "favourite_toggle"
 SERVICE_FULLTEXT = "fulltext_search"
 SERVICE_CATALOGS = "catalogs"
+SERVICE_CATALOG_ITEMS = "catalog_items"
 SERVICE_CATALOG_VERIFY = "catalog_verify"
 SERVICE_CATALOG_PAUSE = "catalog_pause"
 
