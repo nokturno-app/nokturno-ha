@@ -525,20 +525,28 @@ class NokturnoCard extends HTMLElement {
         .nokturno-chooser .pfoot { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; padding:4px; clear:both; }
         .nokturno-chooser .pbtn { border:none; border-radius:8px; padding:8px 14px; font:inherit;
           cursor:pointer; background: var(--secondary-background-color, #2a2a2a); color:inherit; }
-        .nokturno-chooser .panel.more { padding:0; overflow:hidden; min-width:min(92vw,340px); max-width:min(92vw,440px); position:relative; }
-        .nokturno-chooser .more .pclose { position:absolute; top:8px; right:8px; z-index:1; width:32px; height:32px; font-size:1.4rem; border-radius:50%; background:rgba(0,0,0,.35); color:#fff; }
-        .nokturno-chooser .mhead { display:flex; gap:14px; padding:16px 48px 8px 16px; align-items:flex-start; }
-        .nokturno-chooser .mposter { width:104px; border-radius:10px; flex:none; box-shadow:0 2px 10px rgba(0,0,0,.4); }
-        .nokturno-chooser .mname { font-size:1.15rem; font-weight:600; line-height:1.25; }
-        .nokturno-chooser .mmeta { margin-top:4px; font-size:.85rem; color: var(--secondary-text-color, #9e9e9e); }
-        .nokturno-chooser .minfo { margin-top:6px; font-size:.85rem; font-weight:600; }
-        .nokturno-chooser .mplot { padding:4px 16px 12px; font-size:.9rem; line-height:1.4; max-height:34vh; overflow:auto; }
-        .nokturno-chooser .mrows { border-top:1px solid var(--divider-color, #333); padding:6px; }
-        .nokturno-chooser .mrow { display:flex; align-items:center; gap:14px; width:100%; border:none; background:none; color:inherit;
-          font:inherit; text-align:left; padding:11px 12px; border-radius:10px; cursor:pointer; --mdc-icon-size:22px; }
+        .nokturno-chooser { backdrop-filter: blur(4px); }
+        .nokturno-chooser .panel.more { padding:0; overflow:hidden; border-radius:28px; width:min(94vw,560px); max-width:none; min-width:0;
+          max-height:90vh; display:flex; flex-direction:column; box-shadow:0 11px 15px -7px rgba(0,0,0,.2), 0 24px 38px 3px rgba(0,0,0,.14), 0 9px 46px 8px rgba(0,0,0,.12); }
+        .nokturno-chooser .mbar { display:flex; align-items:center; gap:4px; padding:8px 16px 0 8px; flex:none; }
+        .nokturno-chooser .mclose { border:none; background:none; color: var(--primary-text-color, #fff); width:48px; height:48px; border-radius:50%;
+          display:flex; align-items:center; justify-content:center; cursor:pointer; --mdc-icon-size:24px; flex:none; }
+        .nokturno-chooser .mclose:hover { background: var(--secondary-background-color, #2a2a2a); }
+        .nokturno-chooser .mbtitle { font-size:1.375rem; line-height:1.6; font-weight:400; padding:0 4px; }
+        .nokturno-chooser .mbody { padding:8px 24px 8px; overflow:auto; flex:1 1 auto; }
+        .nokturno-chooser .mhead { display:flex; gap:16px; align-items:flex-start; }
+        .nokturno-chooser .mposter { width:110px; border-radius:12px; flex:none; box-shadow:0 2px 10px rgba(0,0,0,.4); }
+        .nokturno-chooser .mmeta { font-size:.95rem; color: var(--secondary-text-color, #9e9e9e); }
+        .nokturno-chooser .minfo { margin-top:6px; font-size:.9rem; font-weight:600; }
+        .nokturno-chooser .mplot { margin-top:12px; font-size:.95rem; line-height:1.5; }
+        .nokturno-chooser .mrows { flex:none; border-top:1px solid var(--divider-color, #333); padding:8px 12px 12px; }
+        .nokturno-chooser .mrow { display:flex; align-items:center; gap:16px; width:100%; border:none; background:none; color:inherit;
+          font:inherit; text-align:left; padding:8px 12px; border-radius:12px; cursor:pointer; min-height:48px; }
         .nokturno-chooser .mrow:hover { background: var(--secondary-background-color, #2a2a2a); }
-        .nokturno-chooser .mrow ha-icon { color: var(--secondary-text-color, #9e9e9e); }
-        .nokturno-chooser .mrow.danger, .nokturno-chooser .mrow.danger ha-icon { color: var(--error-color, #db4437); }
+        .nokturno-chooser .mic { width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
+          background: rgba(var(--rgb-primary-color, 3,169,244), .15); color: var(--primary-color); --mdc-icon-size:22px; }
+        .nokturno-chooser .mrow.danger .mic { background: rgba(var(--rgb-error-color, 219,68,55), .15); color: var(--error-color, #db4437); }
+        .nokturno-chooser .mrow.danger { color: var(--error-color, #db4437); }
         .nokturno-chooser .ptitle.big { font-size:1.05rem; color: var(--primary-text-color, #fff); }
         .nokturno-chooser .pbtn.icon { display:inline-flex; align-items:center; padding:8px 12px; --mdc-icon-size:22px; }
         .nokturno-chooser .pbtn.danger { background: var(--error-color, #c0392b); color:#fff; }
@@ -981,18 +989,6 @@ class NokturnoCard extends HTMLElement {
         .thumb.dim img { opacity:.45; }
         .tags { display:contents; }
         .chip[data-rowall] { margin:10px 0 0 8px; }
-        .acts { display:none; position:absolute; inset:0; flex-wrap:wrap; align-content:center; justify-content:center;
-                gap:6px; padding:6px; }
-        .act { display:flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%;
-               background:rgba(0,0,0,.6); color:#fff; --mdc-icon-size:20px; }
-        .act:hover { background: var(--primary-color); }
-        .act ha-icon { display:flex; align-items:center; justify-content:center; width:var(--mdc-icon-size); height:var(--mdc-icon-size); margin:0; line-height:0; }
-        @media (hover:hover) {
-          .poster:hover .thumb.hasacts img { opacity:.15; }
-          .poster:hover .thumb.hasacts .where { display:none; }
-          .poster:hover .thumb.hasacts > ha-icon { display:none; }
-          .poster:hover .thumb.hasacts .acts { display:flex; }
-        }
         .chip.active { background: var(--primary-color); color: var(--text-primary-color); }
         .where { position:absolute; left:6px; bottom:6px; font-size:.68rem; font-weight:600; padding:2px 6px;
                  border-radius:6px; background:rgba(0,0,0,.65); color:#fff; }
@@ -1271,16 +1267,14 @@ class NokturnoCard extends HTMLElement {
 
   /** Dlaždice řady: `e` je položka z `_rowEntries`, klik otevře `_rowDetail`. */
   _tile(key, e, i) {
-    const acts = (e.actions || []).map((a, j) => a.icon
-      ? `<span class="act" role="button" data-rowact="${key}:${i}:${j}" title="${this._esc(a.label)}"><ha-icon icon="${a.icon}"></ha-icon></span>` : "").join("");
     // po klepnutí plakát ztmavne a místo hodnocení, štítku a ikon ukáže procenta hledání streamů
     const busy = this._state.busy && this._state.loading === `${key}:${i}`;
     return `<button class="poster" data-rowitem="${key}:${i}" title="${this._esc(e.title)}">
-      <span class="thumb${e.dim ? " dim" : ""}${acts && !busy ? " hasacts" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
+      <span class="thumb${e.dim ? " dim" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
         ${e.poster ? `<img src="${this._esc(this._thumbSmall(e.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
         ${busy ? `<span class="mask"><ha-icon class="spin" icon="mdi:loading"></ha-icon><span class="pct"></span></span>` : `<span class="tags">${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}${
           e.rating ? `<span class="where rate">★ ${this._esc(e.rating)}</span>` : ""}</span>
-        ${acts ? `<span class="acts">${acts}</span>` : ""}`}
+        `}
       </span><div class="t">${this._esc(e.title)}${e.year ? ` <span class="year">(${this._esc(e.year)})</span>` : ""}</div></button>`;
   }
 
@@ -1422,18 +1416,22 @@ class NokturnoCard extends HTMLElement {
     ];
     const meta = [e.year, e.rating ? `★ ${e.rating}` : ""].filter(Boolean).map((x) => this._esc(x)).join(" · ");
     const act = await this._modal(`<div class="panel more">
-      <button class="pclose" title="${this._t("Zavřít")}">×</button>
-      <div class="mhead">
-        ${e.poster ? `<img class="mposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
-        <div class="mtitle"><div class="mname">${this._esc(e.title)}</div>
-          ${meta ? `<div class="mmeta">${meta}</div>` : ""}
-          ${e.info ? `<div class="minfo">${this._esc(e.info)}</div>` : ""}</div>
+      <div class="mbar"><button class="mclose" title="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></button>
+        <div class="mbtitle">${this._esc(e.title)}</div></div>
+      <div class="mbody">
+        <div class="mhead">
+          ${e.poster ? `<img class="mposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
+          <div class="mtitle">${meta ? `<div class="mmeta">${meta}</div>` : ""}
+            ${e.info ? `<div class="minfo">${this._esc(e.info)}</div>` : ""}</div>
+        </div>
+        ${e.plot ? `<div class="mplot">${this._esc(e.plot)}</div>` : ""}
       </div>
-      ${e.plot ? `<div class="mplot">${this._esc(e.plot)}</div>` : ""}
       <div class="mrows">${rows.map((r) => `<button class="mrow${r.danger ? " danger" : ""}" data-act="${r.id}">
-        <ha-icon icon="${r.icon}"></ha-icon><span>${this._esc(r.label)}</span></button>`).join("")}</div>
-    </div>`, (wrap, close) => wrap.querySelectorAll("[data-act]").forEach((b) =>
-        b.addEventListener("click", () => close(b.dataset.act))));
+        <span class="mic"><ha-icon icon="${r.icon}"></ha-icon></span><span>${this._esc(r.label)}</span></button>`).join("")}</div>
+    </div>`, (wrap, close) => {
+      wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => close(b.dataset.act)));
+      wrap.querySelector(".mclose").addEventListener("click", () => close(null));
+    });
     if (!act) return undefined;
     if (key !== undefined) this._state.loading = `${key}:${idx}`;
     if (/^a\d+$/.test(act)) return acts[+act.slice(1)].run();
@@ -2133,12 +2131,6 @@ class NokturnoCard extends HTMLElement {
     if (data.hometab !== undefined) { st.homeTab = data.hometab; this._paint(); return; }
     if (data.rowall !== undefined) { st.rowAll = { ...(st.rowAll || {}), [data.rowall]: true }; this._paint(); return; }
     if (data.catpick !== undefined) { st.catalogId = data.catpick; this._paint(); return this._loadCatalog(data.catpick); }
-    if (data.rowact !== undefined) {
-      const [key, i, j] = data.rowact.split(":");
-      const a = (((this._rowItems || {})[key] || [])[+i] || {}).actions;
-      st.loading = `${key}:${i}`;
-      return a && a[+j] ? a[+j].run() : undefined;
-    }
     if (data.rowitem !== undefined) {
       const [key, i] = data.rowitem.split(":");
       const e = ((this._rowItems || {})[key] || [])[+i];
