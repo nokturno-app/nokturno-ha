@@ -1759,6 +1759,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ctype, item_id, series, alt = await hass.async_add_executor_job(episode_target, engine, call_data)
         sources = tuple(call.data.get("source") or ("ws", "hs", "st", "fs", "pt"))
         rows = await _in_executor(engine.fulltext_streams, ctype, item_id, series, alt, sources)
+        # karta pak pošle `url` řádku – bez zapamatování by play/download hledaly znovu přísně a vzaly jiný soubor
+        _zapamatuj_streamy(ctype, item_id, series, alt, rows)
         return {"count": len(rows), "streams": rows}
 
     async def handle_detail(call: ServiceCall):
@@ -1809,17 +1811,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 # mít úložiště nastavené v doplňku; ostatní přehrávače jdou přes HA
                 media_id = (await _in_executor(engine.resolve, stream["url"]) if is_kodi
                             else storage_link(hass, stream["url"]))
-            elif plugin_ok and str(stream.get("url", "")).startswith("ws:"):
-                # soubor z fulltextu WebShare — doplněk má vlastní akci, odkaz si přeloží sám
-                media_id = KODI_PLUGIN + "?" + urllib.parse.urlencode({
-                    "action": "play_ws", "ident": stream["url"][3:],
-                    "name": call_data.get("name") or stream.get("label") or "",
-                })
             elif plugin_ok and item_id:
                 # titulky z WebShare musí do Kodi už jako http odkazy (doplněk `ws:` nepřekládá)
                 resolved = dict(stream)
                 resolved["subtitles"] = await _subtitle_links(stream)
                 media_id = kodi_url(ctype, item_id, series, alt, resolved)
+            elif plugin_ok and str(stream.get("url", "")).startswith("ws:"):
+                # holý soubor WebShare bez titulu (hledání typu webshare, automatizace jen s url) — doplněk má vlastní akci; stream s id titulu jde výš přes action=play (plakát, popis, zhlédnuto)
+                media_id = KODI_PLUGIN + "?" + urllib.parse.urlencode({
+                    "action": "play_ws", "ident": stream["url"][3:],
+                    "name": call_data.get("name") or stream.get("label") or "",
+                })
             else:
                 media_id = await _in_executor(engine.resolve, stream["url"])
             await hass.services.async_call(

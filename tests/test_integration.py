@@ -660,6 +660,28 @@ class TestKarta(unittest.TestCase):
         self.assertIn('if (src.prehrajto) out.push("pt");', card)
 
 
+class TestPrehraniWebShare(unittest.TestCase):
+    """P54: stream WebShare s id titulu jde do Kodi přes action=play (plakát, popis, zhlédnuto);
+    play_ws jen pro holý soubor bez titulu. Fulltext si řádky pamatuje, jinak play vezme jiný soubor."""
+
+    def setUp(self):
+        self.src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+
+    def _usek(self, name):
+        return self.src.split(f"async def {name}(")[1].split("\n    async def ")[0]
+
+    def test_id_titulu_ma_prednost_pred_play_ws(self):
+        usek = self._usek("handle_play")
+        self.assertLess(usek.index("elif plugin_ok and item_id"), usek.index('"action": "play_ws"'))
+
+    def test_fulltext_si_streamy_pamatuje(self):
+        self.assertIn("_zapamatuj_streamy(", self._usek("handle_fulltext"))
+
+    def test_karta_zna_contpick(self):
+        card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        self.assertIn('"contpick"', card.split("const keys = [")[1].split("];")[0])
+
+
 class TestUdrzbaHA(unittest.TestCase):
     def test_cache_se_prorezava_a_readme_nelze(self):
         src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")

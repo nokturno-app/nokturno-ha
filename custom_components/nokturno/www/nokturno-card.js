@@ -1785,7 +1785,7 @@ class NokturnoCard extends HTMLElement {
     const long = this._longPress;
     this._longPress = false;
     clearTimeout(this._pressTimer);
-    const keys = ["open", "back", "ep", "play", "phone", "dl", "link", "toggle", "hist", "histclear", "cont",
+    const keys = ["open", "back", "ep", "play", "phone", "dl", "link", "toggle", "hist", "histclear", "cont", "contpick",
                   "contremove", "watch", "wopen", "wremove", "wseen", "wflag", "trakt", "traktflag", "traktflagdetail",
                   "want", "catalog", "research", "findfulltext", "removeprogress",
                   "favmove", "fav", "favremove", "favtoggle", "hometab"];
