@@ -484,7 +484,7 @@ class NokturnoCard extends HTMLElement {
 
   async _play(stream, force = false) {
     const entityId = await this._choose("player", force);
-    if (!entityId) { if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    if (!entityId) { this._state.loading = null; if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
     this._state.player = entityId;
     await this._guard(async () => {
       await this._call("play", { ...this._target(stream), entity_id: entityId }, false);
@@ -710,7 +710,7 @@ class NokturnoCard extends HTMLElement {
   async _playContinue(item) {
     const params = this._continueStream(item);
     const entityId = await this._choose("player");
-    if (!entityId) { if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    if (!entityId) { this._state.loading = null; if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
     this._state.player = entityId;
     await this._guard(async () => {
       await this._call("play", {
@@ -1265,12 +1265,14 @@ class NokturnoCard extends HTMLElement {
   _tile(key, e, i) {
     const acts = (e.actions || []).map((a, j) => a.icon
       ? `<span class="act" role="button" data-rowact="${key}:${i}:${j}" title="${this._esc(a.label)}"><ha-icon icon="${a.icon}"></ha-icon></span>` : "").join("");
+    // po klepnutí plakát ztmavne a místo hodnocení, štítku a ikon ukáže procenta hledání streamů
+    const busy = this._state.busy && this._state.loading === `${key}:${i}`;
     return `<button class="poster" data-rowitem="${key}:${i}" title="${this._esc(e.title)}">
-      <span class="thumb${e.dim ? " dim" : ""}${acts ? " hasacts" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
+      <span class="thumb${e.dim ? " dim" : ""}${acts && !busy ? " hasacts" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
         ${e.poster ? `<img src="${this._esc(this._thumbSmall(e.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
-        <span class="tags">${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}${
+        ${busy ? `<span class="mask"><ha-icon class="spin" icon="mdi:loading"></ha-icon><span class="pct"></span></span>` : `<span class="tags">${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}${
           e.rating ? `<span class="where rate">★ ${this._esc(e.rating)}</span>` : ""}</span>
-        ${acts ? `<span class="acts">${acts}</span>` : ""}
+        ${acts ? `<span class="acts">${acts}</span>` : ""}`}
       </span><div class="t">${this._esc(e.title)}${e.year ? ` <span class="year">(${this._esc(e.year)})</span>` : ""}</div></button>`;
   }
 
@@ -1284,12 +1286,12 @@ class NokturnoCard extends HTMLElement {
         title: c.label, poster: c.thumbnail, rating: c.rating, plot: c.plot,
         badge: "",
         actions: [
-          { icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => { st.loading = "cont"; return this._openContinue(c); } },
+          { icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => this._openContinue(c) },
           ...(c.entity_id ? [{ icon: "mdi:close-circle-outline", label: this._t("Odebrat z Pokračovat ve sledování"),
                                run: () => this._removeProgress({ entity_id: c.entity_id, file: c.file }) }] : []),
         ],
         play: () => (this._continueStream(c) ? this._playContinue(c) : this._openContinue(c)),
-        open: () => { st.loading = "cont"; return this._openContinue(c); },
+        open: () => this._openContinue(c),
       }));
     }
     if (key === "watched") {
@@ -1423,7 +1425,7 @@ class NokturnoCard extends HTMLElement {
   /** Přehraje titul přes službu `play` (hledá nejlepší stream sama) na vybraném přehrávači. */
   async _playTitle(data) {
     const entityId = await this._choose("player");
-    if (!entityId) { if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    if (!entityId) { this._state.loading = null; if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
     this._state.player = entityId;
     await this._guard(async () => {
       await this._call("play", { ...data, entity_id: entityId }, false);
@@ -2015,7 +2017,7 @@ class NokturnoCard extends HTMLElement {
 
   async _playFile(file) {
     const entityId = await this._choose("player");
-    if (!entityId) { if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    if (!entityId) { this._state.loading = null; if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
     this._state.player = entityId;
     await this._guard(async () => {
       await this._hass.callService("media_player", "play_media", {
@@ -2115,12 +2117,14 @@ class NokturnoCard extends HTMLElement {
     if (data.rowact !== undefined) {
       const [key, i, j] = data.rowact.split(":");
       const a = (((this._rowItems || {})[key] || [])[+i] || {}).actions;
+      st.loading = `${key}:${i}`;
       return a && a[+j] ? a[+j].run() : undefined;
     }
     if (data.rowitem !== undefined) {
       const [key, i] = data.rowitem.split(":");
       const e = ((this._rowItems || {})[key] || [])[+i];
       if (!e) return undefined;
+      st.loading = `${key}:${i}`;
       // dlaždice s ikonami akcí detail nepotřebuje; jako v seznamu: rozkoukané se pustí na tomtéž Kodi,
       // Hlídané a Můj seznam se otevřou (přehrávač se vybírá až ve streamech)
       if ((e.actions || []).some((x) => x.icon)) return key === "continue" && e.play ? e.play() : e.open();
