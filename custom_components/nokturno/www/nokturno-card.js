@@ -1272,9 +1272,6 @@ class NokturnoCard extends HTMLElement {
         .nk-more { min-width:min(80vw,420px); display:flex; flex-direction:column; max-height:calc(100dvh - 160px); }
         .nk-more .nk-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
         .nk-more .mtop { position:relative; display:flow-root; padding:12px; border-radius:12px; isolation:isolate; }
-        .nk-more .mtop.hasbg::before { content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit;
-          background:var(--nk-bg) center top / cover no-repeat; opacity:.1;
-          -webkit-mask-image:linear-gradient(#000 40%, transparent); mask-image:linear-gradient(#000 40%, transparent); }
         .nk-more .mposter { float:left; width:110px; margin:0 16px 8px 0; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.4); }
         .nk-more .mmeta { font-size:.95rem; color:var(--secondary-text-color); }
         .nk-more .mgenres { margin-top:2px; font-size:.9rem; color:var(--secondary-text-color); }
@@ -1314,10 +1311,6 @@ class NokturnoCard extends HTMLElement {
       top.querySelector(".mgenres").textContent = (x.genres || []).join(", ");
       // Kodi popis začíná tučnými žánry „[B]Dětský[/B] · …“ – žánry už jsou výš
       top.querySelector(".mplot").innerHTML = this._plot(String(x.plot || "").replace(/^\s*\[B\][^\[]*\[\/B\]\s*·\s*/i, ""));
-      if (x.background) {
-        top.style.setProperty("--nk-bg", `url(${JSON.stringify(x.background)})`);
-        top.classList.add("hasbg");
-      }
     };
     paint(e);
     const m = await this._titleMeta(e.metaId, e.type);
