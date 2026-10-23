@@ -1092,6 +1092,7 @@ class NokturnoCard extends HTMLElement {
       this._rowItems[key] = entries || [];
       const shown = (entries || []).slice(0, this._limit(key));
       if (key === "mylist") this._fillFavMeta(fav.slice(0, this._limit(key)));
+      if (key === "watched") this._fillRatings(shown);
       html += `<div class="section"><ha-icon icon="${ICONS[key]}"></ha-icon> ${this._t(SECTION_LABELS[key])}</div>${head}`;
       if (!entries) html += `<div class="muted">…</div>`;
       else if (shown.length) {
@@ -1164,7 +1165,7 @@ class NokturnoCard extends HTMLElement {
     if (key === "watched") {
       const ep = (x) => `${x.season}x${String(x.episode).padStart(2, "0")}`;
       const out = src.series.map((w) => ({
-        title: w.title, poster: w.poster, badge: w.new ? `${this._t("nový díl")} ${ep(w.new)}` : "", dim: !w.available,
+        title: w.title, poster: w.poster, rating: (st.rate || {})[w.id], badge: w.new ? `${this._t("nový díl")} ${ep(w.new)}` : "", dim: !w.available,
         type: "series", metaId: w.id,
         info: w.new ? `${this._t("nový díl")} ${ep(w.new)} ${w.new.title || ""}`.trim()
           : [w.available ? `${this._t("ke sledování")} ${ep(w.available)}` : this._t("zatím bez streamu"),
@@ -1212,7 +1213,7 @@ class NokturnoCard extends HTMLElement {
             run: () => this._guard(async () => { await this._call("trakt_flag", { id: t.id }, false); }) });
         }
         actions.push({ icon: "mdi:bell-remove-outline", label: this._t("Odebrat z Hlídaných"), danger: true, run: () => this._toggleWant({ id: t.id }) });
-        out.push({ title: t.title, year: t.year, poster: t.poster, plot: t.description, dim: !t.streams,
+        out.push({ title: t.title, year: t.year, poster: t.poster, plot: t.description, dim: !t.streams, rating: (st.rate || {})[t.id],
                    badge: parts.length === 3 ? `${parts[1]}x${parts[2].padStart(2, "0")}` : (t.flagged ? this._t("kontrolovat dál") : ""),
                    type: t.type === "series" || parts.length === 3 ? "series" : "movie", metaId: t.id,
                    info: `${this._t(state)}${t.streams ? ` ${this._t("· {0} streamů", t.streams)}` : ""}`,
@@ -1241,6 +1242,22 @@ class NokturnoCard extends HTMLElement {
                                    description: m.description || "", source: "katalog" }),
       actions: this._titleActions({ id: m.id, type: m.type, title: m.title, year: m.year, poster: m.poster }),
     }));
+  }
+
+  /** Hodnocení titulů v Hlídaných (senzor ho nenese): po jednom ze služby `detail`, drží se ve `st.rate`. */
+  async _fillRatings(entries) {
+    const st = this._state;
+    st.rate = st.rate || {};
+    const todo = entries.filter((e) => e.metaId && !(e.metaId in st.rate) && /^tt\d+/.test(String(e.metaId)));
+    if (!todo.length || this._rateFilling) return;
+    this._rateFilling = true;
+    try {
+      for (const e of todo) {
+        st.rate[e.metaId] = "";
+        const m = await this._titleMeta(e.metaId, e.type);
+        if (m && m.rating) { st.rate[e.metaId] = m.rating; if (st.view === "search") this._paint(); }
+      }
+    } finally { this._rateFilling = false; }
   }
 
   /** Plakát, hodnocení a popis titulů Mého seznamu, které je nemají uložené (přidané z Traktu):
