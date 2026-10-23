@@ -533,25 +533,8 @@ class NokturnoCard extends HTMLElement {
           display:flex; align-items:center; justify-content:center; cursor:pointer; --mdc-icon-size:24px; flex:none; }
         .nokturno-chooser .mclose:hover { background: var(--secondary-background-color, #2a2a2a); }
         .nokturno-chooser .mbtitle { font-size:1.375rem; line-height:1.6; font-weight:400; padding:0 4px; }
-        .nokturno-chooser .mbody { padding:8px 24px 8px; overflow:auto; flex:1 1 auto; }
-        .nokturno-chooser .mhead { display:flex; gap:16px; align-items:flex-start; }
-        .nokturno-chooser .mposter { width:110px; border-radius:12px; flex:none; box-shadow:0 2px 10px rgba(0,0,0,.4); }
-        .nokturno-chooser .mmeta { font-size:.95rem; color: var(--secondary-text-color, #9e9e9e); }
-        .nokturno-chooser .minfo { margin-top:6px; font-size:.9rem; font-weight:600; }
-        .nokturno-chooser .mplot { margin-top:12px; font-size:.95rem; line-height:1.5; }
-        .nokturno-chooser .mrows { flex:none; border-top:1px solid var(--divider-color, #333); padding:8px 12px 12px; }
-        .nokturno-chooser .mrow { display:flex; align-items:center; gap:16px; width:100%; border:none; background:none; color:inherit;
-          font:inherit; text-align:left; padding:8px 12px; border-radius:12px; cursor:pointer; min-height:48px; }
-        .nokturno-chooser .mrow:hover { background: var(--secondary-background-color, #2a2a2a); }
-        .nokturno-chooser .mic { width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
-          background: rgba(var(--rgb-primary-color, 3,169,244), .15); color: var(--primary-color); --mdc-icon-size:22px; }
-        .nokturno-chooser .mrow.danger .mic { background: rgba(var(--rgb-error-color, 219,68,55), .15); color: var(--error-color, #db4437); }
-        .nokturno-chooser .mrow.danger { color: var(--error-color, #db4437); }
-        .nokturno-chooser .ptitle.big { font-size:1.05rem; color: var(--primary-text-color, #fff); }
-        .nokturno-chooser .pbtn.icon { display:inline-flex; align-items:center; padding:8px 12px; --mdc-icon-size:22px; }
+        .nokturno-chooser .panel.more .nk-more { flex:1 1 auto; min-height:0; max-height:none; min-width:0; padding:8px 24px 12px; }
         .nokturno-chooser .pbtn.danger { background: var(--error-color, #c0392b); color:#fff; }
-        .nokturno-chooser .pbtn.primary { background: var(--primary-color); color: var(--text-primary-color); }
-        .nokturno-chooser .pposter { width:92px; border-radius:8px; float:left; margin:0 10px 6px 4px; }
       </style>${body}`;
       const onKey = (e) => { if (e.key === "Escape") { e.stopPropagation(); close(null); } };
       const close = (value) => {
@@ -914,7 +897,7 @@ class NokturnoCard extends HTMLElement {
         .heroart { position:relative; display:block; }
         .hero img { width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:12px; display:block;
                     background: var(--secondary-background-color); }
-        .desc { margin-top:8px; font-size:.85rem; line-height:1.35; color: var(--secondary-text-color); cursor:pointer;
+        .desc { white-space:pre-line; margin-top:8px; font-size:.85rem; line-height:1.35; color: var(--secondary-text-color); cursor:pointer;
                 display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
         .desc.open { -webkit-line-clamp:unset; display:block; }
         /* výběr ve vzhledu HA: podklad s popiskem, uvnitř nativní select */
@@ -1403,84 +1386,115 @@ class NokturnoCard extends HTMLElement {
     } finally { this._favFilling = false; }
   }
 
-  /** Detail položky z řady: plakát, popis, Otevřít / Přehrát. */
+  /** Obsah dialogu titulu (styly + markup) – stejný pro `ha-dialog` i záložní okno `_modal`.
+      Metadata a popis plní `_fillDialog`; `.mrows` je mimo scroll, takže zůstává dole. */
+  _detailBody(e, rows) {
+    const esc = (x) => this._esc(x);
+    return `<style>
+        .nk-more { min-width:min(80vw,420px); display:flex; flex-direction:column; max-height:calc(100dvh - 160px); }
+        .nk-more .nk-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
+        .nk-more .mtop { position:relative; display:flow-root; padding:12px; border-radius:12px; isolation:isolate; }
+        .nk-more .mtop.hasbg::before { content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit;
+          background:var(--nk-bg) center top / cover no-repeat; opacity:.2;
+          -webkit-mask-image:linear-gradient(#000 40%, transparent); mask-image:linear-gradient(#000 40%, transparent); }
+        .nk-more .mposter { float:left; width:110px; margin:0 16px 8px 0; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.4); }
+        .nk-more .mmeta { font-size:.95rem; color:var(--secondary-text-color); }
+        .nk-more .mgenres { margin-top:2px; font-size:.9rem; color:var(--secondary-text-color); }
+        .nk-more .mmeta:empty, .nk-more .mgenres:empty, .nk-more .mplot:empty { display:none; }
+        .nk-more .minfo { margin-top:6px; font-size:.9rem; font-weight:600; }
+        .nk-more .mplot { margin-top:8px; font-size:.95rem; line-height:1.5; white-space:pre-line; }
+        .nk-more .mrows { flex:none; margin:12px -8px -8px; border-top:1px solid var(--divider-color); padding-top:8px; }
+        .nk-more .mrow { display:flex; align-items:center; gap:16px; width:100%; border:none; background:none; color:var(--primary-text-color);
+          font:inherit; text-align:left; padding:8px 12px; border-radius:12px; cursor:pointer; min-height:48px; }
+        .nk-more .mrow:hover { background:var(--secondary-background-color); }
+        .nk-more .mrow.danger, .nk-more .mrow.danger .mic { color:var(--error-color, #db4437); }
+        .nk-more .mrow.danger:hover { background:rgba(var(--rgb-error-color, 219,68,55), .12); }
+        .nk-more .mic { width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; line-height:0;
+          background:rgba(var(--rgb-primary-color, 3,169,244), .15); color:var(--primary-color); }
+        .nk-more .mrow.danger .mic { background:rgba(var(--rgb-error-color, 219,68,55), .15); }
+        .nk-more .mic ha-icon { display:flex; width:22px; height:22px; --mdc-icon-size:22px; }
+      </style>
+      <div class="nk-more">
+        <div class="nk-scroll"><div class="mtop">
+          ${e.poster ? `<img class="mposter" src="${esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
+          <div class="mmeta"></div><div class="mgenres"></div>
+          ${e.info ? `<div class="minfo">${esc(e.info)}</div>` : ""}
+          <div class="mplot"></div>
+        </div></div>
+        <div class="mrows">${rows.map((r) => `<button class="mrow${r.danger ? " danger" : ""}" data-act="${r.id}">
+          <span class="mic"><ha-icon icon="${r.icon}"></ha-icon></span><span>${esc(r.label)}</span></button>`).join("")}</div>
+      </div>`;
+  }
+
+  /** Doplní dialog: nejdřív co o titulu karta ví, pak (u IMDb id) délku, žánry, fanart a delší popis ze služby `detail`. */
+  async _fillDialog(root, e) {
+    const box = root.querySelector(".nk-more");
+    const top = box && box.querySelector(".mtop");
+    if (!top) return;
+    const paint = (x) => {
+      top.querySelector(".mmeta").innerHTML = this._metaLine(x);
+      top.querySelector(".mgenres").textContent = (x.genres || []).join(", ");
+      top.querySelector(".mplot").innerHTML = this._plot(x.plot);
+      if (x.background) {
+        top.style.setProperty("--nk-bg", `url(${JSON.stringify(x.background)})`);
+        top.classList.add("hasbg");
+      }
+    };
+    paint(e);
+    const m = await this._titleMeta(e.metaId, e.type);
+    if (!m || !box.isConnected) return;
+    const plot = String(m.plot || "").length > String(e.plot || "").length ? m.plot : e.plot;
+    paint({ year: e.year, rating: e.rating || m.rating, runtime: e.runtime || m.runtime,
+            genres: (e.genres || []).length ? e.genres : m.genres, background: e.background || m.background, plot });
+  }
+
   /** Detail titulu v `ha-dialog` HA – stejné okno, jaké používá more-info. Vrací id zvolené
       volby, `null` při zavření, `undefined` když `ha-dialog` v HA není (pak se použije záložní okno). */
-  _haDialog(e, meta, rows) {
+  _haDialog(e, body) {
     if (!customElements.get("ha-dialog")) return Promise.resolve(undefined);
     return new Promise((resolve) => {
       const dlg = document.createElement("ha-dialog");
       dlg.setAttribute("open", "");
-      dlg.heading = true;
+      // název v hlavičce: novější ha-dialog (webawesome) ignoruje slot="heading", čte `header-title`
+      dlg.heading = e.title;
+      dlg.headerTitle = e.title;
+      dlg.setAttribute("header-title", e.title);
       let result = null;
-      dlg.innerHTML = `<style>
-          .nk-more { min-width:min(80vw,420px); }
-          .nk-more .mhead { display:flex; gap:16px; align-items:flex-start; }
-          .nk-more .mposter { width:110px; border-radius:12px; flex:none; box-shadow:0 2px 10px rgba(0,0,0,.4); }
-          .nk-more .mmeta { font-size:.95rem; color:var(--secondary-text-color); }
-          .nk-more .minfo { margin-top:6px; font-size:.9rem; font-weight:600; }
-          .nk-more .mplot { margin-top:12px; font-size:.95rem; line-height:1.5; }
-          .nk-more .mrows { margin:16px -8px -8px; border-top:1px solid var(--divider-color); padding-top:8px; }
-          .nk-more .mrow { display:flex; align-items:center; gap:16px; width:100%; border:none; background:none; color:var(--primary-text-color);
-            font:inherit; text-align:left; padding:8px 12px; border-radius:12px; cursor:pointer; min-height:48px; }
-          .nk-more .mrow:hover { background:var(--secondary-background-color); }
-          .nk-more .mic { width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center;
-            background:rgba(var(--rgb-primary-color, 3,169,244), .15); color:var(--primary-color); --mdc-icon-size:22px; }
-          .nk-more .mrow.danger, .nk-more .mrow.danger .mic { color:var(--error-color, #db4437); }
-          .nk-more .mrow.danger .mic { background:rgba(var(--rgb-error-color, 219,68,55), .15); }
-        </style>
-        <ha-dialog-header slot="heading">
+      dlg.innerHTML = `<ha-dialog-header slot="heading">
           <ha-icon-button slot="navigationIcon" dialogAction="cancel" label="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></ha-icon-button>
           <span slot="title">${this._esc(e.title)}</span>
-        </ha-dialog-header>
-        <div class="nk-more">
-          <div class="mhead">
-            ${e.poster ? `<img class="mposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
-            <div>${meta ? `<div class="mmeta">${meta}</div>` : ""}${e.info ? `<div class="minfo">${this._esc(e.info)}</div>` : ""}</div>
-          </div>
-          ${e.plot ? `<div class="mplot">${this._esc(e.plot)}</div>` : ""}
-          <div class="mrows">${rows.map((r) => `<button class="mrow${r.danger ? " danger" : ""}" data-act="${r.id}">
-            <span class="mic"><ha-icon icon="${r.icon}"></ha-icon></span><span>${this._esc(r.label)}</span></button>`).join("")}</div>
-        </div>`;
+        </ha-dialog-header>${body}`;
       dlg.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => { result = b.dataset.act; dlg.close(); }));
       dlg.addEventListener("closed", () => { dlg.remove(); resolve(result); });
       document.body.appendChild(dlg);
+      this._fillDialog(dlg, e);
     });
   }
 
+  /** Detail titulu z řady, výsledků hledání i katalogu: dialog s popisem a volbami (Vybrat stream / Otevřít a akce titulu). */
   async _rowDetail(e, key, idx) {
     const acts = e.actions || [];
     const has = (...icons) => acts.some((a) => icons.includes(a.icon));
-    // řádky voleb: přehrát, otevřít (když ho akce už nenabízí) a akce řady
     const rows = [
-      ...(e.play ? [{ id: "play", icon: "mdi:play", label: this._t("Přehrát") }] : []),
-      ...(has("mdi:format-list-bulleted", "mdi:folder-play-outline") ? [] : [{ id: "open", icon: "mdi:folder-open-outline", label: this._t("Otevřít") }]),
-      ...acts.filter((a) => a.icon).map((a, n) => ({ id: `a${acts.indexOf(a)}`, icon: a.icon, label: a.label,
-        danger: ["mdi:close-circle-outline", "mdi:eye-off-outline"].includes(a.icon) })),
+      ...(has("mdi:format-list-bulleted", "mdi:folder-play-outline") ? [] : [{ id: "open",
+          icon: e.type === "series" ? "mdi:folder-play-outline" : "mdi:format-list-bulleted",
+          label: e.type === "series" ? this._t("Otevřít") : this._t("Vybrat stream") }]),
+      ...acts.filter((a) => a.icon).map((a) => ({ id: `a${acts.indexOf(a)}`, icon: a.icon, label: a.label,
+          danger: a.danger || ["mdi:close-circle-outline", "mdi:eye-off-outline"].includes(a.icon) })),
     ];
-    const meta = [e.year, e.rating ? `★ ${e.rating}` : ""].filter(Boolean).map((x) => this._esc(x)).join(" · ");
+    const body = this._detailBody(e, rows);
     // vlastní dialog HA (`ha-dialog`, jako more-info a Browser Mod); bez něj záložní okno karty
-    const act = await this._haDialog(e, meta, rows) || (customElements.get("ha-dialog") ? null : await this._modal(`<div class="panel more">
-      <div class="mbar"><button class="mclose" title="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></button>
-        <div class="mbtitle">${this._esc(e.title)}</div></div>
-      <div class="mbody">
-        <div class="mhead">
-          ${e.poster ? `<img class="mposter" src="${this._esc(this._thumbSmall(e.poster))}" referrerpolicy="no-referrer" />` : ""}
-          <div class="mtitle">${meta ? `<div class="mmeta">${meta}</div>` : ""}
-            ${e.info ? `<div class="minfo">${this._esc(e.info)}</div>` : ""}</div>
-        </div>
-        ${e.plot ? `<div class="mplot">${this._esc(e.plot)}</div>` : ""}
-      </div>
-      <div class="mrows">${rows.map((r) => `<button class="mrow${r.danger ? " danger" : ""}" data-act="${r.id}">
-        <span class="mic"><ha-icon icon="${r.icon}"></ha-icon></span><span>${this._esc(r.label)}</span></button>`).join("")}</div>
-    </div>`, (wrap, close) => {
-      wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => close(b.dataset.act)));
-      wrap.querySelector(".mclose").addEventListener("click", () => close(null));
-    }));
+    const act = await this._haDialog(e, body) || (customElements.get("ha-dialog") ? null : await this._modal(
+      `<div class="panel more"><div class="mbar"><button class="mclose" title="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></button>
+       <div class="mbtitle">${this._esc(e.title)}</div></div>${body}</div>`,
+      (wrap, close) => {
+        wrap.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => close(b.dataset.act)));
+        wrap.querySelector(".mclose").addEventListener("click", () => close(null));
+        this._fillDialog(wrap, e);
+      }));
     if (!act) return undefined;
     if (key !== undefined) this._state.loading = `${key}:${idx}`;
     if (/^a\d+$/.test(act)) return acts[+act.slice(1)].run();
-    if (act === "play") return e.play();
     return e.open();
   }
 
@@ -1955,7 +1969,7 @@ class NokturnoCard extends HTMLElement {
           <img src="${this._esc(art)}" decoding="async" referrerpolicy="no-referrer" />
           ${st.busy ? `<span class="mask"><ha-icon class="spin" icon="mdi:loading"></ha-icon><span class="pct"></span></span>` : ""}
         </span>` : ""}
-        ${text ? `<div class="desc${st.descOpen ? " open" : ""}" data-toggle="desc" title="${this._t("Klepnutím rozbalíš")}">${this._esc(text)}</div>` : ""}
+        ${text ? `<div class="desc${st.descOpen ? " open" : ""}" data-toggle="desc" title="${this._t("Klepnutím rozbalíš")}">${this._plot(text)}</div>` : ""}
       </div>`;
   }
 
@@ -2337,6 +2351,41 @@ class NokturnoCard extends HTMLElement {
     return String(url || "")
       .replace(/(image\.tmdb\.org\/t\/p\/)(w\d+|original)\//, "$1w185/")
       .replace(/(image\.tmdb\.org\/t\/p\/)w600_and_h900_bestv2\//, "$1w220_and_h330_face/");
+  }
+
+  /** Popis z Kodi: [B]/[I] → tučně/kurzíva, [CR] → nový řádek, ostatní značky pryč (jako _ZNACKY_KODI v __init__.py). */
+  _plot(text) {
+    return this._esc(text)
+      .replace(/\[B\]([\s\S]*?)\[\/B\]/gi, "<b>$1</b>")
+      .replace(/\[I\]([\s\S]*?)\[\/I\]/gi, "<i>$1</i>")
+      .replace(/\[CR\]/gi, "\n")
+      .replace(/\[\/?(?:COLOR|B|I|LIGHT|UPPERCASE|LOWERCASE|CAPITALIZE)[^\]]*\]/gi, "");
+  }
+
+  /** „132“ / „132 min“ → „2 h 12 min“; jiný tvar se ukáže, jak přišel. */
+  _runtime(v) {
+    const s = String(v || "").trim();
+    const m = s.match(/^(\d+)\s*(min)?$/i);
+    if (!m) return s;
+    const n = +m[1];
+    return n >= 60 ? `${Math.floor(n / 60)} h ${String(n % 60).padStart(2, "0")} min` : `${n} min`;
+  }
+
+  _metaLine(x) {
+    return [x.year, x.rating ? `★ ${x.rating}` : "", this._runtime(x.runtime)].filter(Boolean).map((v) => this._esc(v)).join(" · ");
+  }
+
+  /** Délka, žánry, fanart a delší popis ze služby `detail` – jen u IMDb id, jednou za titul (cache v kartě). */
+  _titleMeta(id, type) {
+    const base = String(id || "").split(":")[0];
+    if (!/^tt\d+$/.test(base)) return Promise.resolve(null);
+    const kind = type === "series" ? "series" : "movie";
+    this._metaCache = this._metaCache || {};
+    const key = `${kind}:${base}`;
+    if (!this._metaCache[key]) this._metaCache[key] = this._call("detail", { id: base, type: kind })
+      .then((m) => ({ rating: m.rating || "", runtime: m.runtime || "", genres: m.genres || [], background: m.background || "", plot: m.description || "" }))
+      .catch(() => null);
+    return this._metaCache[key];
   }
 
   _esc(text) {
