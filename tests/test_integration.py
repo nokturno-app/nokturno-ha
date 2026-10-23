@@ -1297,3 +1297,20 @@ class TestAutoPlayKarty(unittest.TestCase):
         self.assertIn('name: "auto_play"', karta)
         self.assertIn("known: true", karta)
         self.assertIn("cont: c,", karta)
+
+
+class TestStreamyJenKliceSchematu(unittest.TestCase):
+    """Karta volá `streams` jen s klíči, které `STREAMS_SCHEMA` zná – jinak HA volání odmítne
+    a titul z katalogu ukáže „žádný stream“ (title/year navíc, 12.2.0)."""
+
+    def test_volani_streams(self):
+        import re
+        karta = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        zdroj = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        schema = zdroj.split("STREAMS_SCHEMA = vol.Schema({")[1].split("})")[0]
+        povolene = set(re.findall(r'vol\.Optional\("(\w+)"', schema))
+        volani = re.findall(r'_call\("streams", \{([^}]*)\}', karta)
+        self.assertTrue(volani)
+        for args in volani:
+            for klic in re.findall(r"(\w+)(?=\s*[:,]|\s*$)", args.replace("...data", "")):
+                self.assertIn(klic, povolene, args)

@@ -433,7 +433,9 @@ class NokturnoCard extends HTMLElement {
       }
       let res = {};
       try {
-        res = await this._call("streams", { id: item.id, type, title: item.title, year: item.year });
+        // jen klíče ze schématu služby (`STREAMS_SCHEMA`) – `title`/`year` navíc HA odmítne
+        // a karta by ukázala „žádný stream“, i když titul streamy má
+        res = await this._call("streams", { id: item.id, type });
       } catch (err) { /* stejně tak film */ }
       await this._showStreams(res, { id: item.id, type });
     });
@@ -740,7 +742,7 @@ class NokturnoCard extends HTMLElement {
       const found = (res.results || [])[0];
       if (!found) { this._toast(this._t("Titul se nepodařilo najít.")); this._state.stack.pop(); return; }
       this._state.item = found;
-      const streams = await this._call("streams", { id: found.id, type, alt: found.alt, title: found.title, year: found.year });
+      const streams = await this._call("streams", { id: found.id, type, alt: found.alt });
       await this._showStreams(streams, { id: found.id, type, alt: found.alt });
     });
   }
