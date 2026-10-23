@@ -1261,28 +1261,54 @@ class NokturnoCard extends HTMLElement {
       </span><div class="t">${this._esc(e.title)}${e.year ? ` <span class="year">(${this._esc(e.year)})</span>` : ""}</div></button>`;
   }
 
-  /** Položky jedné řady jako `{title, year, poster, rating, plot, badge, dim, play, open}`;
-      `play` je null, když se titul pustit nedá. Pro `catalogs` je `src` pole z `catalog_items`,
-      jinak `{cont, trakt, fav, series, manyKodi}`. */
+  /** Volby dialogu společné pro každý titul (Můj seznam, Hlídané); `t = {id, type, title, year, alt, poster}`.
+      U existujícího zápisu nabídne odebrání (červeně). */
+  _titleActions(t) {
+    if (!t || !t.id) return [];
+    const fav = this._isFavourite(t.id);
+    const out = [fav
+      ? { icon: "mdi:bookmark-remove-outline", label: this._t("Odebrat z Mého seznamu"), danger: true, run: () => this._toggleFavourite(t) }
+      : { icon: "mdi:bookmark-plus-outline", label: this._t("Přidat do Mého seznamu"), run: () => this._toggleFavourite(t) }];
+    if (t.type === "series") {
+      const on = this._isWatched(t.id);
+      out.push(on ? { icon: "mdi:eye-off-outline", label: this._t("Přestat hlídat"), danger: true, run: () => this._toggleWatch(t) }
+                  : { icon: "mdi:eye-plus-outline", label: this._t("Hlídat nové díly"), run: () => this._toggleWatch(t) });
+    } else {
+      const on = this._isWanted(t.id);
+      out.push(on ? { icon: "mdi:bell-remove-outline", label: this._t("Odebrat z Hlídaných"), danger: true, run: () => this._toggleWant(t) }
+                  : { icon: "mdi:bell-plus-outline", label: this._t("Přidat do Hlídaných"), run: () => this._toggleWant(t) });
+    }
+    return out;
+  }
+
+  /** Položky jedné řady jako `{title, year, poster, rating, plot, badge, dim, type, metaId, genres, background, actions, open}`;
+      `type` a `metaId` (IMDb id) slouží dialogu k dotažení délky a žánrů. Pro `catalogs` je `src` pole
+      z `catalog_items`, jinak `{cont, trakt, fav, series, manyKodi}`. */
   _rowEntries(key, src) {
     const st = this._state;
     if (key === "continue") {
-      return src.cont.map((c) => ({
-        title: c.label, poster: c.thumbnail, rating: c.rating, plot: c.plot,
-        badge: "",
-        actions: [
-          { icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => this._openContinue(c) },
-          ...(c.entity_id ? [{ icon: "mdi:close-circle-outline", label: this._t("Odebrat z Pokračovat ve sledování"),
-                               run: () => this._removeProgress({ entity_id: c.entity_id, file: c.file }) }] : []),
-        ],
-        play: () => (this._continueStream(c) ? this._playContinue(c) : this._openContinue(c)),
-        open: () => this._openContinue(c),
-      }));
+      return src.cont.map((c) => {
+        const p = new URLSearchParams(((c.file || "").split("?")[1]) || "");
+        const type = p.get("type") || (c.series ? "series" : "movie");
+        const sid = (p.get("series") || p.get("id") || "").split(":")[0];
+        return {
+          title: c.label, year: c.year, poster: c.thumbnail, background: c.fanart, rating: c.rating, plot: c.plot,
+          badge: "", type, metaId: sid,
+          actions: [
+            { icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => this._openContinue(c) },
+            ...(c.entity_id ? [{ icon: "mdi:close-circle-outline", label: this._t("Odebrat z Pokračovat ve sledování"),
+                                 run: () => this._removeProgress({ entity_id: c.entity_id, file: c.file }) }] : []),
+            ...this._titleActions(sid ? { id: sid, type, title: c.title || c.label, year: c.year, poster: c.thumbnail } : null),
+          ],
+          open: () => this._openContinue(c),
+        };
+      });
     }
     if (key === "watched") {
       const ep = (x) => `${x.season}x${String(x.episode).padStart(2, "0")}`;
       const out = src.series.map((w) => ({
         title: w.title, poster: w.poster, badge: w.new ? `${this._t("nový díl")} ${ep(w.new)}` : "", dim: !w.available,
+        type: "series", metaId: w.id,
         info: w.new ? `${this._t("nový díl")} ${ep(w.new)} ${w.new.title || ""}`.trim()
           : [w.available ? `${this._t("ke sledování")} ${ep(w.available)}` : this._t("zatím bez streamu"),
              w.latest && (!w.available || ep(w.latest) !== ep(w.available)) ? `${this._t("odvysíláno")} ${ep(w.latest)}` : ""]
@@ -1306,22 +1332,16 @@ class NokturnoCard extends HTMLElement {
             return this._guard(async () => { await this._call("watch_series", { id: w.id, remove: true }, false); });
           } },
         ],
-        play: w.available && w.available.id
-          ? () => this._playTitle({ id: w.available.id, type: "series", series: w.id, alt: w.alt || undefined })
-          : null,
         open: () => this._openItem({ id: w.id, type: "series", title: w.title, alt: w.alt, poster: w.poster }),
       }));
       const onSeriesRow = new Set(src.series.filter((w) => w.available && w.available.id).map((w) => w.available.id));
       src.trakt.forEach((t, i) => {
         if (onSeriesRow.has(t.id)) return;
         const parts = String(t.id).split(":");
-        const alt = t.alt || undefined;
-        let play = null;
-        if (t.streams && parts.length === 3) play = () => this._playTitle({ id: t.id, type: "series", series: t.series || parts[0], alt });
-        else if (t.streams && t.type !== "series") play = () => this._playTitle({ id: t.id, type: "movie", alt });
         const state = t.streams ? (t.flagged ? "kontrolovat dál" : "lze pustit") : (t.pending ? "hlídá se" : "zatím ne");
         const actions = [];
         if (t.streams) {
+          actions.push({ icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => this._openTrakt(i) });
           if (!t.flagged) actions.push({ icon: "mdi:bookmark-plus-outline", label: this._t("Přesunout do Mého seznamu"), run: () => {
             this._favOverride = this._favOverride || {};
             this._favOverride[t.id] = { id: t.id, title: this._withYear(t.title, t.year), year: t.year,
@@ -1334,34 +1354,35 @@ class NokturnoCard extends HTMLElement {
           actions.push({ icon: t.flagged ? "mdi:flag" : "mdi:flag-outline", label: t.flagged ? this._t("Přestat kontrolovat dál") : this._t("Kontrolovat dál (streamy nevyhovují)"),
             run: () => this._guard(async () => { await this._call("trakt_flag", { id: t.id }, false); }) });
         }
+        actions.push({ icon: "mdi:bell-remove-outline", label: this._t("Odebrat z Hlídaných"), danger: true, run: () => this._toggleWant({ id: t.id }) });
         out.push({ title: t.title, year: t.year, poster: t.poster, plot: t.description, dim: !t.streams,
                    badge: parts.length === 3 ? `${parts[1]}x${parts[2].padStart(2, "0")}` : (t.flagged ? this._t("kontrolovat dál") : ""),
+                   type: t.type === "series" || parts.length === 3 ? "series" : "movie", metaId: t.id,
                    info: `${this._t(state)}${t.streams ? ` ${this._t("· {0} streamů", t.streams)}` : ""}`,
-                   actions, play, open: () => this._openTrakt(i) });
+                   actions, open: () => this._openTrakt(i) });
       });
       return out;
     }
     if (key === "mylist") {
       const fm = st.favMeta || {};
-      return src.fav.map((f, i) => ({
-        title: f.title, poster: f.poster || (fm[f.id] || {}).poster, rating: (fm[f.id] || {}).rating,
-        plot: (fm[f.id] || {}).plot, year: f.year,
-        play: f.type !== "series" ? () => this._playTitle({ id: f.id, type: "movie", alt: f.alt || undefined }) : null,
-        open: () => this._openItem({ id: f.id, type: f.type || "movie", title: f.title, year: f.year,
-                                     alt: f.alt || null, poster: f.poster || "" }),
-        actions: [{ icon: "mdi:close-circle-outline", label: this._t("Odebrat z Mého seznamu"), run: () => {
-          this._favOverride = this._favOverride || {};
-          this._favOverride[f.id] = false;
-          return this._guard(async () => { await this._call("favourite_toggle", { id: f.id }, false); });
-        } }],
-      }));
+      return src.fav.map((f) => {
+        const type = f.type || "movie";
+        return {
+          title: f.title, poster: f.poster || (fm[f.id] || {}).poster, rating: (fm[f.id] || {}).rating,
+          plot: (fm[f.id] || {}).plot, year: f.year, type, metaId: f.id,
+          open: () => this._openItem({ id: f.id, type, title: f.title, year: f.year,
+                                       alt: f.alt || null, poster: f.poster || "" }),
+          actions: this._titleActions({ id: f.id, type, title: f.title, year: f.year, alt: f.alt, poster: f.poster }),
+        };
+      });
     }
     // catalogs
     return src.map((m) => ({
       title: m.title, year: m.year, poster: m.poster, rating: m.rating, plot: m.description, dim: !m.available,
-      play: m.type !== "series" && m.available ? () => this._playTitle({ id: m.id, type: "movie" }) : null,
+      type: m.type, metaId: m.id, genres: m.genres,
       open: () => this._openItem({ id: m.id, type: m.type, title: m.title, year: m.year, poster: m.poster || "",
                                    description: m.description || "", source: "katalog" }),
+      actions: this._titleActions({ id: m.id, type: m.type, title: m.title, year: m.year, poster: m.poster }),
     }));
   }
 
@@ -1498,17 +1519,6 @@ class NokturnoCard extends HTMLElement {
     return e.open();
   }
 
-  /** Přehraje titul přes službu `play` (hledá nejlepší stream sama) na vybraném přehrávači. */
-  async _playTitle(data) {
-    const entityId = await this._choose("player");
-    if (!entityId) { this._state.loading = null; if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
-    this._state.player = entityId;
-    await this._guard(async () => {
-      await this._call("play", { ...data, entity_id: entityId }, false);
-      this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
-    });
-  }
-
   /** Titul vlastního katalogu do řady (`catalog_items`); výsledek se drží ve stavu karty. */
   async _loadCatalog(id) {
     const st = this._state;
@@ -1601,8 +1611,7 @@ class NokturnoCard extends HTMLElement {
 
   _isWatched(id) { return this._watchlist().some((w) => w.id === id); }
 
-  async _toggleWatch() {
-    const item = this._state.item;
+  async _toggleWatch(item = this._state.item) {
     const watching = this._isWatched(item.id);
     // ikona se přepne hned, senzor to potvrdí o chvíli později
     this._watchOverride = this._watchOverride || {};
@@ -1707,8 +1716,7 @@ class NokturnoCard extends HTMLElement {
   }
 
   /** Hlídané – vlastní seznam i z Traktu; kontroluje se denně, jestli už má stream. */
-  async _toggleWant() {
-    const target = this._wantTarget();
+  async _toggleWant(target = this._wantTarget()) {
     if (!target) return;
     const wanted = this._isWanted(target.id);
     this._wantOverride = this._wantOverride || {};
@@ -1725,8 +1733,7 @@ class NokturnoCard extends HTMLElement {
 
   /** Můj seznam z hlavičky detailu – nezávisle na Hlídaných, funguje i pro titul,
       který se v Hlídaných vůbec neobjevuje (`favourite_toggle` umí přidat i odebrat). */
-  async _toggleFavourite() {
-    const target = this._wantTarget();
+  async _toggleFavourite(target = this._wantTarget()) {
     if (!target) return;
     const already = this._isFavourite(target.id);
     this._favOverride = this._favOverride || {};
@@ -1818,6 +1825,14 @@ class NokturnoCard extends HTMLElement {
     } catch (err) { /* Kodi vypnuté – cache zůstává, ať sekce nezmizí */ }
   }
 
+  /** Výsledek hledání ve tvaru položky řady – klepnutí otevře stejný dialog titulu jako v řadách. */
+  _resultEntry(r) {
+    const type = r.type === "series" ? "series" : "movie";
+    return { title: r.title, year: r.year, poster: r.poster, rating: r.rating || r.imdbRating, plot: r.description,
+             background: r.background, genres: r.genres, type, metaId: r.id, open: () => this._openItem(r),
+             actions: this._titleActions({ id: r.id, type, title: r.title, year: r.year, alt: r.alt, poster: r.poster }) };
+  }
+
   _results() {
     const st = this._state;
     // databáze filmů je po ruce vždycky – zdroje můžou najít něco jiného, než uživatel hledal
@@ -1839,6 +1854,7 @@ class NokturnoCard extends HTMLElement {
         <span class="thumb">
           <ha-icon icon="mdi:filmstrip"></ha-icon>
           ${r.poster ? `<img src="${this._esc(this._thumb(r.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
+          ${r.rating || r.imdbRating ? `<span class="tags"><span class="where rate">★ ${this._esc(r.rating || r.imdbRating)}</span></span>` : ""}
           ${st.busy && st.loading === `res:${i}` ? `<span class="mask"><ha-icon class="spin" icon="mdi:loading"></ha-icon><span class="pct"></span></span>` : ""}
         </span>
         <div class="t">${this._esc(r.title)}${r.year ? ` <span class="year">(${r.year})</span>` : ""}</div>
@@ -2296,8 +2312,10 @@ class NokturnoCard extends HTMLElement {
       return this._guard(async () => { await this._call("watch_series", { id: w.id, remove: true }, false); });
     }
     if (data.open !== undefined) {
-      st.loading = `res:${+data.open}`;
-      return this._openItem(st.results[+data.open]);
+      const r = st.results[+data.open];
+      if (!r) return undefined;
+      if (r.type === "file") { st.loading = `res:${+data.open}`; return this._openItem(r); }  // soubor z fulltextu: žádný titul, rovnou stream
+      return this._rowDetail(this._resultEntry(r), "res", +data.open);
     }
     if (data.back !== undefined) {
       const target = data.back === "back" ? (st.stack.pop() || "search") : data.back;
