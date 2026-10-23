@@ -1273,7 +1273,7 @@ class NokturnoCard extends HTMLElement {
         .nk-more .nk-scroll { flex:1 1 auto; min-height:0; overflow:auto; }
         .nk-more .mtop { position:relative; display:flow-root; padding:12px; border-radius:12px; isolation:isolate; }
         .nk-more .mtop.hasbg::before { content:""; position:absolute; inset:0; z-index:-1; border-radius:inherit;
-          background:var(--nk-bg) center top / cover no-repeat; opacity:.2;
+          background:var(--nk-bg) center top / cover no-repeat; opacity:.1;
           -webkit-mask-image:linear-gradient(#000 40%, transparent); mask-image:linear-gradient(#000 40%, transparent); }
         .nk-more .mposter { float:left; width:110px; margin:0 16px 8px 0; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,.4); }
         .nk-more .mmeta { font-size:.95rem; color:var(--secondary-text-color); }
@@ -1312,7 +1312,8 @@ class NokturnoCard extends HTMLElement {
     const paint = (x) => {
       top.querySelector(".mmeta").innerHTML = this._metaLine(x);
       top.querySelector(".mgenres").textContent = (x.genres || []).join(", ");
-      top.querySelector(".mplot").innerHTML = this._plot(x.plot);
+      // Kodi popis začíná tučnými žánry „[B]Dětský[/B] · …“ – žánry už jsou výš
+      top.querySelector(".mplot").innerHTML = this._plot(String(x.plot || "").replace(/^\s*\[B\][^\[]*\[\/B\]\s*·\s*/i, ""));
       if (x.background) {
         top.style.setProperty("--nk-bg", `url(${JSON.stringify(x.background)})`);
         top.classList.add("hasbg");
@@ -1342,8 +1343,11 @@ class NokturnoCard extends HTMLElement {
           <ha-icon-button slot="navigationIcon" dialogAction="cancel" label="${this._t("Zavřít")}"><ha-icon icon="mdi:close"></ha-icon></ha-icon-button>
           <span slot="title">${this._esc(e.title)}</span>
         </ha-dialog-header>${body}`;
-      dlg.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => { result = b.dataset.act; dlg.close(); }));
-      dlg.addEventListener("closed", () => { dlg.remove(); resolve(result); });
+      // zavření a výsledek hned: novější ha-dialog `close()` nemusí zavřít, `closed` chodí pozdě nebo vůbec
+      let done = false;
+      const finish = () => { if (done) return; done = true; dlg.open = false; dlg.removeAttribute("open"); setTimeout(() => dlg.remove(), 300); resolve(result); };
+      dlg.querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => { result = b.dataset.act; finish(); }));
+      ["closed", "wa-after-hide"].forEach((ev) => dlg.addEventListener(ev, finish));
       document.body.appendChild(dlg);
       this._fillDialog(dlg, e);
     });
