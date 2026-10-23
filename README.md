@@ -152,6 +152,7 @@ type: custom:nokturno-card
 title: Nokturno                  # nadpis karty
 show_header: true                # false skryje nadpis i ikonu
 player: media_player.coreelec    # výchozí přehrávač: ▶ ho pustí bez ptaní, dlouhý stisk nabídne seznam
+auto_play: false                 # true: klik na plakát rovnou pustí stream podle nastavení integrace (čeština, 5.1…), dlouhý stisk otevře nabídku
 sections:                        # sekce řad a jejich pořadí (Stažené jsou vždy dole)
   - continue
   - catalogs
@@ -176,6 +177,7 @@ Vše je volitelné: bez `players` se nabídnou přehrávače z nastavení integr
 | Zobrazit nadpis a ikonu | `show_header` |
 | Výchozí přehrávač | `player` (▶ ho pustí bez výběru, dlouhý stisk nabídne seznam) |
 | Přehrávače na výběr | `players` |
+| Klik na plakát rovnou přehraje (dlouhý stisk = nabídka) | `auto_play` |
 | Sekce a jejich pořadí (řady plakátů) | `sections` |
 | V katalozích jen dostupné | `only_available` |
 | Výchozí mobil | `phone` (nabídka se plní z telefonů, které integrace našla, i se jménem majitele) |

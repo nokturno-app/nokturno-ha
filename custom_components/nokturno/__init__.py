@@ -492,6 +492,40 @@ def _bez_znacek(text: str) -> str:
     return " ".join(_ZNACKY_KODI.sub("", text).split())
 
 
+def _kanaly(value) -> float:
+    """Počet kanálů z výpisu streamu („5.1“, 6, „2.0“) jako číslo; nečitelné = 0."""
+    try:
+        return float(str(value).replace(",", "."))
+    except ValueError:
+        return 0.0
+
+
+def _auto_stream(streams, lang="", surround=False, hide_sd=False, max_bitrate=0.0):
+    """Index streamu pro volbu karty „klik na plakát rovnou přehraje“ (`auto_play`).
+
+    Výpis je už seřazený podle předvoleb, takže stačí první stream, který splní všechny:
+    jazyk zvuku, 5.1 (v preferovaném jazyce, když ho stream uvádí), bez SD, strop
+    datového toku, a není to nahrávka z kina. `arrange()` při prázdném výsledku filtru
+    vrací původní seznam, proto se tu předvolby kontrolují znovu. Nesplní-li je žádný,
+    vrátí None a karta ukáže výpis streamů."""
+    for s in streams:
+        if s.get("lowq"):
+            continue
+        if lang and lang not in (s.get("langs") or []):
+            continue
+        if surround:
+            ch = s.get("channels") or {}
+            values = [ch[lang]] if lang and lang in ch else list(ch.values())
+            if not any(_kanaly(v) >= 5.1 for v in values):
+                continue
+        if hide_sd and s.get("quality_rank") and s["quality_rank"] <= 1:
+            continue
+        if max_bitrate and s.get("bitrate") and s["bitrate"] > max_bitrate:
+            continue
+        return s.get("index")
+    return None
+
+
 async def _kodi_continue_one(hass: HomeAssistant, kodi: dict) -> list[dict]:
     session = async_get_clientsession(hass)
     payload = {"jsonrpc": "2.0", "id": 1, "method": "Files.GetDirectory", "params": {
@@ -1748,7 +1782,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 await hass.async_add_executor_job(stats.note_play, item_id, title, year, kind)
             except Exception as err:  # noqa: BLE001 – statistika nesmí shodit funkční odpověď
                 _LOGGER.debug("statistika zhlédnutí %s: %s", item_id, err)
-        return {"count": len(streams), "streams": streams, "warnings": warnings}
+        auto = _auto_stream(streams, lang=engine.options.get("pref_lang") or "",
+                            surround=bool(engine.options.get("pref_surround")),
+                            hide_sd=bool(engine.options.get("hide_sd")),
+                            max_bitrate=engine._max_bitrate())
+        return {"count": len(streams), "streams": streams, "warnings": warnings, "auto": auto}
 
     async def handle_fulltext(call: ServiceCall):
         """Ruční, uvolněné hledání na WebShare/HellSpy/Sledujteto/FastShare/Přehraj.to — tlačítko „Zkusit fulltext"

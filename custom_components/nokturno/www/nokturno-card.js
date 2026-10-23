@@ -12,6 +12,7 @@
  *   type: custom:nokturno-card
  *   player: media_player.coreelec      # výchozí přehrávač: ▶ ho pustí bez výběru, dlouhý stisk nabídne seznam
  *   players: [media_player.coreelec, media_player.samsung_tv_q6]
+ *   auto_play: true                    # klik na plakát rovnou pustí stream podle předvoleb, dlouhý stisk = dialog
  *   phone: notify.mobile_app_sm_s921b  # výchozí mobil (jinak první nabídnutý)
  *   phones: [...]                      # ruční seznam mobilů
  *   downloads: sensor.nokturno_stahovani
@@ -154,6 +155,7 @@ const SK = {
   "Výchozí přehrávač": "Predvolený prehrávač",
   "Přehrávače na výběr": "Prehrávače na výber",
   "Výchozí mobil": "Predvolený mobil",
+  "Klik na plakát rovnou přehraje (dlouhý stisk = nabídka)": "Klik na plagát rovno prehrá (dlhé podržanie = ponuka)",
   "Senzor stahování": "Senzor sťahovania",
   "Zatím nic rozkoukaného ani hlídaného.": "Zatiaľ nič rozpozerané ani sledované.",
   "Nadpis karty": "Nadpis karty",
@@ -429,18 +431,11 @@ class NokturnoCard extends HTMLElement {
           }
         } catch (err) { /* seriál zatím žádný zdroj nemá */ }
       }
-      let streams = [];
-      let warnings = [];
+      let res = {};
       try {
-        const res = await this._call("streams", { id: item.id, type, title: item.title, year: item.year });
-        streams = res.streams || [];
-        warnings = res.warnings || [];
+        res = await this._call("streams", { id: item.id, type, title: item.title, year: item.year });
       } catch (err) { /* stejně tak film */ }
-      st.streams = streams;
-      st.warnings = warnings;
-      st.streamTarget = { id: item.id, type };
-      st.fulltext = false;
-      st.view = "streams";
+      await this._showStreams(res, { id: item.id, type });
     });
   }
 
@@ -448,12 +443,31 @@ class NokturnoCard extends HTMLElement {
     this._state.stack.push(this._state.view);
     await this._guard(async () => {
       const res = await this._call("streams", { ...data });
-      this._state.streams = res.streams || [];
-      this._state.warnings = res.warnings || [];
-      this._state.streamTarget = data;
-      this._state.fulltext = false;   // stejně tak ruční fulltext
-      this._state.view = "streams";
+      await this._showStreams(res, data);
     });
+  }
+
+  /** Výpis streamů do stavu karty. V režimu „klik na plakát rovnou přehraje“ (`st.autoPlay`)
+      pustí stream, který integrace vybrala podle předvoleb (`auto`), na prvním přehrávači
+      a výpis neukáže – karta zůstane, kde se klepnulo. Bez vhodného streamu výpis jako vždy. */
+  async _showStreams(res, target) {
+    const st = this._state;
+    st.streams = res.streams || [];
+    st.warnings = res.warnings || [];
+    st.streamTarget = target;
+    st.fulltext = false;   // stejně tak ruční fulltext
+    const auto = st.autoPlay;
+    st.autoPlay = false;
+    const stream = auto && res.auto != null ? st.streams.find((s) => s.index === res.auto) : null;
+    const entityId = this._config.player || this._players()[0];
+    if (stream && entityId) {
+      st.player = entityId;
+      await this._call("play", { ...this._target(stream), entity_id: entityId }, false);
+      this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
+      st.stack.pop();   // výpis se neotevřel, návrat by vedl o krok zpět navíc
+      return;
+    }
+    st.view = "streams";
   }
 
   /** Co poslat službě, aby přehrála/stáhla PRÁVĚ tenhle řádek.
@@ -727,10 +741,7 @@ class NokturnoCard extends HTMLElement {
       if (!found) { this._toast(this._t("Titul se nepodařilo najít.")); this._state.stack.pop(); return; }
       this._state.item = found;
       const streams = await this._call("streams", { id: found.id, type, alt: found.alt, title: found.title, year: found.year });
-      this._state.streams = streams.streams || [];
-      this._state.warnings = streams.warnings || [];
-      this._state.streamTarget = { id: found.id, type, alt: found.alt };
-      this._state.view = "streams";
+      await this._showStreams(streams, { id: found.id, type, alt: found.alt });
     });
   }
 
@@ -1157,6 +1168,7 @@ class NokturnoCard extends HTMLElement {
             ...this._titleActions(sid ? { id: sid, type, title: c.title || c.label, year: c.year, poster: c.thumbnail } : null),
           ],
           open: () => this._openContinue(c),
+          cont: c,
         };
       });
     }
@@ -1386,6 +1398,41 @@ class NokturnoCard extends HTMLElement {
     if (key !== undefined) this._state.loading = `${key}:${idx}`;
     if (/^a\d+$/.test(act)) return acts[+act.slice(1)].run();
     return e.open();
+  }
+
+  /** Volba karty `auto_play`: klepnutí na plakát bez dialogu titulu – rovnou jeho akce
+      (`e.open`). Film se pustí podle předvoleb (`_showStreams`), seriál otevře epizody.
+      Dlouhý stisk dál otevře dialog. */
+  async _autoOpen(e, key, idx) {
+    const st = this._state;
+    st.loading = `${key}:${idx}`;
+    // Pokračovat ve sledování: stejný stream, na kterém titul skončil (jinak by se ztratila pozice)
+    if (e.cont && this._continueStream(e.cont)) return this._playContinue(e.cont);
+    st.autoPlay = true;
+    try { await e.open(); } finally { st.autoPlay = false; }
+  }
+
+  /** Stream, na kterém titul skončil – nese ho plugin odkaz z Kodi (`action=play&url=…`). */
+  _continueStream(item) {
+    const params = new URLSearchParams(((item && item.file) || "").split("?")[1] || "");
+    return params.get("action") === "play" && params.get("id") && params.get("url") ? params : null;
+  }
+
+  /** Rozkoukané: pustí stejný stream bez nového hledání (`known`) na prvním přehrávači. */
+  async _playContinue(item) {
+    const params = this._continueStream(item);
+    const entityId = this._config.player || this._players()[0];
+    if (!entityId) { this._state.loading = null; this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
+    this._state.player = entityId;
+    await this._guard(async () => {
+      await this._call("play", {
+        id: params.get("id"), type: params.get("type") || (item.series ? "series" : "movie"),
+        series: params.get("series") || undefined, alt: params.get("alt") || undefined,
+        url: params.get("url"), subs: params.get("subs") || undefined,
+        name: item.label || item.title, known: true, entity_id: entityId,
+      }, false);
+      this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
+    });
   }
 
   /** Titul vlastního katalogu do řady (`catalog_items`); výsledek se drží ve stavu karty. */
@@ -2013,6 +2060,7 @@ class NokturnoCard extends HTMLElement {
       const [key, i] = data.rowitem.split(":");
       const e = ((this._rowItems || {})[key] || [])[+i];
       if (!e) return undefined;
+      if (this._config.auto_play && !long) return this._autoOpen(e, key, i);
       return this._rowDetail(e, key, i);
     }
     if (data.toggle === "desc") { this._state.descOpen = !this._state.descOpen; this._paint(); return; }
@@ -2040,6 +2088,7 @@ class NokturnoCard extends HTMLElement {
       const r = st.results[+data.open];
       if (!r) return undefined;
       if (r.type === "file") { st.loading = `res:${+data.open}`; return this._openItem(r); }  // soubor z fulltextu: žádný titul, rovnou stream
+      if (this._config.auto_play && !long) return this._autoOpen(this._resultEntry(r), "res", +data.open);
       return this._rowDetail(this._resultEntry(r), "res", +data.open);
     }
     if (data.back !== undefined) {
@@ -2170,6 +2219,7 @@ class NokturnoCardEditor extends HTMLElement {
       { name: "show_header", selector: { boolean: {} } },
       { name: "player", selector: { entity: { domain: "media_player" } } },
       { name: "players", selector: { entity: { domain: "media_player", multiple: true } } },
+      { name: "auto_play", selector: { boolean: {} } },
       { name: "sections", selector: { select: { multiple: true, reorder: true,
         options: ROW_SECTIONS.map((v) => ({ value: v, label: this._t(SECTION_LABELS[v]) })) } } },
       { name: "only_available", selector: { boolean: {} } },
@@ -2186,6 +2236,7 @@ class NokturnoCardEditor extends HTMLElement {
       show_header: "Zobrazit nadpis a ikonu",
       player: "Výchozí přehrávač",
       players: "Přehrávače na výběr",
+      auto_play: "Klik na plakát rovnou přehraje (dlouhý stisk = nabídka)",
       phone: "Výchozí mobil",
       downloads: "Senzor stahování",
       sections: "Sekce a jejich pořadí (řady plakátů)",

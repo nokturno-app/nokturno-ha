@@ -1250,3 +1250,50 @@ class TestPopisekBezZnacekKodi(unittest.TestCase):
                          "let na scéně koncert (2025)")
         self.assertEqual(_bez_znacek("Film.mkv  [COLOR FF9A9A9A]2.6 GB[/COLOR] [B]x[/B]"), "Film.mkv 2.6 GB x")
         self.assertEqual(_bez_znacek("Matrix [1999]"), "Matrix [1999]")
+
+
+class TestAutoPlayKarty(unittest.TestCase):
+    """Volba karty `auto_play`: integrace vybere stream podle předvoleb (`auto`), karta ho pustí."""
+
+    def setUp(self):
+        from custom_components.nokturno import _auto_stream
+        self.vyber = _auto_stream
+        self.streams = [
+            {"index": 0, "langs": ["EN"], "channels": {"EN": "5.1"}, "quality_rank": 4},
+            {"index": 1, "langs": ["CZ"], "channels": {"CZ": "2.0"}, "quality_rank": 4},
+            {"index": 2, "langs": ["CZ", "EN"], "channels": {"CZ": 6, "EN": "5.1"}, "quality_rank": 3},
+        ]
+
+    def test_jazyk(self):
+        self.assertEqual(self.vyber(self.streams, lang="CZ"), 1)
+
+    def test_jazyk_a_51(self):
+        self.assertEqual(self.vyber(self.streams, lang="CZ", surround=True), 2)
+
+    def test_51_jen_v_jinem_jazyce_nestaci(self):
+        s = [{"index": 0, "langs": ["CZ", "EN"], "channels": {"CZ": "2.0", "EN": "5.1"}}]
+        self.assertIsNone(self.vyber(s, lang="CZ", surround=True))
+
+    def test_nic_nevyhovuje(self):
+        self.assertIsNone(self.vyber(self.streams, lang="SK"))
+        self.assertIsNone(self.vyber([], lang="CZ"))
+
+    def test_sd_tok_a_kino(self):
+        s = [{"index": 0, "langs": ["CZ"], "quality_rank": 1},
+             {"index": 1, "langs": ["CZ"], "quality_rank": 4, "bitrate": 40},
+             {"index": 2, "langs": ["CZ"], "quality_rank": 4, "lowq": True},
+             {"index": 3, "langs": ["CZ"], "quality_rank": 4, "bitrate": 10}]
+        self.assertEqual(self.vyber(s, lang="CZ", hide_sd=True, max_bitrate=20), 3)
+
+    def test_bez_predvoleb_prvni(self):
+        self.assertEqual(self.vyber(self.streams), 0)
+
+    def test_sluzba_a_karta(self):
+        zdroj = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn('"auto": auto', zdroj)
+        karta = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        self.assertIn("res.auto", karta)
+        self.assertIn("this._config.auto_play && !long", karta)
+        self.assertIn('name: "auto_play"', karta)
+        self.assertIn("known: true", karta)
+        self.assertIn("cont: c,", karta)
