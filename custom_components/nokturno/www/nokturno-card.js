@@ -17,7 +17,6 @@
  *   downloads: sensor.nokturno_stahovani
  *   (layout se od 11.6 nečte – úvod je vždy řady plakátů, Stažené dole)
  *   sections: [continue, catalogs, watched, mylist, downloads]   # sekce řad a jejich pořadí
- *   continue_limit: 8                  # kolik položek Pokračovat ve sledování ukázat (zbytek „Zobrazit vše“)
  *   only_available: true               # v katalozích jen tituly, které mají stream
  */
 
@@ -161,7 +160,6 @@ const SK = {
   "Zobrazit vše": "Zobraziť všetko",
   "Katalogy": "Katalógy",
   "Sekce a jejich pořadí (řady plakátů)": "Sekcie a ich poradie (rady plagátov)",
-  "Počet položek v Pokračovat": "Počet položiek v Pokračovať",
   "V katalozích jen dostupné": "V katalógoch len dostupné",
 };
 
@@ -209,7 +207,7 @@ class NokturnoCard extends HTMLElement {
 
   _limit(key) {
     if ((this._state.rowAll || {})[key]) return Infinity;
-    return key === "continue" ? (+this._config.continue_limit || Infinity) : key === "watched" ? 12 : key === "mylist" ? 20 : Infinity;
+    return key === "continue" || key === "watched" ? 12 : key === "mylist" ? 20 : Infinity;
   }
 
   set hass(hass) {
@@ -2174,7 +2172,6 @@ class NokturnoCardEditor extends HTMLElement {
       { name: "players", selector: { entity: { domain: "media_player", multiple: true } } },
       { name: "sections", selector: { select: { multiple: true, reorder: true,
         options: ROW_SECTIONS.map((v) => ({ value: v, label: this._t(SECTION_LABELS[v]) })) } } },
-      { name: "continue_limit", selector: { number: { min: 1, max: 50, mode: "box" } } },
       { name: "only_available", selector: { boolean: {} } },
       phones.length
         ? { name: "phone", selector: { select: { options: phones, mode: "dropdown" } } }
@@ -2192,7 +2189,6 @@ class NokturnoCardEditor extends HTMLElement {
       phone: "Výchozí mobil",
       downloads: "Senzor stahování",
       sections: "Sekce a jejich pořadí (řady plakátů)",
-      continue_limit: "Počet položek v Pokračovat",
       only_available: "V katalozích jen dostupné",
     }[schema.name] || schema.name;
     return this._t(label);

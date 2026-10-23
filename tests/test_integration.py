@@ -676,7 +676,7 @@ class TestKarta(unittest.TestCase):
 
     def test_editor_zna_nove_volby_a_rady_maji_male_nahledy(self):
         card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
-        for key in ("sections", "continue_limit", "only_available", "player"):
+        for key in ("sections", "only_available", "player"):
             self.assertIn(f'name: "{key}"', card)
         self.assertNotIn('name: "layout"', card)
         self.assertIn("w185", card)
