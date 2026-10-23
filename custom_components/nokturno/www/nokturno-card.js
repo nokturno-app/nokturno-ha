@@ -15,7 +15,7 @@
  *   phone: notify.mobile_app_sm_s921b  # výchozí mobil (jinak první nabídnutý)
  *   phones: [...]                      # ruční seznam mobilů
  *   downloads: sensor.nokturno_stahovani
- *   layout: rows                       # úvod jako řady plakátů (výchozí `list` = seznam s taby)
+ *   (layout se od 11.6 nečte – úvod je vždy řady plakátů, Stažené dole)
  *   sections: [continue, catalogs, watched, mylist, downloads]   # sekce řad a jejich pořadí
  *   continue_limit: 8                  # kolik položek Pokračovat ve sledování ukázat (zbytek „Zobrazit vše“)
  *   only_available: true               # v katalozích jen tituly, které mají stream
@@ -119,7 +119,6 @@ const SK = {
   "Přidat do Hlídaných": "Pridať do Sledovaných",
   "Odebrat z Pokračovat ve sledování": "Odobrať z Pokračovať v sledovaní",
   "Vybrat jiný stream": "Vybrať iný stream",
-  "Původní stream se nepodařilo přehrát – vyber jiný.": "Pôvodný stream sa nepodarilo prehrať – vyber iný.",
   "Uvolněné hledání podle slov v názvu souboru – najde i to, co přísný filtr zahodí jako podobný, ale jiný titul": "Voľnejšie hľadanie podľa slov v názve súboru – nájde aj to, čo prísny filter zahodí ako podobný, ale iný titul",
   "Hledám…": "Hľadám…",
   "Zkusit fulltext na {0}": "Skúsiť fulltext na {0}",
@@ -157,17 +156,10 @@ const SK = {
   "Přehrávače na výběr": "Prehrávače na výber",
   "Výchozí mobil": "Predvolený mobil",
   "Senzor stahování": "Senzor sťahovania",
-  "Domů": "Domov",
-  "Knihovna": "Knižnica",
   "Zatím nic rozkoukaného ani hlídaného.": "Zatiaľ nič rozpozerané ani sledované.",
-  "Zatím nic v Mém seznamu.": "Zatiaľ nič v Mojom zozname.",
-  "pokračovat": "pokračovať",
   "Nadpis karty": "Nadpis karty",
   "Zobrazit vše": "Zobraziť všetko",
   "Katalogy": "Katalógy",
-  "Seznam s taby": "Zoznam so záložkami",
-  "Řady plakátů": "Rady plagátov",
-  "Rozložení úvodní obrazovky": "Rozloženie úvodnej obrazovky",
   "Sekce a jejich pořadí (řady plakátů)": "Sekcie a ich poradie (rady plagátov)",
   "Počet položek v Pokračovat": "Počet položiek v Pokračovať",
   "V katalozích jen dostupné": "V katalógoch len dostupné",
@@ -205,12 +197,10 @@ class NokturnoCard extends HTMLElement {
       seasons: [], season: null, item: null, title: "", busy: false, searching: false, loading: null, error: "",
       byType: { movie: [], series: [] }, bothTypes: false,
       player: config.player || (config.players || [])[0] || "", phone: config.phone || "",
-      continueItems: null, continueSource: null, stack: [], homeTab: "domov",
+      continueItems: null, continueSource: null, stack: [],
     };
     this._started = false;
   }
-
-  _rows() { return this._config.layout === "rows"; }
 
   _sections() {
     const s = Array.isArray(this._config.sections) && this._config.sections.length ? this._config.sections : ROW_SECTIONS;
@@ -707,44 +697,6 @@ class NokturnoCard extends HTMLElement {
     });
   }
 
-  /** Stream, na kterém titul skončil – nese ho plugin odkaz z Kodi (`action=play&url=…`). */
-  _continueStream(item) {
-    const params = new URLSearchParams(((item && item.file) || "").split("?")[1] || "");
-    return params.get("action") === "play" && params.get("id") && params.get("url") ? params : null;
-  }
-
-  /** Rozkoukané: pustí stejný stream bez nového hledání, přehrávač se vybírá jako u Přehrát. */
-  async _playContinue(item) {
-    const params = this._continueStream(item);
-    const entityId = await this._choose("player");
-    if (!entityId) { this._state.loading = null; if (!this._players().length) this._toast(this._t("Není nastavený žádný přehrávač.")); return; }
-    this._state.player = entityId;
-    await this._guard(async () => {
-      await this._call("play", {
-        id: params.get("id"), type: params.get("type") || (item.series ? "series" : "movie"),
-        series: params.get("series") || undefined, alt: params.get("alt") || undefined,
-        url: params.get("url"), subs: params.get("subs") || undefined,
-        name: item.label || item.title, known: true, entity_id: entityId,
-      }, false);
-      this._toast(this._t("Spouštím na {0}", this._friendly(entityId)));
-    });
-    if (!this._state.error) this._watchStart(entityId, item);
-  }
-
-  /** Kodi neúspěšné přehrání do HA nehlásí – když se do 30 s nerozjede, nabídne výběr streamu. */
-  _watchStart(entityId, item) {
-    const playing = () => ["playing", "paused"].includes((this._hass.states[entityId] || {}).state);
-    if (playing()) return;   // hrálo už něco jiného, rozjezd nového nejde poznat
-    const started = Date.now();
-    const timer = setInterval(() => {
-      if (playing()) { clearInterval(timer); return; }
-      if (Date.now() - started < 30000) return;
-      clearInterval(timer);
-      this._toast(this._t("Původní stream se nepodařilo přehrát – vyber jiný."));
-      this._openContinue(item);
-    }, 2000);
-  }
-
   /** Rozkoukané: otevře streamy titulu v kartě (id a typ nese plugin odkaz z Kodi). */
   async _openContinue(item) {
     const query = (item.file || "").split("?")[1] || "";
@@ -952,19 +904,7 @@ class NokturnoCard extends HTMLElement {
         .chip.x { color: var(--secondary-text-color); }
         .section { margin-top:14px; font-weight:500; display:flex; align-items:center; gap:6px; }
         .section ha-icon { --mdc-icon-size:18px; }
-        /* taby úvodní obrazovky – Domů / Knihovna / Stažené */
-        .tabs { display:flex; gap:4px; margin-top:12px; border-bottom:1px solid var(--divider-color); }
-        .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:5px; border:none;
-               background:none; color: var(--secondary-text-color); font:inherit; font-size:.82rem;
-               padding:8px 4px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; }
-        .tab ha-icon { --mdc-icon-size:16px; }
-        .tab.active { color: var(--primary-color); border-bottom-color: var(--primary-color); font-weight:500; }
-        .tabbadge { background: var(--primary-color); color:#fff; border-radius:9px; min-width:16px;
-                    height:16px; padding:0 4px; font-size:.65rem; line-height:16px; text-align:center; }
-        /* rozkoukané: dlaždice na šířku, ať je poznat záběr z filmu */
-        .cont { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px; margin-top:8px; }
-        .cont .poster .thumb { aspect-ratio:16/9; }
-        /* řady plakátů (layout: rows) */
+        /* řady plakátů */
         .row { display:grid; grid-auto-flow:column; grid-auto-columns:92px; gap:8px; overflow-x:auto;
                margin-top:8px; padding-bottom:4px; scroll-snap-type:x proximity; }
         .row .poster { scroll-snap-align:start; }
@@ -1107,9 +1047,8 @@ class NokturnoCard extends HTMLElement {
     });
   }
 
-  /** Úvodní obrazovka: poslední dotazy nad taby, obsah podle vybraného tabu
-      (Domů = rozkoukané + Hlídané včetně seriálů, Knihovna = Můj seznam,
-      Stažené = probíhající i hotová stahování – kreslí `_renderDownloads`). */
+  /** Úvodní obrazovka: poslední dotazy a řady plakátů podle `sections`
+      (Stažené kreslí samostatně `_renderDownloads` do #downloads). */
   _home() {
     const st = this._state;
     const sensor = this._hass && this._hass.states[this._config.downloads];
@@ -1123,100 +1062,18 @@ class NokturnoCard extends HTMLElement {
     const trakt = this._traktList();
     const fav = this._favourites();
     const series = this._watchlist();
-    const jobs = (sensor && sensor.attributes.downloads) || [];
-    const activeCount = jobs.filter((j) => j.status === "running" || j.status === "queued").length;
-    if (this._rows()) return html + this._homeRows(cont, trakt, fav, series);
-    const tabs = [
-      { id: "domov", label: this._t("Domů"), icon: "mdi:home-outline" },
-      { id: "knihovna", label: this._t("Knihovna"), icon: "mdi:bookmark-multiple-outline" },
-      { id: "stazene", label: this._t("Stažené"), icon: "mdi:folder-download-outline", badge: activeCount },
-    ];
-    html += `<div class="tabs">${tabs.map((tb) => `
-      <button class="tab${st.homeTab === tb.id ? " active" : ""}" data-hometab="${tb.id}">
-        <ha-icon icon="${tb.icon}"></ha-icon> ${tb.label}${tb.badge ? `<span class="tabbadge">${tb.badge}</span>` : ""}
-      </button>`).join("")}</div>`;
-    if (st.homeTab === "domov") html += this._homeTabDomov(cont, trakt, series) + this._homeRows(cont, trakt, fav, series, ["catalogs"]);
-    else if (st.homeTab === "knihovna") html += this._homeTabKnihovna(fav);
-    // obsah tabu Stažené kreslí samostatně `_renderDownloads` do #downloads
-    return html;
-  }
-
-  _homeTabDomov(cont, trakt, series) {
-    const st = this._state;
-    let html = "";
-    const manyKodi = new Set(cont.map((c) => c.entity_id)).size > 1;
-    if (cont.length) {
-      // stejný textový řádkový styl jako „Hlídané" – bez plakátu.
-      // Plakáty/fanart v plné velikosti se tu dřív dekódovaly do paměti prohlížeče
-      // (desítky MB na obrázek) a při delším prohlížení to vedlo ke „stránka neodpovídá".
-      html += `<div class="section"><ha-icon icon="mdi:play-circle-outline"></ha-icon> ${this._t("Pokračovat ve sledování")}</div>
-        <div>${cont.slice(0, this._limit("continue")).map((c, i) => {
-          const loading = st.busy && st.loading === `cont:${i}`;
-          return `
-          <div class="stream stacked" data-cont="${i}" style="cursor:pointer" title="${this._esc(c.plot)}">
-            <span class="tag" style="background:var(--success-color, #2e8b57)">
-              <ha-icon icon="${loading ? "mdi:loading" : "mdi:play-circle-outline"}" class="ext${loading ? " spin" : ""}"></ha-icon>
-              ${this._t("pokračovat")}</span>
-            <span class="label">${this._esc(c.label)}${manyKodi ? ` <span class="muted">· ${this._esc(c.player)}</span>` : ""}</span>
-            <span class="icons">
-              ${this._continueStream(c) ? `<ha-icon-button data-contpick="${i}" title="${this._t("Vybrat jiný stream")}">
-                <ha-icon icon="mdi:format-list-bulleted"></ha-icon>
-              </ha-icon-button>` : ""}
-              <ha-icon-button data-contremove="${i}" title="${this._t("Odebrat z Pokračovat ve sledování")}">
-                <ha-icon icon="mdi:close-circle-outline"></ha-icon>
-              </ha-icon-button>
-            </span>
-          </div>`;
-        }).join("")}</div>
-        ${cont.length > this._limit("continue") ? `<button class="chip" data-rowall="continue">${this._t("Zobrazit vše")} (${cont.length})</button>` : ""}`;
-    }
-    // díl s vlaječkou u hlídaného seriálu se kreslí na řádku seriálu (jako v Kodi)
-    const onSeriesRow = new Set(series.filter((w) => w.available && w.available.id).map((w) => w.available.id));
-    const titlesAll = trakt.map((t, i) => [t, i]).filter(([t]) => !onSeriesRow.has(t.id));
-    const titles = titlesAll.slice(0, this._limit("watched"));
-    if (series.length || titles.length) {
-      html += `<div class="section"><ha-icon icon="mdi:bell-outline"></ha-icon> ${this._t("Hlídané")}</div>
-        <div>${this._seriesRows(series)}${titles.map(([t, i]) => {
-          const opening = st.busy && st.loading === `trakt:${i}`;
-          const flagging = st.busy && st.loading === `traktflag:${i}`;
-          const moving = st.busy && st.loading === `favmove:${i}`;
-          // do Mého seznamu jde přesunout jen titul, který má stream a není označený
-          // k dalšímu hlídání kvality/zvuku – ten se má dál kontrolovat, ne odložit
-          const canMove = t.streams && !t.flagged;
-          return `
-          <div class="stream stacked" data-trakt="${i}" style="cursor:pointer" title="${t.streams ? this._t("Otevřít streamy – {0} k dispozici", t.streams) : this._t("Zatím žádný stream – až se objeví, přijde oznámení")}">
-            <span class="tag" style="background:${t.streams ? (t.flagged ? "var(--warning-color, #b8860b)" : "var(--success-color, #2e8b57)") : "var(--disabled-text-color, #777)"}">
-              <ha-icon icon="${opening ? "mdi:loading" : (t.streams ? (t.flagged ? "mdi:flag-outline" : "mdi:play-circle-outline") : (t.pending ? "mdi:radar" : "mdi:clock-outline"))}" class="ext${opening ? " spin" : ""}"></ha-icon>
-              ${this._t(t.streams ? (t.flagged ? "kontrolovat dál" : "lze pustit") : (t.pending ? "hlídá se" : "zatím ne"))}</span>
-            <span class="label">${this._esc(t.title)}${t.year ? ` <span class="muted">(${this._esc(t.year)})</span>` : ""}${
-              t.streams ? ` <span class="muted">${this._t("· {0} streamů", t.streams)}</span>` : ""}</span>
-            ${t.streams ? `<span class="icons">
-              ${canMove ? `<ha-icon-button data-favmove="${i}" title="${this._t("Přesunout do Mého seznamu")}">
-                <ha-icon icon="${moving ? "mdi:loading" : "mdi:bookmark-plus-outline"}" class="${moving ? "spin" : ""}"></ha-icon>
-              </ha-icon-button>` : ""}
-              <ha-icon-button data-traktflag="${i}" title="${t.flagged
-                ? this._t("Streamy jsou, ale ne v požadované kvalitě/zvuku – kliknutím přestaneš kontrolovat dál")
-                : this._t("Streamy jsou, ale ne v požadované kvalitě/zvuku (např. 5.1) – označit, ať se to dál sleduje")}">
-                <ha-icon icon="${flagging ? "mdi:loading" : (t.flagged ? "mdi:flag" : "mdi:flag-outline")}" class="${flagging ? "spin" : ""}"></ha-icon>
-              </ha-icon-button>
-            </span>` : ""}
-          </div>`;
-        }).join("")}</div>
-        ${titlesAll.length > titles.length ? `<button class="chip" data-rowall="watched">${this._t("Zobrazit vše")} (${titlesAll.length})</button>` : ""}`;
-    }
-    if (!cont.length && !series.length && !titles.length) html += `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
-    return html;
+    return html + this._homeRows(cont, trakt, fav, series);
   }
 
   /** Úvod jako řady plakátů – pořadí a výběr sekcí z `sections`; Stažené kreslí `_renderDownloads` dole. */
-  _homeRows(cont, trakt, fav, series, only) {
+  _homeRows(cont, trakt, fav, series) {
     const st = this._state;
     const ICONS = { continue: "mdi:play-circle-outline", watched: "mdi:bell-outline",
                     mylist: "mdi:bookmark-multiple-outline", catalogs: "mdi:playlist-check" };
     const manyKodi = new Set(cont.map((c) => c.entity_id)).size > 1;
     this._rowItems = {};
     let html = "";
-    for (const key of only || this._sections()) {
+    for (const key of this._sections()) {
       if (key === "downloads") continue;
       let head = "";
       let entries;
@@ -1244,7 +1101,7 @@ class NokturnoCard extends HTMLElement {
             : ""}</div>`;
       }
     }
-    if (!html && !only) html = `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
+    if (!html) html = `<div class="muted empty">${this._t("Zatím nic rozkoukaného ani hlídaného.")}</div>`;
     return html;
   }
 
@@ -1539,7 +1396,6 @@ class NokturnoCard extends HTMLElement {
     const t = this._traktList()[i];
     if (!t) return undefined;
     if (t.pending) { this._toast(this._t("Titul zatím žádný zdroj nemá – je v Hlídaných.")); return undefined; }
-    st.loading = `trakt:${i}`;
     const parts = String(t.id).split(":");
     if (parts.length === 3) {
       // uložený díl: seznam epizod by byl objížďka, otevřít rovnou jeho streamy
@@ -1554,59 +1410,6 @@ class NokturnoCard extends HTMLElement {
     }
     return this._openItem({ id: t.id, type: t.type, title: t.title, year: t.year, alt: t.alt || null,
                             poster: t.poster || "", description: t.description || "" });
-  }
-
-  _homeTabKnihovna(fav) {
-    const st = this._state;
-    let html = "";
-    if (fav.length) {
-      html += `<div class="section"><ha-icon icon="mdi:bookmark-multiple-outline"></ha-icon> ${this._t("Můj seznam")}</div>
-        <div>${fav.slice(0, this._limit("mylist")).map((f, i) => {
-          const opening = st.busy && st.loading === `fav:${i}`;
-          return `
-          <div class="stream stacked" data-fav="${i}" style="cursor:pointer">
-            <span class="tag" style="background:var(--primary-color, #555)"><ha-icon icon="${opening ? "mdi:loading" : "mdi:bookmark-outline"}" class="ext${opening ? " spin" : ""}"></ha-icon> ${this._t("Můj seznam")}</span>
-            <span class="label">${this._esc(f.title)}</span>
-            <span class="icons">
-              <ha-icon-button data-favremove="${i}" title="${this._t("Odebrat z Mého seznamu")}">
-                <ha-icon icon="mdi:close-circle-outline"></ha-icon>
-              </ha-icon-button>
-            </span>
-          </div>`;
-        }).join("")}</div>
-        ${fav.length > this._limit("mylist") ? `<button class="chip" data-rowall="mylist">${this._t("Zobrazit vše")} (${fav.length})</button>` : ""}`;
-    }
-    if (!fav.length) html += `<div class="muted empty">${this._t("Zatím nic v Mém seznamu.")}</div>`;
-    return html;
-  }
-
-  /** Řádky hlídaných seriálů v sekci Hlídané (Domů). */
-  _seriesRows(series) {
-    return series.map((w, i) => `
-          <div class="stream stacked">
-            <span class="tag" style="background:${w.new ? "var(--success-color, #2e8b57)" : "var(--disabled-text-color, #777)"}">
-              <ha-icon icon="${w.new ? "mdi:new-box" : "mdi:eye-outline"}" class="ext"></ha-icon>
-              ${w.new ? this._t("nový díl") : this._t("hlídá se")}</span>
-            <span class="label${w.new ? "" : " label--meta"}">${this._esc(w.title)}${w.new
-              ? ` – ${w.new.season}x${String(w.new.episode).padStart(2, "0")} ${this._esc(w.new.title)}`
-              : `<span class="muted">${w.available
-                  ? `${this._t("ke sledování")} ${w.available.season}x${String(w.available.episode).padStart(2, "0")}`
-                  : this._t("zatím bez streamu")}${w.latest && (!w.available || w.latest.episode !== w.available.episode || w.latest.season !== w.available.season)
-                  ? `, ${this._t("odvysíláno")} ${w.latest.season}x${String(w.latest.episode).padStart(2, "0")}` : ""}</span>`}</span>
-            <span class="icons">
-              ${w.new ? `<ha-icon-button data-wseen="${i}" title="${this._t("Označit nový díl jako viděný")}"><ha-icon icon="mdi:check"></ha-icon></ha-icon-button>` : ""}
-              ${w.available && w.available.id ? (() => {
-                const ep = `${w.available.season}x${String(w.available.episode).padStart(2, "0")}`;
-                const on = this._isEpisodeFlagged(w.available.id);
-                return `<ha-icon-button data-wflag="${i}" title="${on
-                  ? this._t("Přestat kontrolovat díl {0}", ep)
-                  : this._t("Díl {0} má streamy, ale ne takové, jaké chceš (např. bez CZ titulků) – kontrolovat dál", ep)}">
-                  <ha-icon icon="${on ? "mdi:flag" : "mdi:flag-outline"}"></ha-icon></ha-icon-button>`;
-              })() : ""}
-              <ha-icon-button data-wopen="${i}" title="${this._t("Otevřít")}"><ha-icon icon="mdi:folder-play-outline"></ha-icon></ha-icon-button>
-              <ha-icon-button data-wremove="${i}" title="${this._t("Přestat hlídat")}"><ha-icon icon="mdi:eye-off-outline"></ha-icon></ha-icon-button>
-            </span>
-          </div>`).join("");
   }
 
   _isWatched(id) { return this._watchlist().some((w) => w.id === id); }
@@ -2012,22 +1815,12 @@ class NokturnoCard extends HTMLElement {
     const jobs = (sensor && sensor.attributes.downloads) || [];
     const files = (sensor && sensor.attributes.files) || [];
     const activeAll = jobs.filter((j) => j.status === "running" || j.status === "queued");
-    // Stažené je vlastní tab na úvodní obrazovce; v detailu titulu by jen odváděly pozornost od streamů.
-    const home = !["results", "episodes", "streams"].includes(this._state.view)
-      && (this._state.homeTab === "stazene" || (this._rows() && this._sections().includes("downloads")));
+    // Stažené patří na úvodní obrazovku; v detailu titulu by jen odváděly pozornost od streamů.
+    const home = !["results", "episodes", "streams"].includes(this._state.view) && this._sections().includes("downloads");
     const active = home ? activeAll : [];
     const shown = home ? files : [];
     this._files = shown;
     this._active = active;
-    // badge na tabu Stažené: aktualizuje se i mimo _paint, tiky senzoru chodí častěji
-    const tabBtn = this._root.querySelector('.tab[data-hometab="stazene"]');
-    if (tabBtn) {
-      let badge = tabBtn.querySelector(".tabbadge");
-      if (activeAll.length) {
-        if (!badge) { badge = document.createElement("span"); badge.className = "tabbadge"; tabBtn.appendChild(badge); }
-        badge.textContent = activeAll.length;
-      } else if (badge) badge.remove();
-    }
     if (!active.length && !shown.length) {
       if (!box.hidden || box.firstChild) { box.hidden = true; box.innerHTML = ""; }
       return;
@@ -2196,14 +1989,12 @@ class NokturnoCard extends HTMLElement {
     const long = this._longPress;
     this._longPress = false;
     clearTimeout(this._pressTimer);
-    const keys = ["open", "back", "ep", "play", "phone", "dl", "link", "toggle", "hist", "histclear", "cont", "contpick",
-                  "contremove", "watch", "wopen", "wremove", "wseen", "wflag", "trakt", "traktflag", "traktflagdetail",
-                  "want", "catalog", "research", "findfulltext", "removeprogress",
-                  "favmove", "fav", "favremove", "favtoggle", "hometab", "rowitem", "rowact", "rowall", "catpick"];
+    const keys = ["open", "back", "ep", "play", "phone", "dl", "link", "toggle", "hist", "histclear",
+                  "watch", "traktflagdetail", "want", "catalog", "research", "findfulltext", "removeprogress",
+                  "favtoggle", "rowitem", "rowact", "rowall", "catpick"];
     const hit = event.composedPath().find((el) => el.dataset && keys.some((k) => k in el.dataset));
     if (!hit) return;
     const data = hit.dataset;
-    if (data.hometab !== undefined) { st.homeTab = data.hometab; this._paint(); return; }
     if (data.rowall !== undefined) { st.rowAll = { ...(st.rowAll || {}), [data.rowall]: true }; this._paint(); return; }
     if (data.catpick !== undefined) { st.catalogId = data.catpick; this._paint(); return this._loadCatalog(data.catpick); }
     if (data.rowitem !== undefined) {
@@ -2220,97 +2011,19 @@ class NokturnoCard extends HTMLElement {
       return;
     }
     if (data.histclear !== undefined) return this._call("clear_history", {}, false).then(() => this._paint());
-    if (data.cont !== undefined) {
-      const item = st.continueItems[+data.cont];
-      // klik = stejný stream, na kterém titul skončil; dlouhý stisk = výběr streamu
-      if (!long && this._continueStream(item)) return this._playContinue(item);
-      st.loading = `cont:${+data.cont}`;
-      return this._openContinue(item);
-    }
-    if (data.contpick !== undefined) {
-      // výběr streamu i bez dlouhého stisku (ovladač TV)
-      st.loading = `cont:${+data.contpick}`;
-      return this._openContinue(st.continueItems[+data.contpick]);
-    }
-    if (data.contremove !== undefined) {
-      const item = st.continueItems[+data.contremove];
-      if (!item || !item.entity_id) return undefined;
-      return this._removeProgress({ entity_id: item.entity_id, file: item.file });
-    }
     if (data.watch !== undefined) return this._toggleWatch();
-    if (data.wopen !== undefined) {
-      const w = this._watchlist()[+data.wopen];
-      return this._openItem({ id: w.id, type: "series", title: w.title, alt: w.alt, poster: w.poster });
-    }
     if (data.want !== undefined) return this._toggleWant();
     if (data.removeprogress !== undefined) return this._removeProgress();
     if (data.wantquery !== undefined) return this._wantQuery();
     if (data.catalog !== undefined) return this._searchCatalog();
     if (data.research !== undefined) { st.catalog = false; return this._search(); }
-    if (data.traktflag !== undefined) {
-      const t = this._traktList()[+data.traktflag];
-      if (!t) return undefined;
-      st.loading = `traktflag:${data.traktflag}`;
-      return this._guard(async () => { await this._call("trakt_flag", { id: t.id }, false); });
-    }
     if (data.traktflagdetail !== undefined) {
       const t = this._currentTraktEntry();
       if (!t) return undefined;
       st.loading = "traktflagdetail";
       return this._guard(async () => { await this._call("trakt_flag", { id: t.id }, false); });
     }
-    if (data.favmove !== undefined) {
-      const t = this._traktList()[+data.favmove];
-      if (!t) return undefined;
-      // zmizí z Hlídaných a objeví se v Mém seznamu hned, senzor to potvrdí až po chvíli
-      this._favOverride = this._favOverride || {};
-      this._favOverride[t.id] = { id: t.id, title: this._withYear(t.title, t.year), year: t.year,
-                                   poster: t.poster, alt: t.alt, type: t.type };
-      st.loading = `favmove:${data.favmove}`;
-      return this._guard(async () => {
-        await this._call("favourite_add", { id: t.id }, false);
-        this._toast(this._t("Přidáno do Mého seznamu"));
-      });
-    }
-    if (data.favremove !== undefined) {
-      const f = this._favourites()[+data.favremove];
-      if (!f) return undefined;
-      this._favOverride = this._favOverride || {};
-      this._favOverride[f.id] = false;
-      this._paint();
-      return this._guard(async () => {
-        if ((this._sensorAttr("favourites") || []).some((x) => x.id === f.id)) {
-          await this._call("favourite_toggle", { id: f.id, type: f.type === "series" ? "series" : "movie" }, false);
-        }
-        this._toast(this._t("Odebráno z Mého seznamu"));
-      });
-    }
-    if (data.fav !== undefined) {
-      const f = this._favourites()[+data.fav];
-      if (!f) return undefined;
-      st.loading = `fav:${data.fav}`;
-      return this._openItem({ id: f.id, type: f.type || "movie", title: f.title, year: f.year,
-                              alt: f.alt || null, poster: f.poster || "" });
-    }
     if (data.favtoggle !== undefined) return this._toggleFavourite();
-    if (data.trakt !== undefined) return this._openTrakt(+data.trakt);
-    if (data.wflag !== undefined) {
-      const w = this._watchlist()[+data.wflag];
-      if (!w || !w.available) return undefined;
-      return this._toggleEpisodeFlag(w);
-    }
-    if (data.wseen !== undefined) {
-      const w = this._watchlist()[+data.wseen];
-      this._watchOverride = this._watchOverride || {};
-      this._watchOverride[w.id] = { ...w, new: null };  // zhasne hned
-      return this._guard(async () => { await this._call("mark_seen", { id: w.id }, false); });
-    }
-    if (data.wremove !== undefined) {
-      const w = this._watchlist()[+data.wremove];
-      this._watchOverride = this._watchOverride || {};
-      this._watchOverride[w.id] = false;  // zmizí hned
-      return this._guard(async () => { await this._call("watch_series", { id: w.id, remove: true }, false); });
-    }
     if (data.open !== undefined) {
       const r = st.results[+data.open];
       if (!r) return undefined;
@@ -2445,8 +2158,6 @@ class NokturnoCardEditor extends HTMLElement {
       { name: "show_header", selector: { boolean: {} } },
       { name: "player", selector: { entity: { domain: "media_player" } } },
       { name: "players", selector: { entity: { domain: "media_player", multiple: true } } },
-      { name: "layout", selector: { select: { mode: "dropdown", options: [
-        { value: "list", label: this._t("Seznam s taby") }, { value: "rows", label: this._t("Řady plakátů") } ] } } },
       { name: "sections", selector: { select: { multiple: true, reorder: true,
         options: ROW_SECTIONS.map((v) => ({ value: v, label: this._t(SECTION_LABELS[v]) })) } } },
       { name: "continue_limit", selector: { number: { min: 1, max: 50, mode: "box" } } },
@@ -2466,7 +2177,6 @@ class NokturnoCardEditor extends HTMLElement {
       players: "Přehrávače na výběr",
       phone: "Výchozí mobil",
       downloads: "Senzor stahování",
-      layout: "Rozložení úvodní obrazovky",
       sections: "Sekce a jejich pořadí (řady plakátů)",
       continue_limit: "Počet položek v Pokračovat",
       only_available: "V katalozích jen dostupné",
@@ -2487,6 +2197,7 @@ class NokturnoCardEditor extends HTMLElement {
     form.computeLabel = (schema) => this._label(schema);
     form.addEventListener("value-changed", (e) => {
       this._config = { type: "custom:nokturno-card", ...e.detail.value };
+      delete this._config.layout;
       this.dispatchEvent(new CustomEvent("config-changed", {
         detail: { config: this._config }, bubbles: true, composed: true,
       }));

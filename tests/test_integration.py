@@ -648,8 +648,15 @@ class TestKarta(unittest.TestCase):
         self.assertIn('this._esc(String(s.label || "").replace(', card)
         self.assertNotIn("this._esc(s.label.replace(", card)
         self.assertIn('this._esc(s.source || "?")', card)
-        self.assertIn("(${this._esc(t.year)})", card)
+        self.assertIn("(${this._esc(e.year)})", card)
 
+    def test_dialog_titulu_jednotny(self):
+        card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        self.assertNotIn('id: "play"', card)                       # #4 bez Přehrát
+        self.assertIn("this._plot(", card)                         # #12 BBCode
+        self.assertIn('"header-title"', card)                      # #1 název v novém ha-dialog
+        self.assertIn("this._rowDetail(this._resultEntry(r)", card)  # #8 hledání přes dialog
+        self.assertNotIn("homeTab", card)                          # #7/#11 bez tabů
 
     def test_fulltext_umi_fastshare_i_prehrajto(self):
         """Karta posílala `fs`, ale schéma služby znalo jen ws/hs/st → „Zkusit fulltext“ s FastShare
@@ -669,9 +676,9 @@ class TestKarta(unittest.TestCase):
 
     def test_editor_zna_nove_volby_a_rady_maji_male_nahledy(self):
         card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
-        for key in ("layout", "sections", "continue_limit", "only_available", "player"):
+        for key in ("sections", "continue_limit", "only_available", "player"):
             self.assertIn(f'name: "{key}"', card)
-        self.assertIn('this._config.layout === "rows"', card)
+        self.assertNotIn('name: "layout"', card)
         self.assertIn("w185", card)
         self.assertIn('"catalog_items"', card)
 
@@ -695,7 +702,7 @@ class TestPrehraniWebShare(unittest.TestCase):
 
     def test_karta_zna_contpick(self):
         card = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
-        self.assertIn('"contpick"', card.split("const keys = [")[1].split("];")[0])
+        self.assertIn('label: this._t("Vybrat stream"), run: () => this._openContinue(c)', card)
 
 
 class TestUdrzbaHA(unittest.TestCase):
@@ -1092,8 +1099,7 @@ class TestKontrolovatDalDil(unittest.TestCase):
 
     def test_karta_a_sluzba_se_shoduji(self):
         karta = (ROOT / "custom_components/nokturno/www/nokturno-card.js").read_text("utf-8")
-        self.assertIn('data-wflag="${i}"', karta)
-        self.assertIn('"wflag"', karta)
+        self.assertIn("run: () => this._toggleEpisodeFlag(w)", karta)
         self.assertIn("flag: true", karta)
         zdroj = (ROOT / "custom_components/nokturno/__init__.py").read_text("utf-8")
         self.assertIn('vol.Optional("flag", default=False)', zdroj)

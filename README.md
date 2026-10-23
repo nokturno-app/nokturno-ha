@@ -32,7 +32,7 @@ Přehrávač a vyhledávač pro Home Assistant – nad tvým vlastním úložiš
 
 - **Vlastní úložiště** – až tři WebDAV složky (NAS, Nextcloud, server), soubory jsou v kartě mezi streamy vždy první
 - **Volitelně osm vyhledávačů třetích stran** (WebShare, Sosáč, HellSpy, Sledujteto, FastShare, Přehraj.to, CZtor, Luna) v jednom hledání; stejný titul i soubor se sloučí do jednoho řádku
-- **Karta na dashboard** se záložkami Domů, Knihovna a Stažené – hledání, výběr streamu, detail titulu, Pokračovat ve sledování, Hlídané, Můj seznam, hlídané seriály, stažené soubory
+- **Karta na dashboard** s řadami plakátů (Pokračovat, Katalogy, Hlídané, Můj seznam) a výpisem Stažených – hledání, výběr streamu, detail titulu, Pokračovat ve sledování, Hlídané, Můj seznam, hlídané seriály, stažené soubory
 - **Přehrání v Kodi** přes doplněk Nokturno (Kodi si drží „Pokračovat ve sledování"), stažení do HA nebo odkaz do mobilu
 - **Hlídané** – nový díl sledovaného seriálu se ohlásí, až když se dá pustit; hlídat jde i titul, který zatím žádný zdroj nemá (chystaný film), a s příznakem *kontrolovat dál* i díl, u kterého čekáš na vhodnější stream. Kontrola je společná s Kodi ([nápověda](https://nokturno-app.github.io/nokturno-napoveda/cs/hlidane))
 - **Synchronizace s Kodi** – zhlédnuté, rozkoukané, Můj seznam, historie hledání a Hlídané pro Kodi v domácí síti i mimo ni (kód skupiny)
@@ -152,7 +152,6 @@ type: custom:nokturno-card
 title: Nokturno                  # nadpis karty
 show_header: true                # false skryje nadpis i ikonu
 player: media_player.coreelec    # výchozí přehrávač: ▶ ho pustí bez ptaní, dlouhý stisk nabídne seznam
-layout: rows                     # úvod jako řady plakátů (výchozí list = seznam s taby)
 sections:                        # sekce řad a jejich pořadí (Stažené jsou vždy dole)
   - continue
   - catalogs
@@ -178,7 +177,6 @@ Vše je volitelné: bez `players` se nabídnou přehrávače z nastavení integr
 | Zobrazit nadpis a ikonu | `show_header` |
 | Výchozí přehrávač | `player` (▶ ho pustí bez výběru, dlouhý stisk nabídne seznam) |
 | Přehrávače na výběr | `players` |
-| Rozložení úvodní obrazovky | `layout` (`list` = seznam s taby, `rows` = řady plakátů) |
 | Sekce a jejich pořadí (řady plakátů) | `sections` |
 | Počet položek v Pokračovat | `continue_limit` |
 | V katalozích jen dostupné | `only_available` |
@@ -191,18 +189,19 @@ Vše je volitelné: bez `players` se nabídnou přehrávače z nastavení integr
 
 <img src="https://raw.githubusercontent.com/nokturno-app/nokturno-ha/main/docs/01-domu.jpg" alt="Karta – záložka Domů" width="352"> <img src="https://raw.githubusercontent.com/nokturno-app/nokturno-ha/main/docs/02-knihovna.jpg" alt="Karta – záložka Knihovna" width="352">
 
-Nahoře **pole pro hledání**, pod ním záložky **Domů**, **Knihovna** a **Stažené**.
+Nahoře **pole pro hledání**, pod ním **řady plakátů** (pořadí a výběr sekcí určuje `sections`) a dole výpis **Stažených**.
 
 - **Pole pro hledání** a tlačítko **Hledat** (během dotazu se v něm točí kolečko). Přepínač **Filmy / Seriály** se ukáže až u výsledků, a jen když dotaz našel obojí. Rok napsaný do dotazu se použije jako filtr – „Duna 2021" vrátí jen film z roku 2021.
 - **Štítky** s posledními dotazy (nejvýš 10, sdíleno s doplňkem pro Kodi) – klepnutím se hledání zopakuje, křížek historii smaže.
-- **Pokračovat ve sledování** (záložka *Domů*) – rozkoukané tituly a další díly ze všech Kodi. U víc zařízení je na dlaždici jméno toho, kde je titul rozkoukaný. Klepnutí otevře **streamy titulu** (id se přečte z odkazu, který Kodi posílá), takže se dá pokračovat na libovolném přehrávači, stáhnout nebo poslat do mobilu.
-- **Hlídané** (záložka *Domů*) – tituly, které sis uložil zvonkem (a případně seznam z Traktu). Zvonek v detailu **dílu** uloží ten díl, ne celý seriál; v seznamu je pak i s číslem („Okresní přebor · 1x01“) a klepnutí otevře rovnou jeho streamy. Zelené „lze pustit“ u těch, které už mají stream, „hlídá se“ u těch, které zatím nikde nejsou. Titul, který teprve vyjde, přidáš přes **Hledat v databázi filmů** u výsledků hledání.
-- **Můj seznam** a **hlídané seriály** (záložka *Knihovna*) – zelený štítek „nový díl“ znamená, že další epizoda už má stream.
-- Záložka **Stažené** – u běžícího souboru procenta, rychlost, odhad zbývajícího času, kolik už je staženo z celku a křížek, kterým se stahování zruší. Pod tím hotové soubory – u každého počet stažených titulků, velikost a tři akce: ▶ přehrát na vybraném přehrávači, 📱 poslat odkaz do mobilu, 🗑 smazat (i s titulky). V nadpisu je volné místo na disku.
+- **Klepnutí na plakát** (v řadě, ve výsledcích hledání i v katalogu) otevře **dialog titulu**: název, hodnocení, délku, žánry, celý popis a fanart v pozadí. Dole jsou volby *Vybrat stream* (u seriálu *Otevřít*), *Přidat do / Odebrat z Mého seznamu*, *Přidat do / Odebrat z Hlídaných* (u seriálu *Hlídat nové díly*) a akce dané řady. Volby, které titul něco ruší, jsou červené.
+- **Pokračovat ve sledování** – rozkoukané tituly a další díly ze všech Kodi. U víc zařízení je na dlaždici jméno toho, kde je titul rozkoukaný. Volba *Vybrat stream* otevře **streamy titulu** (id se přečte z odkazu, který Kodi posílá), takže se dá pokračovat na libovolném přehrávači, stáhnout nebo poslat do mobilu.
+- **Hlídané** – tituly, které sis uložil zvonkem (a případně seznam z Traktu). Zvonek v detailu **dílu** uloží ten díl, ne celý seriál; v seznamu je pak i s číslem („Okresní přebor · 1x01“) a klepnutí otevře rovnou jeho streamy. Zelené „lze pustit“ u těch, které už mají stream, „hlídá se“ u těch, které zatím nikde nejsou. Titul, který teprve vyjde, přidáš přes **Hledat v databázi filmů** u výsledků hledání.
+- **Můj seznam** a **hlídané seriály** – zelený štítek „nový díl“ znamená, že další epizoda už má stream.
+- **Stažené** (textový výpis dole, jen když jsou v `sections`) – u běžícího souboru procenta, rychlost, odhad zbývajícího času, kolik už je staženo z celku a křížek, kterým se stahování zruší. Pod tím hotové soubory – u každého počet stažených titulků, velikost a tři akce: ▶ přehrát na vybraném přehrávači, 📱 poslat odkaz do mobilu, 🗑 smazat (i s titulky). V nadpisu je volné místo na disku.
 
 ### Výsledky hledání
 
-Mřížka plakátů s názvem a rokem. Po klepnutí se přes plakát položí kolečko a druhé se točí v tlačítku *Hledat*, dokud se detail nenačte. Vedle tlačítka **Úvod** je vždy **Hledat v databázi filmů** (IMDb/TMDB) – hodí se, když zdroje vrátí něco jiného, než jsi hledal, nebo film teprve vyjde; z těch výsledků klepnutím titul rovnou uložíš do seznamu k zhlédnutí a **Zpět k výsledkům ze zdrojů** tě vrátí. Když hledáš s rokem a zdroje nic z toho roku nemají, výsledek je prázdný – právě proto, aby ti nepodstrčily jiný film. Titul, který má jen Sosáč, dostane plakát z TMDB. **Úvod** vlevo nahoře se vrátí zpět.
+Mřížka plakátů s názvem, rokem a hodnocením. Klepnutí nejdřív otevře dialog titulu (stejný jako v řadách), teprve volba *Vybrat stream* nebo *Otevřít* v něm načte detail – přes plakát se pak položí kolečko a druhé se točí v tlačítku *Hledat*, dokud se detail nenačte. Vedle tlačítka **Úvod** je vždy **Hledat v databázi filmů** (IMDb/TMDB) – hodí se, když zdroje vrátí něco jiného, než jsi hledal, nebo film teprve vyjde; z těch výsledků klepnutím titul rovnou uložíš do seznamu k zhlédnutí a **Zpět k výsledkům ze zdrojů** tě vrátí. Když hledáš s rokem a zdroje nic z toho roku nemají, výsledek je prázdný – právě proto, aby ti nepodstrčily jiný film. Titul, který má jen Sosáč, dostane plakát z TMDB. **Úvod** vlevo nahoře se vrátí zpět.
 
 ### Jak se hledá
 
