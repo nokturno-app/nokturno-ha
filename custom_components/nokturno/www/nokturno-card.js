@@ -839,6 +839,8 @@ class NokturnoCard extends HTMLElement {
         .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap:10px; margin-top:12px; align-items:start; }
         .grid.files { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
         .poster { cursor:pointer; text-align:left; background:none; border:none; padding:0; color:inherit; font:inherit; display:flex; flex-direction:column; }
+        /* dlouhý stisk plakátu nesmí na dotyku otevřít nativní menu obrázku ani začít výběr/tažení */
+        .poster, .poster img { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; -webkit-user-drag:none; }
         /* pozor: lazy loading obrázků tu nefunguje - dlaždice pod okrajem okna se v shadow DOM nenačtou */
         .thumb { position:relative; display:flex; align-items:center; justify-content:center; width:100%;
                  aspect-ratio:2/3; border-radius:12px; background: var(--secondary-background-color);
@@ -981,12 +983,30 @@ class NokturnoCard extends HTMLElement {
     this._root.querySelector("#go").addEventListener("click", () => this._search());
     this._root.querySelector("#clearcache").addEventListener("click", () => this._clearCache());
     this._root.querySelector("#body").addEventListener("click", (e) => this._onClick(e));
-    this._root.querySelector("#body").addEventListener("pointerdown", () => {
-      // dlouhý stisk (≥ 500 ms) vyvolá výběr přehrávače i v režimu „první v seznamu"
+    const body = this._root.querySelector("#body");
+    body.addEventListener("pointerdown", (e) => {
+      // dlouhý stisk (≥ 500 ms) vyvolá výběr přehrávače i v režimu „první v seznamu";
+      // u plakátu se dialog otevře rovnou z časovače, protože na Androidu (WebView) po dlouhém
+      // stisku obrázku často `click` vůbec nepřijde (nativní menu, pointercancel, posun řady)
       clearTimeout(this._pressTimer);
       this._longPress = false;
-      this._pressTimer = setTimeout(() => { this._longPress = true; }, 500);
+      this._suppressClick = false;
+      if (e.button > 0) return;   // pravé tlačítko myši dlouhý stisk nespouští
+      const hit = e.composedPath().find((el) => el.dataset && ("rowitem" in el.dataset || "open" in el.dataset));
+      this._pressStart = { x: e.clientX, y: e.clientY };
+      this._pressTimer = setTimeout(() => {
+        if (hit && this._posterOpen(hit.dataset, true) !== false) this._suppressClick = true;
+        else this._longPress = true;
+      }, 500);
     });
+    // posun prstu (rolování řady) nebo zrušení stisku = žádný dlouhý stisk
+    body.addEventListener("pointermove", (e) => {
+      const s = this._pressStart;
+      if (s && Math.hypot(e.clientX - s.x, e.clientY - s.y) > 10) clearTimeout(this._pressTimer);
+    });
+    ["pointerup", "pointercancel"].forEach((ev) => body.addEventListener(ev, () => clearTimeout(this._pressTimer)));
+    // nativní kontextové menu WebView nad plakátem by přebilo náš dialog
+    body.addEventListener("contextmenu", (e) => { if (e.target.closest && e.target.closest(".poster")) e.preventDefault(); });
     const kind = this._root.querySelector("#type");
     kind.options = KINDS;
     kind.value = this._state.type;
@@ -1123,7 +1143,7 @@ class NokturnoCard extends HTMLElement {
     const busy = this._state.busy && this._state.loading === `${key}:${i}`;
     return `<button class="poster" data-rowitem="${key}:${i}" title="${this._esc(e.title)}">
       <span class="thumb${e.dim ? " dim" : ""}"><ha-icon icon="mdi:filmstrip"></ha-icon>
-        ${e.poster ? `<img src="${this._esc(this._thumbSmall(e.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
+        ${e.poster ? `<img src="${this._esc(this._thumbSmall(e.poster))}" draggable="false" decoding="async" referrerpolicy="no-referrer" />` : ""}
         ${busy ? `<span class="mask"><ha-icon class="spin" icon="mdi:loading"></ha-icon><span class="pct"></span></span>` : `<span class="tags">${e.badge ? `<span class="where">${this._esc(e.badge)}</span>` : ""}${
           e.rating ? `<span class="where rate">★ ${this._esc(e.rating)}</span>` : ""}</span>
         `}
@@ -1717,7 +1737,7 @@ class NokturnoCard extends HTMLElement {
         [r.title + (r.year ? ` (${r.year})` : ""), r.description].filter(Boolean).join("\n"))}">
         <span class="thumb">
           <ha-icon icon="mdi:filmstrip"></ha-icon>
-          ${r.poster ? `<img src="${this._esc(this._thumb(r.poster))}" decoding="async" referrerpolicy="no-referrer" />` : ""}
+          ${r.poster ? `<img src="${this._esc(this._thumb(r.poster))}" draggable="false" decoding="async" referrerpolicy="no-referrer" />` : ""}
           ${r.rating || r.imdbRating ? `<span class="tags"><span class="where rate">★ ${this._esc(r.rating || r.imdbRating)}</span></span>` : ""}
           ${st.busy && st.loading === `res:${i}` ? `<span class="mask"><ha-icon class="spin" icon="mdi:loading"></ha-icon><span class="pct"></span></span>` : ""}
         </span>
@@ -2044,9 +2064,28 @@ class NokturnoCard extends HTMLElement {
     return `<ha-select id="${id}" data-pick="${id}"></ha-select>`;
   }
 
+  /** Plakát (`data-rowitem` / `data-open`): krátký klik přehraje (auto_play) nebo otevře detail, dlouhý stisk vždy detail.
+   *  Volá ho klik i časovač dlouhého stisku; `false` = nic neotevřeno (chybí položka). */
+  _posterOpen(data, long) {
+    const st = this._state;
+    if (data.rowitem !== undefined) {
+      const [key, i] = data.rowitem.split(":");
+      const e = ((this._rowItems || {})[key] || [])[+i];
+      if (!e) return false;
+      if (this._config.auto_play && !long) return this._autoOpen(e, key, i);
+      return this._rowDetail(e, key, i);
+    }
+    const r = st.results[+data.open];
+    if (!r) return false;
+    if (r.type === "file") { st.loading = `res:${+data.open}`; return this._openItem(r); }  // soubor z fulltextu: žádný titul, rovnou stream
+    if (this._config.auto_play && !long) return this._autoOpen(this._resultEntry(r), "res", +data.open);
+    return this._rowDetail(this._resultEntry(r), "res", +data.open);
+  }
+
   /** Jeden posluchač na celý obsah – přežije překreslení a funguje i uvnitř ha-icon-button. */
   _onClick(event) {
     const st = this._state;
+    if (this._suppressClick) { this._suppressClick = false; return; }   // dlouhý stisk už vyřídil časovač
     const long = this._longPress;
     this._longPress = false;
     clearTimeout(this._pressTimer);
@@ -2058,13 +2097,7 @@ class NokturnoCard extends HTMLElement {
     const data = hit.dataset;
     if (data.rowall !== undefined) { st.rowAll = { ...(st.rowAll || {}), [data.rowall]: true }; this._paint(); return; }
     if (data.catpick !== undefined) { st.catalogId = data.catpick; this._paint(); return this._loadCatalog(data.catpick); }
-    if (data.rowitem !== undefined) {
-      const [key, i] = data.rowitem.split(":");
-      const e = ((this._rowItems || {})[key] || [])[+i];
-      if (!e) return undefined;
-      if (this._config.auto_play && !long) return this._autoOpen(e, key, i);
-      return this._rowDetail(e, key, i);
-    }
+    if (data.rowitem !== undefined) return this._posterOpen(data, long);
     if (data.toggle === "desc") { this._state.descOpen = !this._state.descOpen; this._paint(); return; }
     if (data.hist !== undefined) {
       const sensor = this._hass.states[this._config.downloads];
@@ -2086,13 +2119,7 @@ class NokturnoCard extends HTMLElement {
       return this._guard(async () => { await this._call("trakt_flag", { id: t.id }, false); });
     }
     if (data.favtoggle !== undefined) return this._toggleFavourite();
-    if (data.open !== undefined) {
-      const r = st.results[+data.open];
-      if (!r) return undefined;
-      if (r.type === "file") { st.loading = `res:${+data.open}`; return this._openItem(r); }  // soubor z fulltextu: žádný titul, rovnou stream
-      if (this._config.auto_play && !long) return this._autoOpen(this._resultEntry(r), "res", +data.open);
-      return this._rowDetail(this._resultEntry(r), "res", +data.open);
-    }
+    if (data.open !== undefined) return this._posterOpen(data, long);
     if (data.back !== undefined) {
       const target = data.back === "back" ? (st.stack.pop() || "search") : data.back;
       if (data.back !== "back") { st.stack = []; st.catalog = false; }
