@@ -1347,8 +1347,13 @@ class TestTraktRequirements(unittest.TestCase):
         async def check_trakt(only=None):
             return None
 
+        async def check_series(force=False, only=None):
+            return None
+
         env = {"watch_lib": watch_lib, "engine": type("E", (), {"store": self.store}), "hass": Hass(),
                "HomeAssistantError": HomeAssistantError, "ServiceCall": object, "SIGNAL_TRAKT": "s",
+               "SIGNAL_WATCHLIST": "w", "check_series": check_series,
+               "watchlist": lambda: watch_lib.series(self.store),
                "async_dispatcher_send": lambda *a: self.signals.append(a), "check_trakt": check_trakt}
         exec("async def handle_trakt_requirements(" + textwrap.dedent(telo), env)   # noqa: S102
         self.handler = env["handle_trakt_requirements"]
@@ -1363,6 +1368,13 @@ class TestTraktRequirements(unittest.TestCase):
         self.assertTrue(self.checked and self.signals)
         out = self.call(id="tt1")   # prázdné = nerozhoduje
         self.assertEqual(out, {"id": "tt1", "q": None, "surround": None, "audio": None, "subs": None})
+
+    def test_serial(self):
+        self.watch_lib.watch_series(self.store, "tt9", {"title": "Seriál"})
+        out = self.call(id="tt9", q=4, audio="CZ")
+        self.assertEqual((out["q"], out["audio"]), (4, "CZ"))
+        self.assertEqual(self.watch_lib.series(self.store)["tt9"]["q"], 4)
+        self.assertIn("w", self.signals[-1])
 
     def test_neznamy_id_je_chyba(self):
         with self.assertRaises(self.error):

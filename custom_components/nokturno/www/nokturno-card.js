@@ -1569,10 +1569,18 @@ class NokturnoCard extends HTMLElement {
     return this._traktList().find((t) => t.id === id) || null;
   }
 
-  /** Požadavky na stream u vlastního hlídaného titulu (Trakt Watchlist je v Mém seznamu,
+  /** Požadavky na stream u vlastního hlídaného titulu nebo sledovaného seriálu (Trakt Watchlist je v Mém seznamu,
       do Hlídaných se nemíchá), takže se ukážou vždy, když je titul v Hlídaných. */
-  _requirements() {
+  /** Hlídaný titul (díl) v detailu, jinak sledovaný seriál – obojí nese požadavky na stream. */
+  _reqEntry() {
+    const st = this._state;
     const t = this._currentTraktEntry();
+    if (t || st.episode || !st.item) return t;
+    return this._watchlist().find((w) => w.id === st.item.id) || null;
+  }
+
+  _requirements() {
+    const t = this._reqEntry();
     if (!t) return "";
     const none = this._t("Nerozhoduje");
     const track = [{ value: "-", label: none }, { value: "CZ", label: this._t("Čeština") },
@@ -1591,7 +1599,7 @@ class NokturnoCard extends HTMLElement {
 
   /** Změna jednoho výběru → služba dostane všechny čtyři hodnoty (nevyplněné = nerozhoduje). */
   _setRequirement(field, value) {
-    const t = this._currentTraktEntry();
+    const t = this._reqEntry();
     if (!t) return undefined;
     const cur = { q: String(t.q || 0), surround: t.surround ? "1" : "0", audio: t.audio || "-", subs: t.subs || "-" };
     if (cur[field] === value) return undefined;   // ha-select hlásí `selected` i při naplnění

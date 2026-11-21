@@ -1241,15 +1241,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         return {"id": wid, "flagged": flagged}
 
     async def handle_trakt_requirements(call: ServiceCall):
-        """Požadavky na stream hlídaného titulu (kvalita, 5.1, dabing, titulky).
-        Jádro vynuluje výsledek kontroly, takže se titul hned zkontroluje znovu."""
+        """Požadavky na stream hlídaného titulu nebo sledovaného seriálu (kvalita, 5.1,
+        dabing, titulky). Jádro vynuluje výsledek kontroly, takže se hned zkontroluje znovu."""
         wid = call.data["id"]
         req = {k: call.data[k] for k in watch_lib.REQ_FIELDS if k in call.data}
+        is_series = wid in watchlist() and not watch_lib.is_wanted(engine.store, wid)
         item = await hass.async_add_executor_job(watch_lib.set_requirements, engine.store, wid, req)
         if item is None:
             raise HomeAssistantError("Titul s tímto ID není v Hlídaných.")
-        async_dispatcher_send(hass, SIGNAL_TRAKT)
-        hass.async_create_task(check_trakt(only=wid))
+        if is_series:
+            async_dispatcher_send(hass, SIGNAL_WATCHLIST)
+            hass.async_create_task(check_series(force=True, only=wid))
+        else:
+            async_dispatcher_send(hass, SIGNAL_TRAKT)
+            hass.async_create_task(check_trakt(only=wid))
         return {"id": wid, **{k: item.get(k) for k in watch_lib.REQ_FIELDS}}
 
     def wantlist():
