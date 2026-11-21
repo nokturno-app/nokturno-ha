@@ -843,6 +843,32 @@
         }
       }
     },
+    "trakt_requirements": {
+      "name": "Watchlist – stream requirements",
+      "description": "Sets what a stream of a watched title must meet (quality, 5.1 sound, dubbing, subtitles). Unset means it does not matter. The title is checked again right away.",
+      "fields": {
+        "id": {
+          "name": "Title ID",
+          "description": "ID as shown in the watchlist item."
+        },
+        "q": {
+          "name": "Picture",
+          "description": "Lowest accepted picture quality: 0 = any, 3 = Full HD or better, 3.5 = 2K or better, 4 = 4K."
+        },
+        "surround": {
+          "name": "5.1 sound",
+          "description": "Only streams with 5.1 or better sound."
+        },
+        "audio": {
+          "name": "Dubbing",
+          "description": "Language of the dubbing: CZ, SK, CZ|SK (Czech or Slovak), EN or HU. Leave empty if it does not matter."
+        },
+        "subs": {
+          "name": "Subtitles",
+          "description": "Language of the subtitles: CZ, SK, CZ|SK (Czech or Slovak), EN or HU. Leave empty if it does not matter."
+        }
+      }
+    },
     "share_file": {
       "name": "Send downloaded file",
       "description": "Creates a temporary link to a downloaded file through the public HA address (Nabu Casa) and sends it to the phone.",

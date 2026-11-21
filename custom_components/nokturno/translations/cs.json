@@ -843,6 +843,32 @@
         }
       }
     },
+    "trakt_requirements": {
+      "name": "Hlídané – požadavky na stream",
+      "description": "Nastaví, co musí hlídaný titul splnit (kvalita obrazu, zvuk 5.1, dabing, titulky). Nevyplněné nerozhoduje. Titul se hned zkontroluje znovu.",
+      "fields": {
+        "id": {
+          "name": "ID titulu",
+          "description": "ID tak, jak je uvedené u položky seznamu."
+        },
+        "q": {
+          "name": "Obraz",
+          "description": "Nejnižší přijatelná kvalita obrazu: 0 = nerozhoduje, 3 = Full HD a lepší, 3.5 = 2K a lepší, 4 = 4K."
+        },
+        "surround": {
+          "name": "Zvuk 5.1",
+          "description": "Jen streamy se zvukem 5.1 a víc."
+        },
+        "audio": {
+          "name": "Dabing",
+          "description": "Jazyk dabingu: CZ, SK, CZ|SK (česky nebo slovensky), EN nebo HU. Nevyplněné nerozhoduje."
+        },
+        "subs": {
+          "name": "Titulky",
+          "description": "Jazyk titulků: CZ, SK, CZ|SK (česky nebo slovensky), EN nebo HU. Nevyplněné nerozhoduje."
+        }
+      }
+    },
     "share_file": {
       "name": "Poslat stažený soubor",
       "description": "Vytvoří dočasný odkaz na stažený soubor přes veřejnou adresu HA (Nabu Casa) a pošle ho do mobilu.",

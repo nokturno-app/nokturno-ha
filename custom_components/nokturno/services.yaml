@@ -379,6 +379,30 @@ trakt_flag:
       required: true
       selector:
         text: null
+trakt_requirements:
+  fields:
+    id:
+      required: true
+      selector:
+        text: null
+    q:
+      selector:
+        number:
+          min: 0
+          max: 4
+          step: 0.5
+    surround:
+      default: false
+      selector:
+        boolean: null
+    audio:
+      example: CZ|SK
+      selector:
+        text: null
+    subs:
+      example: CZ
+      selector:
+        text: null
 share_file:
   fields:
     path:

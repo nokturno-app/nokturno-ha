@@ -85,6 +85,7 @@ from .const import (
     SERVICE_SEEN,
     SERVICE_TRAKT_AUTH,
     SERVICE_TRAKT_FLAG,
+    SERVICE_TRAKT_REQUIREMENTS,
     SERVICE_TRAKT_LIST,
     SERVICE_TRAKT_WATCHED,
     SERVICE_WANT,
@@ -245,6 +246,15 @@ REMOVE_PROGRESS_SCHEMA = vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.string, vo
 SEEN_SCHEMA = vol.Schema({vol.Optional("id"): vol.Any(cv.string, None)})
 
 TRAKT_FLAG_SCHEMA = vol.Schema({vol.Required("id"): cv.string})
+
+# požadavky na stream hlídaného titulu; chybějící pole = nerozhoduje
+TRAKT_REQUIREMENTS_SCHEMA = vol.Schema({
+    vol.Required("id"): cv.string,
+    vol.Optional("q"): vol.All(vol.Coerce(float), vol.In((0, 3, 3.5, 4))),
+    vol.Optional("surround"): cv.boolean,
+    vol.Optional("audio"): vol.In(mycat_lib.TRACKS),
+    vol.Optional("subs"): vol.In(mycat_lib.TRACKS),
+})
 
 FAVOURITE_ADD_SCHEMA = vol.Schema({vol.Required("id"): cv.string})
 
@@ -1230,6 +1240,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         async_dispatcher_send(hass, SIGNAL_TRAKT)
         return {"id": wid, "flagged": flagged}
 
+    async def handle_trakt_requirements(call: ServiceCall):
+        """Požadavky na stream hlídaného titulu (kvalita, 5.1, dabing, titulky).
+        Jádro vynuluje výsledek kontroly, takže se titul hned zkontroluje znovu."""
+        wid = call.data["id"]
+        req = {k: call.data[k] for k in watch_lib.REQ_FIELDS if k in call.data}
+        item = await hass.async_add_executor_job(watch_lib.set_requirements, engine.store, wid, req)
+        if item is None:
+            raise HomeAssistantError("Titul s tímto ID není v Hlídaných.")
+        async_dispatcher_send(hass, SIGNAL_TRAKT)
+        hass.async_create_task(check_trakt(only=wid))
+        return {"id": wid, **{k: item.get(k) for k in watch_lib.REQ_FIELDS}}
+
     def wantlist():
         """Vlastní seznam „chci vidět" — funguje i bez Traktu (ten od 7/2026 chce VIP)."""
         return engine.store.load(watch_lib.WANTED, {})
@@ -2037,6 +2059,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         (SERVICE_TRAKT_AUTH, handle_trakt_auth, vol.Schema({}), SupportsResponse.OPTIONAL),
         (SERVICE_TRAKT_LIST, handle_trakt_list, vol.Schema({}), SupportsResponse.OPTIONAL),
         (SERVICE_TRAKT_FLAG, handle_trakt_flag, TRAKT_FLAG_SCHEMA, SupportsResponse.OPTIONAL),
+        (SERVICE_TRAKT_REQUIREMENTS, handle_trakt_requirements, TRAKT_REQUIREMENTS_SCHEMA, SupportsResponse.OPTIONAL),
         (SERVICE_WANT, handle_want, WANT_SCHEMA, SupportsResponse.OPTIONAL),
         (SERVICE_FAVOURITE_ADD, handle_favourite_add, FAVOURITE_ADD_SCHEMA, SupportsResponse.OPTIONAL),
         (SERVICE_FAVOURITE_TOGGLE, handle_favourite_toggle, FAVOURITE_TOGGLE_SCHEMA, SupportsResponse.OPTIONAL),

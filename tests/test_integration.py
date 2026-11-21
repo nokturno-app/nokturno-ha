@@ -1314,3 +1314,63 @@ class TestStreamyJenKliceSchematu(unittest.TestCase):
         for args in volani:
             for klic in re.findall(r"(\w+)(?=\s*[:,]|\s*$)", args.replace("...data", "")):
                 self.assertIn(klic, povolene, args)
+
+
+class TestTraktRequirements(unittest.TestCase):
+    """Služba `trakt_requirements`: požadavky na stream hlídaného titulu.
+    Handler je uvnitř `async_setup_entry`, proto se jeho zdroj spustí s falešným `hass`
+    a skutečným úložištěm jádra."""
+
+    def setUp(self):
+        import asyncio
+        import tempfile
+        import textwrap
+        from custom_components.nokturno import HomeAssistantError, watch_lib
+        from custom_components.nokturno.lib.store import Store
+        self.asyncio, self.watch_lib, self.error = asyncio, watch_lib, HomeAssistantError
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.store = Store(tmp.name)
+        watch_lib.want(self.store, "tt1", {"title": "Matrix"})
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        telo = src.split("    async def handle_trakt_requirements(")[1].split("\n    def wantlist")[0]
+        self.checked, self.signals = [], []
+
+        class Hass:
+            async def async_add_executor_job(_self, fn, *args):
+                return fn(*args)
+
+            def async_create_task(_self, coro):
+                coro.close()
+                self.checked.append(True)
+
+        async def check_trakt(only=None):
+            return None
+
+        env = {"watch_lib": watch_lib, "engine": type("E", (), {"store": self.store}), "hass": Hass(),
+               "HomeAssistantError": HomeAssistantError, "ServiceCall": object, "SIGNAL_TRAKT": "s",
+               "async_dispatcher_send": lambda *a: self.signals.append(a), "check_trakt": check_trakt}
+        exec("async def handle_trakt_requirements(" + textwrap.dedent(telo), env)   # noqa: S102
+        self.handler = env["handle_trakt_requirements"]
+
+    def call(self, **data):
+        return self.asyncio.run(self.handler(type("Call", (), {"data": data})))
+
+    def test_ulozi_pozadavky_a_spusti_kontrolu(self):
+        out = self.call(id="tt1", q=3.5, surround=True, audio="CZ|SK")
+        self.assertEqual(out, {"id": "tt1", "q": 3.5, "surround": True, "audio": "CZ|SK", "subs": None})
+        self.assertEqual(self.watch_lib.wanted(self.store)["tt1"]["audio"], "CZ|SK")
+        self.assertTrue(self.checked and self.signals)
+        out = self.call(id="tt1")   # prázdné = nerozhoduje
+        self.assertEqual(out, {"id": "tt1", "q": None, "surround": None, "audio": None, "subs": None})
+
+    def test_neznamy_id_je_chyba(self):
+        with self.assertRaises(self.error):
+            self.call(id="tt404", q=4)
+        self.assertEqual(self.checked, [])
+
+    def test_sluzba_je_zaregistrovana(self):
+        src = (COMPONENT / "__init__.py").read_text(encoding="utf-8")
+        self.assertIn("(SERVICE_TRAKT_REQUIREMENTS, handle_trakt_requirements, TRAKT_REQUIREMENTS_SCHEMA, SupportsResponse.OPTIONAL)", src)
+        karta = (COMPONENT / "www" / "nokturno-card.js").read_text(encoding="utf-8")
+        self.assertIn('"trakt_requirements"', karta)

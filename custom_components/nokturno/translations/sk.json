@@ -843,6 +843,32 @@
         }
       }
     },
+    "trakt_requirements": {
+      "name": "Sledované – požiadavky na stream",
+      "description": "Nastaví, čo musí sledovaný titul spĺňať (kvalita obrazu, zvuk 5.1, dabing, titulky). Nevyplnené nerozhoduje. Titul sa hneď znova skontroluje.",
+      "fields": {
+        "id": {
+          "name": "ID titulu",
+          "description": "ID tak, ako je uvedené pri položke zoznamu."
+        },
+        "q": {
+          "name": "Obraz",
+          "description": "Najnižšia prijateľná kvalita obrazu: 0 = nerozhoduje, 3 = Full HD a lepšie, 3.5 = 2K a lepšie, 4 = 4K."
+        },
+        "surround": {
+          "name": "Zvuk 5.1",
+          "description": "Iba streamy so zvukom 5.1 a viac."
+        },
+        "audio": {
+          "name": "Dabing",
+          "description": "Jazyk dabingu: CZ, SK, CZ|SK (česky alebo slovensky), EN alebo HU. Nevyplnené nerozhoduje."
+        },
+        "subs": {
+          "name": "Titulky",
+          "description": "Jazyk titulkov: CZ, SK, CZ|SK (česky alebo slovensky), EN alebo HU. Nevyplnené nerozhoduje."
+        }
+      }
+    },
     "share_file": {
       "name": "Poslať stiahnutý súbor",
       "description": "Vytvorí dočasný odkaz na stiahnutý súbor cez verejnú adresu HA (Nabu Casa) a pošle ho do mobilu.",

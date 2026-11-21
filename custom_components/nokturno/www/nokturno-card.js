@@ -70,6 +70,23 @@ const SK = {
   "lze pustit": "dá sa pustiť",
   "hlídá se": "sleduje sa",
   "zatím ne": "zatiaľ nie",
+  "nevyhovuje": "nevyhovuje",
+  "Požadavky na stream": "Požiadavky na stream",
+  "Obraz": "Obraz",
+  "Zvuk": "Zvuk",
+  "Dabing": "Dabing",
+  "Titulky": "Titulky",
+  "Nerozhoduje": "Nerozhoduje",
+  "Full HD a lepší": "Full HD a lepšie",
+  "2K a lepší": "2K a lepšie",
+  "4K": "4K",
+  "5.1 a víc": "5.1 a viac",
+  "Čeština": "Čeština",
+  "Slovenština": "Slovenčina",
+  "Čeština nebo slovenština": "Čeština alebo slovenčina",
+  "Angličtina": "Angličtina",
+  "Maďarština": "Maďarčina",
+  "Požadavky uloženy – titul se hned zkontroluje": "Požiadavky uložené – titul sa hneď skontroluje",
   "kontrolovat dál": "kontrolovať ďalej",
   "Přestat kontrolovat díl {0}": "Prestať kontrolovať diel {0}",
   "Kontrolovat dál (streamy nevyhovují)": "Kontrolovať ďalej (streamy nevyhovujú)",
@@ -1061,6 +1078,7 @@ class NokturnoCard extends HTMLElement {
         if (id === "season") { st.season = +value; this._paint(); }
         else if (id === "player" || id === "fplayer") { st.player = value; }
         else if (id === "phone" || id === "fphone") { st.phone = value; }
+        else if (id.startsWith("req_")) this._setRequirement(id.slice(4), value);
       };
       // nativní select hlásí „change“, ha-select „selected“ (mwc) i „closed“
       el.addEventListener("change", apply);
@@ -1228,7 +1246,7 @@ class NokturnoCard extends HTMLElement {
       src.trakt.forEach((t, i) => {
         if (onSeriesRow.has(t.id)) return;
         const parts = String(t.id).split(":");
-        const state = t.streams ? (t.flagged ? "kontrolovat dál" : "lze pustit") : (t.pending ? "hlídá se" : "zatím ne");
+        const state = t.streams ? (t.flagged ? "kontrolovat dál" : "lze pustit") : (t.pending ? "hlídá se" : (t.total ? "nevyhovuje" : "zatím ne"));
         const actions = [];
         if (t.streams) {
           actions.push({ icon: "mdi:format-list-bulleted", label: this._t("Vybrat stream"), run: () => this._openTrakt(i) });
@@ -1551,6 +1569,42 @@ class NokturnoCard extends HTMLElement {
     return this._traktList().find((t) => t.id === id) || null;
   }
 
+  /** Požadavky na stream u vlastního hlídaného titulu (Trakt Watchlist je v Mém seznamu,
+      do Hlídaných se nemíchá), takže se ukážou vždy, když je titul v Hlídaných. */
+  _requirements() {
+    const t = this._currentTraktEntry();
+    if (!t) return "";
+    const none = this._t("Nerozhoduje");
+    const track = [{ value: "-", label: none }, { value: "CZ", label: this._t("Čeština") },
+                   { value: "SK", label: this._t("Slovenština") }, { value: "CZ|SK", label: this._t("Čeština nebo slovenština") },
+                   { value: "EN", label: this._t("Angličtina") }, { value: "HU", label: this._t("Maďarština") }];
+    return `<div class="muted" style="margin:8px 0 0">${this._t("Požadavky na stream")}</div><div class="picks">
+      ${this._pick("req_q", this._t("Obraz"), [{ value: "0", label: none }, { value: "3", label: this._t("Full HD a lepší") },
+                                               { value: "3.5", label: this._t("2K a lepší") }, { value: "4", label: this._t("4K") }],
+                   String(t.q || 0))}
+      ${this._pick("req_surround", this._t("Zvuk"), [{ value: "0", label: none }, { value: "1", label: this._t("5.1 a víc") }],
+                   t.surround ? "1" : "0")}
+      ${this._pick("req_audio", this._t("Dabing"), track, t.audio || "-")}
+      ${this._pick("req_subs", this._t("Titulky"), track, t.subs || "-")}
+    </div>`;
+  }
+
+  /** Změna jednoho výběru → služba dostane všechny čtyři hodnoty (nevyplněné = nerozhoduje). */
+  _setRequirement(field, value) {
+    const t = this._currentTraktEntry();
+    if (!t) return undefined;
+    const cur = { q: String(t.q || 0), surround: t.surround ? "1" : "0", audio: t.audio || "-", subs: t.subs || "-" };
+    if (cur[field] === value) return undefined;   // ha-select hlásí `selected` i při naplnění
+    cur[field] = value;
+    const data = { id: t.id, q: +cur.q, surround: cur.surround === "1" };
+    if (cur.audio !== "-") data.audio = cur.audio;
+    if (cur.subs !== "-") data.subs = cur.subs;
+    return this._guard(async () => {
+      await this._call("trakt_requirements", data, false);
+      this._toast(this._t("Požadavky uloženy – titul se hned zkontroluje"));
+    });
+  }
+
   /** Díl hlídaný s příznakem „kontrolovat dál" (tlačítko u seriálu v Knihovně). */
   _isEpisodeFlagged(id) {
     const over = this._wantOverride || {};
@@ -1814,7 +1868,7 @@ class NokturnoCard extends HTMLElement {
             </ha-icon-button>`;
           })()}
         </div>
-      </div>` + this._streamWarnings();
+      </div>` + this._requirements() + this._streamWarnings();
     // ruční, uvolněné hledání na fulltextových zdrojích – pro případ, že přísný filtr
     // skutečnou shodu zahodil (nebo naopak, i mezi nalezenými je dobré umět ověřit).
     // Proto je dole i u titulu, který streamy už má – ne jen v prázdném stavu.
