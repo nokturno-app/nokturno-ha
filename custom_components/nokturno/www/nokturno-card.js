@@ -1575,7 +1575,11 @@ class NokturnoCard extends HTMLElement {
   _reqEntry() {
     const st = this._state;
     const t = this._currentTraktEntry();
-    if (t || st.episode || !st.item) return t;
+    if (t) return t;
+    // právě přidaný titul/díl: senzor ho ještě nemá, výběry se ale nabídnou hned
+    const id = (st.episode && st.episode.id) || (st.item && st.item.id);
+    if (id && (this._wantOverride || {})[id] === true) return { id };
+    if (st.episode || !st.item) return null;
     return this._watchlist().find((w) => w.id === st.item.id) || null;
   }
 
