@@ -510,7 +510,8 @@ def open_storage(url, *args, **kwargs):
     if base.startswith("smb://"):
         return SmbStorage(url, *args, backend=backend, **kwargs)
     if base.startswith("file://"):
-        return LocalStorage(url, *args, backend=backend, **kwargs)
+        # `backend` od hostitele je SMB (Kodi: `KodiSmbBackend`), místní složka ho nepoužije
+        return LocalStorage(url, *args, **kwargs)
     return StorageApi(url, *args, **kwargs)
 
 
